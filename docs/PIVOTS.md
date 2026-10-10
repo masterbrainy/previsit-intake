@@ -49,3 +49,15 @@ What changed:
 Why: user decisions on 2026-10-09 during the 15-minute finish push.
 Impact on in-flight work: no code change needed for rules 1–3 (already built that way). New follow-ups: A.1 (deferred), A.2 (shared-contact warning on booking). Eval gate still unmet (~88% key-fact accuracy vs 90%, 0–1 fabricated, 100% red-flag recall); Phase 1 stays unpassed.
 Tasks added / removed / changed (PROGRESS.md IDs): added A.1 (deferred) and A.2. D.* unchanged.
+
+## P-004 · 2026-10-09 · Patient self-registration and self-booking
+Plan version: v0.4 → v0.5
+What changed: patients can set up their own details and book their own appointments in the portal. Decided by the user in the Build session (bookings live immediately with no clinic confirmation; anyone can register after verifying a phone or email with the code), already built and pushed by Build (cfded44, PB.1). Confirmed for logging by the user in this session, with pilot guards added.
+Rules (PRD §8.10): every contact gets a code, including contacts not on file, so there is no account enumeration. Self-registered patients are marked `self_registered` ("identity not checked by clinic" on the doctor's page). Bookings are only for people on the contact, with a listed doctor, at a future time within a year, max 5 upcoming per patient. The doctor sees a "booked by patient" badge. Known gap: no availability/calendar check.
+Reverses: the PRD non-goal "Appointment booking" (calendar/availability management stays out of scope).
+Hard rules: unchanged. The physician approval gate, check-before-play, results-never-to-LLM and red-flag stop all still apply to self-booked visits.
+Why: the user wants patients to be able to start on their own in the portal, not only from a clinic booking.
+Risks raised by Plan & Pivot: double-bookings and visits the clinic doesn't know about; unchecked identities on history sheets; open sign-up running up OpenAI costs (in demo mode the code is shown on screen, so verification is effectively off); conflict with a clinic's real scheduling system.
+Pilot guards (user-approved, required before any real-patient pilot): bookings come from or sync with the clinic scheduling system, or need clinic confirmation before the intake runs (PB.2); sign-up and AI-spend caps for any public hosting (PB.3); clinic checks self-registered identities before the visit.
+Impact on in-flight work: demo video scenes may show self-booking as an alternative to scene 1 (optional). Test: extend portal tests to self-registration and booking limits if not already covered.
+Tasks added / removed / changed (PROGRESS.md IDs): PB.1 (done, Build); added PB.2, PB.3 (pilot guards), PB.4 (availability check).

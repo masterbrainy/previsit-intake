@@ -1,6 +1,6 @@
 # PRD: Pre-Visit AI History Taking & Physician-Gated Recommendations
 
-**Status:** Draft v0.4 (P-003: portal identity rules) · **Date:** 2026-10-09 · **Owner:** TBD
+**Status:** Draft v0.5 (P-004: patient self-registration and self-booking) · **Date:** 2026-10-09 · **Owner:** TBD
 **Working name:** Pre-Visit Intake (placeholder)
 
 ---
@@ -43,7 +43,7 @@ Fever is only the worked example. The system is **specialty-agnostic**: any comp
 - Prescribing or dosing medication (including OTC) to the patient. *(See open question Q6.)*
 - Ordering any test without explicit physician sign-off. There is **no auto-approve**, ever.
 - Replacing emergency care. Red-flag symptoms get escalated, not handled (§9).
-- Appointment booking. We assume a booking already exists and trigger off it.
+- ~~Appointment booking.~~ *Reversed in P-004:* patients can now book their own appointments in the portal (§8.10). Calendar/availability management is still out of scope.
 - **An open-ended AI chat assistant for patients.** In the patient portal the AI only conducts the pre-visit intake call; everything else in the portal is plain pages (P-002).
 
 ---
@@ -222,7 +222,7 @@ Fever is the first module. New complaints and specialties are added as **content
 ### 8.10 Patient portal (added in P-002)
 The patient's home in the product. The AI's only job here is the intake call (§8.2); every other part of the portal is plain pages with no AI.
 - **P0** Front page with two doors: **clinicians** (dashboard sign-in) and **patients** (portal sign-in). No patient names or lists are shown on any public page.
-- **P0** **Sign-in with a one-time code:** the patient enters the email or phone number on their appointment and receives a 6-digit code. Codes expire after 10 minutes, lock after 5 wrong tries, and requests are rate-limited. No passwords. Session cookie is HttpOnly with sign-out. In demo mode only (synthetic data), the code may be shown on screen because no SMS/email sending exists yet; this is never allowed outside demo mode.
+- **P0** **Sign-in with a one-time code:** the patient enters their email or phone number and receives a 6-digit code. Since P-004 every contact gets a code, including contacts not yet on file, so the sign-in page never reveals whether someone is a patient. Codes expire after 10 minutes, lock after 5 wrong tries, and requests are rate-limited. No passwords. Session cookie is HttpOnly with sign-out. In demo mode only (synthetic data), the code may be shown on screen because no SMS/email sending exists yet; this is never allowed outside demo mode.
 - **P0** The text-message link opens the portal sign-in with the contact pre-filled; the patient still needs the code.
 - **P0** Portal home lists the patient's own appointments. Per appointment: start or resume the **pre-visit intake call with the AI (OpenAI)**, self-care advice, tests the doctor has asked for (only after approval and sending, as today), log readings, upload test reports, messages from the clinic.
 - **P0** A patient can only ever see their own records.
@@ -232,6 +232,9 @@ The patient's home in the product. The AI's only job here is the intake call (§
 - **P0** **Shared contacts (P-003, user decision):** signing in with a phone or email shows every appointment booked with that contact (e.g. a household phone for two children), each labelled with the patient's name. This acts as light caregiver access without a separate consent step.
 - **P0** **Same patient across bookings (P-003):** bookings with the same name, date of birth and contact belong to one patient. A typo creates a separate patient record; it never merges two people.
 - **P0** **Physician access to the patient side (P-003):** only through the read-only "Open patient's view". The patient's own link does not work for staff.
+- **P0** **Self-registration (P-004, user decision):** anyone who verifies a phone or email with the code can set up their own details (and those of people they book for). These patients are marked `self_registered`, and the doctor's page shows "identity not checked by clinic".
+- **P0** **Self-booking (P-004, user decision):** a signed-in patient can book appointments that are **live immediately**, with no clinic confirmation. Limits: only for people on their own contact, only with a listed doctor, only at a future time within one year, at most 5 upcoming appointments per patient. The doctor sees a "booked by patient" badge. **Known gap:** there is no availability or calendar check, so double-booking is possible.
+- **Pilot guards for P-004 (must be met before any real-patient pilot):** (1) bookings come from, or sync with, the clinic's own scheduling system, or need clinic confirmation before the intake runs; (2) any publicly hosted site caps self-registrations and AI-call spend; (3) self-registered identities are checked by the clinic before the visit.
 - **P2** Caregiver/proxy access to a patient's portal with explicit consent (ties to §8.1 caregiver mode); revisit the shared-contact rule when this is designed.
 
 ---
@@ -256,7 +259,7 @@ The patient's home in the product. The AI's only job here is the intake call (§
 
 | System | MVP | Later |
 |--------|-----|-------|
-| Appointments | Manual entry / CSV | Scheduling system API / HL7 SIU |
+| Appointments | Manual entry / CSV; patient self-booking in the portal (P-004) | Scheduling system API / HL7 SIU; self-bookings sync with or come from it (pilot guard) |
 | EHR | PDF download | FHIR push |
 | Lab | Staff hand-off + PDF upload | LIS order + results (HL7 ORM/ORU or FHIR) |
 | Patient messaging | SMS | WhatsApp, app push |
@@ -286,6 +289,7 @@ The patient's home in the product. The AI's only job here is the intake call (§
 | Rubber-stamp approvals | Show rationale, monitor approval patterns, keep suggestion sets small |
 | Patient treats general advice as treatment | Clear wording, no drugs or doses, explicit "your doctor will decide" |
 | Scope creep into result interpretation | Written non-goal; no code path from results to the LLM |
+| Self-booking without clinic check (P-004): double-bookings, visits the clinic doesn't know about, fake identities, open sign-up running up AI costs | Doctor sees "booked by patient" and "identity not checked by clinic"; booking limits; pilot guards in §8.10 (scheduling-system sync or clinic confirmation, sign-up and spend caps for public hosting, identity check before the visit) |
 | Shared contact exposes records (P-003): adults sharing a phone/email, or staff entering one placeholder number for many patients, see each other's appointments | Accepted for now by user decision. Before any real-patient use: warn staff on the booking form when a contact is already used by another patient, and revisit with caregiver consent (§8.10 P2) |
 
 ## 14. Open questions

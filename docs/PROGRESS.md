@@ -1,6 +1,6 @@
 # Progress
 
-Plan version: v0.4 · Status values: `todo` · `doing` · `done` · `blocked: <reason>`
+Plan version: v0.5 · Status values: `todo` · `doing` · `done` · `blocked: <reason>`
 Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / clinician / decision)
 
 ## Phase 0: Foundations
@@ -66,6 +66,9 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | PP.7 | Tests: patient sees only own records (guessed IDs, old links); code expiry/lockout/rate limit; unapproved recs never shown in portal; preview is read-only; AI replies still checked before play | T | done |
 | PP.8 | Real sign-in code delivery by SMS/email | U+B | blocked: needs a messaging provider (same as F.3) |
 | PB.1 | Patient self-service: new patients set up their details after verifying their contact; patients book visits themselves (live immediately, marked for the doctor) | B | done |
+| PB.2 | Pilot guard: self-bookings come from / sync with the clinic scheduling system, or need clinic confirmation before the intake runs (P-004) | U+B | todo: before any pilot |
+| PB.3 | Pilot guard: cap self-registrations and AI-call spend on any publicly hosted site (P-004, ties to D.2) | B | todo: before public hosting |
+| PB.4 | Availability/calendar check to prevent double-booking (P-004 known gap) | B | todo |
 
 ## Demo release: working site + captioned video (final step, P-001)
 | ID | Task | Owner | Status |
