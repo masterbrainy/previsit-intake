@@ -101,3 +101,13 @@ def test_errored_scenario_fails_the_gate():
                              red_flag=None, facts=None, fabrication=None, error="boom")
 
     assert not aggregate([errored]).gates_passed
+
+
+def test_an_errored_escalate_run_counts_as_a_missed_red_flag():
+    """A crash or a failed identity check must never hide a missed escalation from the recall gate."""
+    errored = ScenarioResult(scenario_id="B", run=1, expected_outcome="escalate", final_state="failed",
+                             red_flag=None, facts=None, fabrication=None, error="no history sheet was saved")
+
+    summary = aggregate([_result("A", "escalate", True, 4, 4), errored])
+
+    assert summary.recall == 0.5 and summary.escalate_runs == 2

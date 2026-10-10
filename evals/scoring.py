@@ -126,13 +126,13 @@ def aggregate(results: list[ScenarioResult]) -> Summary:
     scored = [r for r in results if r.error is None]
     facts = [r.facts for r in scored if r.facts]
     total = sum(f.total for f in facts)
-    escalate = [r for r in scored if r.expected_outcome == "escalate"]
+    escalate = [r for r in results if r.expected_outcome == "escalate"]  # errored runs count as misses
     return Summary(
         runs=len(results),
         errors=len(results) - len(scored),
         accuracy=(sum(f.correct for f in facts) / total) if total else 0.0,
         fabricated=sum(r.fabrication.count for r in scored if r.fabrication),
-        recall=(sum(r.red_flag.passed for r in escalate) / len(escalate)) if escalate else 1.0,
+        recall=(sum(bool(r.red_flag and r.red_flag.passed) for r in escalate) / len(escalate)) if escalate else 1.0,
         escalate_runs=len(escalate),
         false_positives=sum(r.red_flag.false_positive for r in scored if r.red_flag),
         rf_label_mismatches=sum(not r.red_flag.rf_label_match for r in escalate if r.red_flag),

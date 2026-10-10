@@ -12,6 +12,7 @@ import yaml
 SCENARIO_DIR = Path(__file__).resolve().parent / "scenarios"
 FRONT_MATTER = re.compile(r"^---\n(.*?)\n---\n", re.S)
 DISCLOSURE_ROW = re.compile(r"^\| (D\d+[a-z]?) \|", re.M)
+DISCLOSURE_LINE = re.compile(r"^\| (D\d+[a-z]?) \|[^|]*\|(.*)\|\s*$", re.M)
 AGE = re.compile(r"^(\d+)([ywmd])$")
 PERSONA_SECTION = "Simulated patient"
 
@@ -66,6 +67,11 @@ class Scenario:
     @property
     def disclosure_ids(self) -> tuple[str, ...]:
         return tuple(DISCLOSURE_ROW.findall(self.body))
+
+    @property
+    def disclosure_lines(self) -> dict[str, str]:
+        """Disclosure ID -> what the caller says (the table's last column)."""
+        return {d: text.strip() for d, text in DISCLOSURE_LINE.findall(self.body)}
 
     @property
     def persona(self) -> str:

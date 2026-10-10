@@ -50,7 +50,8 @@ def test_simulator_disclosures_are_limited_to_the_scenario_table():
     from evals.simulator import SimulatedPatient
 
     scenario = load_scenario(SCENARIO_DIR / "FEV-003-fever-headache-stiff-neck.md")
-    llm = make_fake_llm(sim_patient=lambda s, m: {"utterance": "hi", "disclosed": ["D2", "D9", "D"], "hang_up": False})
+    said = "My neck's really stiff too, it hurts to put my chin down. And the light's bothering my eyes."
+    llm = make_fake_llm(sim_patient=lambda s, m: {"utterance": said, "disclosed": ["D2", "D9", "D"], "hang_up": False})
 
     said = SimulatedPatient(llm, scenario, date(2007, 8, 10)).reply("Hello")
 
@@ -97,3 +98,46 @@ def test_judge_header_comes_from_the_sheet_record_when_present():
 
     assert "11 weeks" in header and "father" in header and "FALLBACK" not in header
     assert judge_header(HistorySheet(), fallback="FALLBACK") == "FALLBACK"
+
+
+def _sim(scenario_file, handler):
+    from datetime import date
+
+    from evals.scenario import SCENARIO_DIR, load_scenario
+    from evals.simulator import SimulatedPatient
+
+    return SimulatedPatient(make_fake_llm(sim_patient=handler), load_scenario(SCENARIO_DIR / scenario_file),
+                            date(2026, 7, 21))
+
+
+def test_simulator_cannot_hang_up_unless_the_scenario_says_so():
+    hang = lambda s, m: {"utterance": "bye", "disclosed": [], "hang_up": True}
+
+    assert _sim("FEV-021-infant-4-months-boundary.md", hang).reply("Any rash?").hang_up is False
+    assert _sim("FEV-017-pregnant-bleeding-call-drops.md", hang).reply("Any bleeding?").hang_up is True
+
+
+def test_simulator_is_told_the_exact_date_of_birth_to_give():
+    sim = _sim("FEV-022-infant-11-weeks-feels-hot.md", lambda s, m: {"utterance": "x", "disclosed": [], "hang_up": False})
+    sim.reply("Name and date of birth?")
+
+    assert "date of birth exactly as 2026-07-21" in sim._system
+
+
+def test_a_disclosure_tag_only_counts_if_the_reply_contains_that_line():
+    """The simulator has tagged a bare "No." as the read-back faint (FEV-013), which made a timely escalation look late."""
+    tag = lambda text: lambda s, m: {"utterance": text, "disclosed": ["D2"], "hang_up": False}
+
+    plain = _sim("FEV-013-faint-disclosed-at-read-back.md", tag("No.")).reply("Any travel?")
+    real = _sim("FEV-013-faint-disclosed-at-read-back.md",
+                tag("Oh, actually, I passed out in the bathroom this morning, just for a second.")).reply("Is that right?")
+
+    assert plain.disclosed == [] and real.disclosed == ["D2"]
+
+
+def test_disclosure_lines_are_read_from_the_table():
+    from evals.scenario import SCENARIO_DIR, load_scenario
+
+    lines = load_scenario(SCENARIO_DIR / "FEV-003-fever-headache-stiff-neck.md").disclosure_lines
+
+    assert "neck" in lines["D2"].lower() and set(lines) == {"D1", "D2"}
