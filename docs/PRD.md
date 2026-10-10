@@ -1,7 +1,7 @@
-# PRD: Pre-Visit AI History Taking & Physician-Gated Recommendations
+# PRD: PATH, pre-visit AI history taking with physician-gated recommendations
 
 **Status:** Draft v0.6 (P-005: hospital overview, individual doctor accounts, doctor choice, referrals) · **Date:** 2026-10-09 · **Owner:** TBD
-**Working name:** Pre-Visit Intake (placeholder)
+**Product name:** **PATH** (Pre-visit Assessment & Triage Helper), adopted in P-006. Despite "Triage" in the expansion, PATH does not triage or assess: it takes the history, and every clinical decision stays with the physician (§3 non-goals).
 
 ---
 

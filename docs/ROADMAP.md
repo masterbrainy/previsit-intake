@@ -1,4 +1,4 @@
-# Roadmap: Pre-Visit AI History Taking
+# Roadmap: PATH (pre-visit AI history taking)
 
 **Status:** Draft v0.6 (P-001 demo release; P-002 patient portal; P-005 hospital view + doctor accounts) · **Date:** 2026-10-09 · Companion to [PRD.md](PRD.md)
 

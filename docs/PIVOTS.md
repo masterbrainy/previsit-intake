@@ -79,3 +79,12 @@ Hard rules: unchanged. Quick notes are clinician-only and never sent to the AI.
 Why: the user reframed the clinician side as a hospital with individual doctors, their own patient lists, and referral-based sharing.
 Impact on in-flight work: resolves F.4 (shared physician login) and the §8.6 approval-audit gap. All clinical routes move behind doctor sign-in, so Test's route tests and the demo recorder need updating. Demo scenes 1, 3 and 8 updated. Earlier pending proposal "individual doctor logins as a Phase 3 gate item" is now covered.
 Tasks added / removed / changed (PROGRESS.md IDs): added H.1–H.11 (H.1–H.8 doing in Build, H.9 Test, H.10–H.11 pilot guards); F.4 marked superseded.
+
+## P-006 · 2026-10-09 · Product named PATH
+Plan version: v0.6 → v0.7
+What changed: the product is named **PATH (Pre-visit Assessment & Triage Helper)**, replacing the placeholder "Pre-Visit Intake". PRD and ROADMAP titles updated. README, UI text, pyproject description and the GitHub description move to PATH (Build, N.1–N.3).
+Not renamed (deliberately): the Python package `previsit`, the local folder `/Users/brianhuang/Projects/previsit-intake` (all sessions use this absolute path), and the session titles "… · Pre-visit intake" (the messaging protocol matches them exactly). Renaming the GitHub repository itself waits for the user's confirmation, because it changes the public URL.
+Why: user decision for the hackathon pitch and write-up.
+Note: Plan & Pivot flagged that "Triage" and "Assessment" in the expansion describe things PATH deliberately does not do; the user kept the name. The PRD states that PATH takes the history and does not triage or assess, and the non-goals are unchanged.
+Impact on in-flight work: copy changes only; no behaviour change. Demo captions should use "PATH".
+Tasks added / removed / changed (PROGRESS.md IDs): added N.1–N.3.
