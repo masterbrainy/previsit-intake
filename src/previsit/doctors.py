@@ -70,7 +70,7 @@ def recommend_doctors(
             reasons.append("general practice: sees most problems")
         ranked.append((score, load.get(doctor.id, 0), doctor.name, Recommendation(doctor, tuple(reasons))))
     ranked.sort(key=lambda r: (-r[0], r[1], r[2]))
-    picks = [r[3] for r in ranked if r[0] >= 0][:limit]
+    picks = [r[3] for r in ranked if r[0] > 0][:limit]  # unmatched specialists are listed as "other doctors"
     if picks and all(p.doctor.specialty != GENERAL_PRACTICE for p in picks):
         # A general practitioner is always offered (ROADMAP H.2).
         gp = next((r[3] for r in ranked if r[3].doctor.specialty == GENERAL_PRACTICE), None)
