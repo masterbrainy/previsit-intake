@@ -100,7 +100,7 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 ## Rename to PATH (P-006)
 | ID | Task | Owner | Status |
 |---|---|---|---|
-| N.1 | README rewritten for PATH (what it is, safety rules, current run instructions, current auth, status/limits) | B | todo |
+| N.1 | README rewritten for PATH (what it is, safety rules, current run instructions, current auth, status/limits) | B | done: README.md rewritten (flows for patient, doctor and staff; safety rules; demo and dev quick start; tests, evals, film; layout; latest eval numbers and limits) |
 | N.2 | Product name "PATH" in the UI (page titles, headers, portal, emails/messages copy), pyproject description, CLAUDE.md heading | B | done: wordmark, page titles, portal header, the assistant's greeting ("I'm PATH…"), FastAPI title, pyproject, CLAUDE.md heading |
 | N.3 | GitHub repo description/topics updated to PATH (repo rename only if the user confirms) | B | todo |
 
