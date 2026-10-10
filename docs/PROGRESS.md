@@ -1,6 +1,6 @@
 # Progress
 
-Plan version: v0.1 · Status values: `todo` · `doing` · `done` · `blocked: <reason>`
+Plan version: v0.2 · Status values: `todo` · `doing` · `done` · `blocked: <reason>`
 Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / clinician / decision)
 
 ## Phase 0: Foundations
@@ -53,6 +53,17 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | 4.1 | Result upload + attach to sheet | B | done |
 | 4.2 | Physician notification on results | B | done |
 | 4.3 | Tests: results never sent to LLM | T | done |
+
+## Demo release: working site + captioned video (final step, P-001)
+| ID | Task | Owner | Status |
+|---|---|---|---|
+| D.1 | Demo-ready site: one-command start, clean reset script, synthetic demo patients (incl. backdated temperature readings) | B | todo |
+| D.2 | Decide hosting: local only, or a URL clinicians/researchers can open | U | todo |
+| D.3 | Demo patient scripts (fever full flow + stiff-neck escalation); run each ≥3× through the simulator to confirm they reliably hit every scene | T | todo |
+| D.4 | Automated recorder in `demo/`: Playwright drives physician + patient windows, records each | B | todo |
+| D.5 | Assemble video with ffmpeg: side by side, captions on every step, AI voice audio, pauses-shortened note, closing limits card; check extracted frames | B | todo |
+| D.6 | Caption review: every claim true vs code and latest eval results; wording right for clinicians | T | todo |
+| D.7 | Final review: user watches and accepts the video | U | todo |
 
 ## Build follow-ups (found while building)
 | ID | Task | Owner | Status |

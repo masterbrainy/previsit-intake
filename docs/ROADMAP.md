@@ -1,6 +1,6 @@
 # Roadmap: Pre-Visit AI History Taking
 
-**Status:** Draft v0.1, ready for review · **Date:** 2026-10-09 · Companion to [PRD.md](PRD.md)
+**Status:** Draft v0.2 (P-001: demo release added) · **Date:** 2026-10-09 · Companion to [PRD.md](PRD.md)
 
 Each phase ships one arrow from the whiteboard and has to pass its exit gate before the next one starts. Safety (red-flag escalation) ships in Phase 1, because the agent talks to patients from day one.
 
@@ -12,6 +12,7 @@ Phase 1  Voice intake → history sheet     ██████                  
 Phase 2  General recs + symptom logs            ████               wk 10–14
 Phase 3  Medical recs + physician OK                ██████         wk 14–20
 Phase 4  Results routing                                  ████     wk 20–24
+Demo     Working site + captioned demo video                  █     final step of the prototype
 Phase 5  Scale: modules, specialties, integrations            ███→ wk 24+
 ```
 
@@ -99,6 +100,36 @@ Phase 5  Scale: modules, specialties, integrations            ███→ wk 24
 **Exit gate:** ≥ 70% of approved tests have results on the sheet before the visit; the pilot's physicians confirm the single-view workflow saves time.
 
 **Pilot readout:** compare against PRD §12 metrics and decide go / no-go on scaling.
+
+---
+
+## Demo release: working site + demo video (final step of the prototype)
+
+**Added in P-001.** The prototype build ends here. Audience: **clinicians and researchers**.
+
+**Deliverable 1: a working site.** One command starts the app from a clean state with synthetic demo patients. The full flow runs without errors: booking → intake → history sheet → suggested test → physician approval → patient notification → symptom log → result upload, plus a red-flag stop. Hosting (local only, or a URL clinicians can open) is an open decision for the user.
+
+**Deliverable 2: a demo video of that real site.**
+- Recorded automatically from the running app (Playwright drives the physician and patient windows, ffmpeg assembles them side by side). It shows the **actual working flow**: no diagrams, mock-ups or abstract concept graphics.
+- **Clear on-screen captions** on every step say what is happening and which safety rule it shows. Short scene labels are fine; explanation lives in the captions over real screens.
+- Synthetic patient only. The patient types and the AI speaks (the AI's real text-to-speech audio is laid into the video); spoken patient input is an optional second pass.
+- Waiting time may be cut, with a visible "pauses shortened" note. Nothing else is staged.
+
+**Scenes the video must show** (clinician/researcher cut, ~5–8 min):
+1. Physician books an appointment; the patient gets a private link
+2. Intake: consent and identity check, adaptive history questions (HOPI), read-back, general advice ending with ER safety-netting
+3. History sheet in the PRD §7 structure; click a statement to show the patient's own words it came from; "could not answer" items; red-flag screen
+4. Suggested investigation (CBC) with its rationale and module rule, visible to the physician only. The patient page shows nothing until the physician approves **and** sends it, then shows the instruction
+5. Patient logs temperatures; the physician sees them on the sheet
+6. Lab report upload appears for the physician exactly as issued; caption states that results are never sent to the AI
+7. Separate case: a red-flag symptom (stiff neck) stops the intake, sends the patient to emergency care, alerts staff, and generates no advice or tests
+8. Closing card with honest limits: draft clinical content pending clinician sign-off, current eval results, single shared physician login, browser channel only (no phone/SMS yet), not for clinical use
+
+**Exit gate:**
+- The demo runs end to end from a clean start, twice in a row, without manual fixes
+- Every scene above is in the video, recorded from the real site, with captions
+- Every claim in the captions is true at the time of recording (checked by Test against the code and eval results)
+- The user has watched and accepted the video
 
 ---
 
