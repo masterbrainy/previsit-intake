@@ -6,9 +6,8 @@
 <h1 style="margin-top:12px">Choose a doctor</h1>
 <p class="sub">For {{ patient.name }}: “{{ reason }}”. <a href="/portal/book?patient_id={{ patient.id }}">Change</a></p>
 {% if urgent %}
-<div class="banner danger" role="alert"><strong>Please don't wait for an appointment if this is happening now.</strong>
-  <p>You mentioned {{ urgent|join(', ') }}. These can be signs of an emergency. Call {{ emergency_number }} now or go to
-  the nearest emergency department. An appointment is not the right place for an emergency.</p></div>
+<div class="banner danger" role="alert"><strong>{{ emergency_script }}</strong>
+  <p>You wrote: {{ urgent|join(', ') }}.</p></div>
 {% endif %}
 {% if error %}<div class="banner danger" role="alert"><strong>{{ error }}</strong></div>{% endif %}
 <form method="post" action="/portal/book">

@@ -14,7 +14,8 @@ from sqlmodel import Session, func, select
 
 from previsit import audit
 from previsit.config import Settings
-from previsit.doctors import recommend_doctors, urgent_words_in
+from previsit.doctors import SUICIDE_RISK_WORDS, recommend_doctors, urgent_words_in
+from previsit.safety.escalation import booking_emergency_message
 from previsit.models import Appointment, Doctor, Patient
 from previsit.portal import auth
 from previsit.web.app import get_session, get_settings_dep, templates
@@ -96,11 +97,13 @@ def _owned_patient(session: Session, user: PortalUser, patient_id: int) -> Patie
 def _step_two(request: Request, session: Session, patient: Patient, reason: str, error: str = "",
               values: dict | None = None, status_code: int = 200):
     recommended = recommend_doctors(session, reason, _age(patient.dob, date.today()))
+    urgent = urgent_words_in(reason)
     picked = {r.doctor.id for r in recommended}
     others = [d for d in session.exec(select(Doctor).order_by(Doctor.name)).all() if d.id not in picked]
     return templates.TemplateResponse(request, "portal_book_doctor.html", {
         "patient": patient, "reason": reason, "recommended": recommended, "others": others,
-        "urgent": urgent_words_in(reason), "emergency_number": request.app.state.settings.emergency_number,
+        "urgent": urgent, "emergency_script": booking_emergency_message(
+            request.app.state.settings, suicide_risk=bool(SUICIDE_RISK_WORDS & set(urgent))),
         "error": error, "values": values or {},
     }, status_code=status_code)
 

@@ -31,6 +31,13 @@ class SignInError(Exception):
     """Message is safe to show to the patient."""
 
 
+def _audit(session: Session, role: str, contact: str, event: str, details: dict | None = None) -> None:
+    """Patients appear as "patient" with portal.* actions; doctors under their own work email with doctor.* actions."""
+    actor = contact if role == "doctor" else "patient"
+    prefix = "doctor" if role == "doctor" else "portal"
+    audit.record(session, actor, f"{prefix}.{event}", "contact", None, {"contact": mask_contact(contact), **(details or {})})
+
+
 def now_utc() -> datetime:
     return datetime.now(UTC).replace(tzinfo=None)
 
@@ -62,20 +69,20 @@ def request_code(
     now = now or now_utc()
     if (_recent_requests(session, SignInCode.contact, contact, now) >= MAX_CODES_PER_CONTACT
             or (ip and _recent_requests(session, SignInCode.ip, ip, now) >= MAX_CODES_PER_IP)):
-        audit.record(session, "patient", "portal.code_rate_limited", "contact", None, {"contact": mask_contact(contact)})
+        _audit(session, role, contact, "code_rate_limited")
         raise SignInError("Too many code requests. Please wait 15 minutes and try again.")
     live = select(SignInCode).where(SignInCode.contact == contact, SignInCode.role == role, SignInCode.used_at.is_(None))
     for old in session.exec(live).all():
         old.used_at = now
         session.add(old)
-    known = bool(patients_for(session, contact))
+    # "known" = already on an appointment; only meaningful for patients (doctors pick their name from a list).
+    known = bool(patients_for(session, contact)) if role == "patient" else None
     code = f"{secrets.randbelow(10 ** CODE_DIGITS):0{CODE_DIGITS}d}"
     session.add(SignInCode(
         role=role, contact=contact, code_hash=_code_hash(key, f"{role}:{contact}", code), ip=ip,
         created_at=now, expires_at=now + CODE_TTL,
     ))
-    audit.record(session, "patient", "portal.code_requested", "contact", None,
-                 {"contact": mask_contact(contact), "known": known})
+    _audit(session, role, contact, "code_requested", {"known": known} if known is not None else None)
     session.flush()
     return CodeRequest(code=code)
 
@@ -98,12 +105,11 @@ def verify_code(
     if hmac.compare_digest(row.code_hash, _code_hash(key, f"{role}:{contact}", code.strip())):
         row.used_at = now
         session.add(row)
-        audit.record(session, "patient", "portal.signed_in", "contact", None, {"contact": mask_contact(contact)})
+        _audit(session, role, contact, "signed_in")
         return
     row.attempts += 1
     session.add(row)
-    audit.record(session, "patient", "portal.code_wrong", "contact", None,
-                 {"contact": mask_contact(contact), "attempts": row.attempts})
+    _audit(session, role, contact, "code_wrong", {"attempts": row.attempts})
     left = MAX_ATTEMPTS - row.attempts
     if left <= 0:
         raise SignInError("Too many wrong tries. Please request a new code.")
@@ -145,7 +151,7 @@ def end_session(session: Session, token: str | None, now: datetime | None = None
     if row is not None and row.ended_at is None:
         row.ended_at = now or now_utc()
         session.add(row)
-        audit.record(session, "patient", "portal.signed_out", "contact", None, {"contact": mask_contact(row.contact)})
+        _audit(session, row.role, row.contact, "signed_out")
 
 
 def deliver_code(contact: str, code: str) -> bool:

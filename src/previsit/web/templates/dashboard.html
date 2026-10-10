@@ -9,8 +9,9 @@
 
 {% for row, alert in emergencies %}
 <div class="banner danger" role="alert">
-  <strong>{{ alert.title }}</strong>
-  <p>{{ row.patient.name }} · booked with {{ row.doctor.name if row.doctor else row.appointment.physician_name }}. {{ alert.body }}</p>
+  <strong>Emergency escalation: {{ row.patient.name }}</strong>
+  <p>{{ alert.created_at.strftime('%a %d %b, %H:%M') }} · booked with {{ row.doctor.name if row.doctor else row.appointment.physician_name }}
+    · contact: <span class="mono">{{ row.patient.phone or row.patient.email or 'not on file' }}</span></p>
   <form class="inline" method="post" action="/alerts/{{ alert.id }}/ack"><input type="hidden" name="next" value="/dashboard"><button class="ghost" type="submit">Acknowledge</button></form>
 </div>
 {% endfor %}

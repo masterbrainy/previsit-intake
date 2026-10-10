@@ -26,6 +26,9 @@ URGENT_WORDS = (
 )
 
 
+SUICIDE_RISK_WORDS = frozenset({"suicide", "suicidal", "kill myself", "overdose"})
+
+
 class ReferralError(ValueError):
     pass
 
@@ -58,7 +61,8 @@ def recommend_doctors(
     ranked = []
     for doctor in session.exec(select(Doctor)).all():
         matched = [k for k in doctor.keywords if f" {k.lower()} " in text or f" {k.lower()}s " in text]
-        reasons = [f"sees {', '.join(matched)}"] if matched else []
+        # Quote only the patient's own words; never name a condition (P-005 adjustment 1).
+        reasons = [f"matches {', '.join(repr(k) for k in matched)} in your visit reason"] if matched else []
         score = 10 * len(matched)
         if age_years is not None and age_years < CHILD_AGE_LIMIT and doctor.specialty == PAEDIATRICS:
             score += 8

@@ -69,6 +69,21 @@ def escalation_message(rf_ids: tuple[str, ...], ctx: PatientContext, settings: S
     )
 
 
+def booking_emergency_message(settings: Settings, suicide_risk: bool = False) -> str:
+    """Fixed text for emergency words in a booking reason. Same instruction as the intake escalation (including the
+    crisis line for suicide-risk words); no staff alert is raised from a keyword alone (P-005 adjustment 2)."""
+    if suicide_risk:
+        return (
+            "You don't have to go through this alone. If you're in danger right now or might act on these thoughts, "
+            f"please call {settings.emergency_number}. You can also talk to someone right now at {settings.crisis_line}."
+        )
+    return (
+        "What you've described may need urgent attention. "
+        f"Please call {settings.emergency_number} or go to the nearest emergency department now. "
+        "Don't wait for an appointment."
+    )
+
+
 def follow_up_message(rf_ids: tuple[str, ...], settings: Settings) -> str:
     """Said to any patient turn after escalation: hesitation, refusal, or 'what is it?'."""
     if SUICIDE_RISK_ID in rf_ids:
