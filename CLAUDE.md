@@ -1,6 +1,6 @@
 # Pre-Visit Intake: shared context for all sessions
 
-**Plan version: v0.5** (bump on every pivot; see docs/PIVOTS.md)
+**Plan version: v0.6** (bump on every pivot; see docs/PIVOTS.md)
 
 Voice AI takes a patient's clinical history before a booked visit. It sends a structured history sheet to the physician, general self-care recommendations to the patient, and suggested investigations to the physician only. Nothing medical reaches the patient without physician approval. Results go to the physician uninterpreted.
 Spec: [docs/PRD.md](docs/PRD.md) · Plan: [docs/ROADMAP.md](docs/ROADMAP.md) · Status: [docs/PROGRESS.md](docs/PROGRESS.md) · Decisions: [docs/PIVOTS.md](docs/PIVOTS.md)

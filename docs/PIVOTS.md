@@ -61,3 +61,21 @@ Risks raised by Plan & Pivot: double-bookings and visits the clinic doesn't know
 Pilot guards (user-approved, required before any real-patient pilot): bookings come from or sync with the clinic scheduling system, or need clinic confirmation before the intake runs (PB.2); sign-up and AI-spend caps for any public hosting (PB.3); clinic checks self-registered identities before the visit.
 Impact on in-flight work: demo video scenes may show self-booking as an alternative to scene 1 (optional). Test: extend portal tests to self-registration and booking limits if not already covered.
 Tasks added / removed / changed (PROGRESS.md IDs): PB.1 (done, Build); added PB.2, PB.3 (pilot guards), PB.4 (availability check).
+
+## P-005 · 2026-10-09 · Hospital overview, individual doctor accounts, doctor choice, referrals
+Plan version: v0.5 → v0.6
+What changed (user's reframe, given in the Build session, confirmed in this session with adjustments):
+- Patients book in the portal; the system **suggests doctors** and the patient picks one.
+- The clinician dashboard becomes a **hospital overview** of all patients with their assigned doctor.
+- **Individual doctor sign-in**; each doctor sees all their own patients with quick notes.
+- A **referral** automatically gives the receiving doctor access. A patient who is only with one doctor is visible only to that doctor unless referred.
+Build's implementation choices (accepted): rule-based suggestions (specialty + keywords, paediatrics boost under 16, GP fallback, fewest-upcoming tiebreak, reasons shown); overview behind the staff login with names, doctor, time, status and emergency flag but no clinical details; doctor sign-in by email + one-time code; per-patient access (assigned or referred, else 404) on all clinical routes; approval.decide records the signed-in doctor; audited referrals; staff booking picks a doctor.
+Adjustments by Plan & Pivot, accepted by the user:
+1. Suggestion reasons only quote the patient's words and never name a condition; general practice is always offered (suggesting by symptoms sits close to the hard rule about unapproved medical recommendations reaching patients).
+2. Emergency words in a booking reason show the full fixed emergency script, acknowledged before continuing, audit-logged (no staff alert from a keyword alone).
+3. Emergency alerts stay visible and acknowledgeable on the hospital overview for every patient; an alert never depends on one doctor being signed in.
+4. Pilot guards: break-glass access for a covering doctor (audited); demo-mode code display never on a public URL; individual staff accounts for the overview.
+Hard rules: unchanged. Quick notes are clinician-only and never sent to the AI.
+Why: the user reframed the clinician side as a hospital with individual doctors, their own patient lists, and referral-based sharing.
+Impact on in-flight work: resolves F.4 (shared physician login) and the §8.6 approval-audit gap. All clinical routes move behind doctor sign-in, so Test's route tests and the demo recorder need updating. Demo scenes 1, 3 and 8 updated. Earlier pending proposal "individual doctor logins as a Phase 3 gate item" is now covered.
+Tasks added / removed / changed (PROGRESS.md IDs): added H.1–H.11 (H.1–H.8 doing in Build, H.9 Test, H.10–H.11 pilot guards); F.4 marked superseded.

@@ -1,6 +1,6 @@
 # Roadmap: Pre-Visit AI History Taking
 
-**Status:** Draft v0.3 (P-001: demo release; P-002: patient portal) · **Date:** 2026-10-09 · Companion to [PRD.md](PRD.md)
+**Status:** Draft v0.6 (P-001 demo release; P-002 patient portal; P-005 hospital view + doctor accounts) · **Date:** 2026-10-09 · Companion to [PRD.md](PRD.md)
 
 Each phase ships one arrow from the whiteboard and has to pass its exit gate before the next one starts. Safety (red-flag escalation) ships in Phase 1, because the agent talks to patients from day one.
 
@@ -13,6 +13,7 @@ Phase 2  General recs + symptom logs            ████               wk 10
 Phase 3  Medical recs + physician OK                ██████         wk 14–20
 Phase 4  Results routing                                  ████     wk 20–24
 Portal   Patient portal (sign-in, intake, advice, tests)          █     before the demo (P-002)
+Hospital Hospital overview + doctor accounts + referrals      █     before the demo (P-005)
 Demo     Working site + captioned demo video                  █     final step of the prototype
 Phase 5  Scale: modules, specialties, integrations            ███→ wk 24+
 ```
@@ -123,6 +124,24 @@ Phase 5  Scale: modules, specialties, integrations            ███→ wk 24
 - An unapproved recommendation still never appears anywhere in the portal (existing hard-rule tests extended to the portal)
 - Every AI reply in the portal still passes the safety check and scope guard before the patient sees or hears it
 
+## Hospital overview, doctor accounts, doctor choice, referrals (added in P-005, before the demo release)
+
+**Goal:** the clinician side becomes a hospital: an overview of all patients and their doctors, individual doctor sign-in, each doctor sees only their own patients, and referrals share access. Full requirements: PRD §8.11.
+
+- Portal booking suggests doctors (rule-based, no AI; reasons quote the patient's words, never a condition; general practice always offered); patient picks one. Emergency words show the full emergency script
+- Hospital overview at `/dashboard`: all patients, assigned doctor, time, status, emergency flag; no clinical details. Staff see and acknowledge emergency alerts for every patient
+- Individual doctor sign-in (email + one-time code)
+- Per-patient access check on every clinical page; approvals record the signed-in doctor
+- Doctor's own patient list with quick notes (never shown to patients, never sent to the AI)
+- Referrals with note; receiving doctor gets access automatically; audited
+
+**Exit gate:**
+- A doctor can never open a patient they are not assigned to or referred (tested, including guessed IDs and direct URLs)
+- Every approval in the audit log names the individual signed-in doctor
+- An emergency alert is visible to hospital staff even when the assigned doctor is not signed in (tested)
+- Doctor-suggestion text never names a condition (tested against the module keyword list)
+- All existing hard-rule tests still pass under doctor sign-in
+
 ---
 
 ## Demo release: working site + demo video (final step of the prototype)
@@ -138,14 +157,14 @@ Phase 5  Scale: modules, specialties, integrations            ███→ wk 24
 - Waiting time may be cut, with a visible "pauses shortened" note. Nothing else is staged.
 
 **Scenes the video must show** (clinician/researcher cut, ~5–8 min):
-1. Front page with clinician and patient doors. Physician books an appointment; the patient gets the portal link
+1. Front page with clinician and patient doors. Patient books in the portal and picks from suggested doctors (caption: rule-based, no AI, never names a condition); hospital overview shows the new booking with its assigned doctor
 2. Patient signs in to the **patient portal** with a one-time code (caption notes the code is shown on screen in demo mode only), sees their appointment, and starts the intake call. Intake: consent and identity check, adaptive history questions (HOPI), read-back, general advice ending with ER safety-netting
-3. History sheet in the PRD §7 structure; click a statement to show the patient's own words it came from; "could not answer" items; red-flag screen
+3. The assigned doctor signs in and sees only their own patients. History sheet in the PRD §7 structure; click a statement to show the patient's own words it came from; "could not answer" items; red-flag screen
 4. Suggested investigation (CBC) with its rationale and module rule, visible to the physician only. The patient's portal shows nothing until the physician approves **and** sends it, then shows the instruction
 5. Patient logs temperatures in the portal; the physician sees them on the sheet
 6. Lab report upload appears for the physician exactly as issued; caption states that results are never sent to the AI
 7. Separate case: a red-flag symptom (stiff neck) stops the intake, sends the patient to emergency care, alerts staff, and generates no advice or tests
-8. Closing card with honest limits: draft clinical content pending clinician sign-off, current eval results, single shared physician login, browser channel only (no phone/SMS yet), not for clinical use
+8. Closing card with honest limits: draft clinical content pending clinician sign-off, current eval results, demo-mode sign-in codes shown on screen, browser channel only (no phone/SMS yet), not for clinical use
 
 **Exit gate:**
 - The demo runs end to end from a clean start, twice in a row, without manual fixes

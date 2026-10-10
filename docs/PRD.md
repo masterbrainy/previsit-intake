@@ -1,6 +1,6 @@
 # PRD: Pre-Visit AI History Taking & Physician-Gated Recommendations
 
-**Status:** Draft v0.5 (P-004: patient self-registration and self-booking) · **Date:** 2026-10-09 · **Owner:** TBD
+**Status:** Draft v0.6 (P-005: hospital overview, individual doctor accounts, doctor choice, referrals) · **Date:** 2026-10-09 · **Owner:** TBD
 **Working name:** Pre-Visit Intake (placeholder)
 
 ---
@@ -53,8 +53,8 @@ Fever is only the worked example. The system is **specialty-agnostic**: any comp
 | User | What they need |
 |------|----------------|
 | **Patient** | A **patient portal** to sign in to, an easy conversation in their own language, clear instructions on what to do before the visit, and to know when to go to the ER instead |
-| **Physician** | A scannable history sheet, a one-click approve/reject on suggested tests, and the results attached before the visit |
-| **Clinic / hospital staff** | Visibility into which patients completed intake, which tests are approved, and lab coordination |
+| **Physician** | Their **own sign-in** and a list of only their own patients (plus referrals), with quick notes; a scannable history sheet, a one-click approve/reject on suggested tests, and the results attached before the visit |
+| **Clinic / hospital staff** | A **hospital overview** of all patients and their assigned doctors (no clinical details), emergency alerts for every patient, and lab coordination |
 | **Clinical lead / admin** | To author and approve complaint modules, red-flag rules and recommendation libraries, plus the audit trail |
 
 ---
@@ -237,6 +237,21 @@ The patient's home in the product. The AI's only job here is the intake call (§
 - **Pilot guards for P-004 (must be met before any real-patient pilot):** (1) bookings come from, or sync with, the clinic's own scheduling system, or need clinic confirmation before the intake runs; (2) any publicly hosted site caps self-registrations and AI-call spend; (3) self-registered identities are checked by the clinic before the visit.
 - **P2** Caregiver/proxy access to a patient's portal with explicit consent (ties to §8.1 caregiver mode); revisit the shared-contact rule when this is designed.
 
+### 8.11 Hospital overview, doctor accounts, doctor choice and referrals (added in P-005)
+- **P0** **Doctor choice at booking.** When a patient books in the portal, the system **suggests doctors** and the patient picks one.
+  - Suggestions are **rule-based, no AI**: each doctor has a specialty and keywords. Ranking: keyword matches on the visit reason, a paediatrics boost for patients under 16, general practice as fallback, fewest upcoming appointments as tiebreak.
+  - The "why suggested" text **only quotes the patient's own words** (e.g. "Matches 'cough' in your visit reason") and **never names a condition**, so the suggestion cannot read as a diagnosis. **General practice is always offered.**
+  - If the visit reason contains emergency words, the patient sees the **full fixed emergency script** (§9) and must acknowledge it before continuing; the event is audit-logged. No staff alert from a keyword alone. The intake call's red-flag check still runs later.
+  - Staff booking (form and CSV) also picks a doctor from the list.
+- **P0** **Hospital overview** (`/dashboard`, staff login): every patient with their assigned doctor, appointment time, status and an emergency flag. **No clinical details** and no links into them.
+  - **Emergency alerts are visible to hospital staff for every patient**, and staff can acknowledge them there as well as the assigned doctor. A red-flag alert never depends on one doctor being signed in.
+- **P0** **Individual doctor sign-in**: email + 6-digit one-time code (same mechanism as patients, role "doctor"; demo mode shows the code). Supersedes the shared physician login for all clinical pages.
+- **P0** **Per-patient access.** A doctor sees a patient only if one of the patient's appointments is assigned to them or the patient was **referred** to them; otherwise the page does not exist for them (404). All clinical pages (patient detail, print, patient view, approve/modify/add/notify, result download, alert acknowledgement) require doctor sign-in and this check.
+  - **Approvals record the signed-in doctor** (closes the §8.6 audit gap from the shared login).
+- **P0** **Doctor's own list**: Doctor A sees all their own patients, with **quick notes** per patient (clinician-only, never shown to the patient, never sent to the AI).
+- **P0** **Referrals**: a doctor with access can refer a patient to another doctor, with a note. The receiving doctor **automatically gets access**. Referrals are audit-logged. A patient who is only with one doctor is visible only to that doctor (and to staff on the overview, without clinical details) unless referred.
+- **Pilot guards for P-005 (before any real-patient pilot):** (1) **break-glass access** for a covering doctor when the assigned doctor is away, with reason and audit; (2) **demo-mode code display must never run on a public URL**, since anyone could sign in as any doctor; (3) individual staff accounts for the hospital overview instead of a shared staff login.
+
 ---
 
 ## 9. Safety and clinical governance
@@ -245,7 +260,7 @@ The patient's home in the product. The AI's only job here is the intake call (§
 - **Human in the loop for every medical action.** Only physician approval converts a suggestion into an order.
 - **Traceability.** Every sheet line is linked to the transcript, and every recommendation to a module rule and version.
 - **Content governance.** Modules are versioned, need a named clinician to sign off, and changes are logged.
-- **Audit log.** Calls, outputs, approvals, notifications and result uploads are all recorded.
+- **Audit log.** Calls, outputs, approvals (with the signed-in doctor), referrals, notifications and result uploads are all recorded.
 - **Scope guard.** The agent refuses diagnosis, medication advice and result interpretation questions, redirecting the patient to their doctor.
 
 ## 10. Privacy, security and regulatory
@@ -290,6 +305,9 @@ The patient's home in the product. The AI's only job here is the intake call (§
 | Patient treats general advice as treatment | Clear wording, no drugs or doses, explicit "your doctor will decide" |
 | Scope creep into result interpretation | Written non-goal; no code path from results to the LLM |
 | Self-booking without clinic check (P-004): double-bookings, visits the clinic doesn't know about, fake identities, open sign-up running up AI costs | Doctor sees "booked by patient" and "identity not checked by clinic"; booking limits; pilot guards in §8.10 (scheduling-system sync or clinic confirmation, sign-up and spend caps for public hosting, identity check before the visit) |
+| Doctor suggestion read as a diagnosis (P-005): routing by symptoms implies a cause ("chest tightness → Cardiology") | Rule-based only, no AI; reason text quotes the patient's words and never names a condition; general practice always offered |
+| Emergency alert missed because the assigned doctor is offline (P-005) | Alerts shown and acknowledgeable on the hospital overview for all patients; break-glass access is a pilot guard |
+| Demo-mode doctor sign-in exposed publicly (P-005): code shown on screen lets anyone sign in as any doctor | Pilot guard: demo mode never on a public URL (ties to D.2 hosting, PB.3) |
 | Shared contact exposes records (P-003): adults sharing a phone/email, or staff entering one placeholder number for many patients, see each other's appointments | Accepted for now by user decision. Before any real-patient use: warn staff on the booking form when a contact is already used by another patient, and revisit with caregiver consent (§8.10 P2) |
 
 ## 14. Open questions
