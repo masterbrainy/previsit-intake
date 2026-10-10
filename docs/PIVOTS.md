@@ -106,3 +106,6 @@ Why: user decisions in this session, on Test's D.6 findings.
 Hard rules: unchanged; this strengthens "red-flag symptoms stop the intake and escalate".
 Impact on in-flight work: Phase 1 stays unpassed until 1.12–1.14 are met, alongside the existing accuracy bar. Overlaps F.5 (coverage checklist); Build may implement both together. D.7 (user review) follows D.8.
 Tasks added / removed / changed (PROGRESS.md IDs): added 1.12, 1.13, 1.14, D.8.
+
+### P-008 addendum · 2026-10-09 · Long-standing symptoms (no version bump; clarifies P-008 scope)
+Test's recall re-run after 1.15 (45/48; FEV-025 now 3/3) found a gap that already existed: "I'm always a bit short, with the COPD" is judged clear, so catching a worsening depends on the interviewer happening to ask. Within P-008's confirmed scope (breathlessness was already listed), PRD §8.2 now says a long-standing symptom gets "worse than usual?", and the safety check treats it as unclear until answered. Task 1.16 (Build). The other two misses were harness issues (scoring mis-tag, simulator never consenting), for Test to fix.
