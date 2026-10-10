@@ -135,14 +135,21 @@ def create_appointment(
 ) -> Appointment:
     """`contact` must already be normalised (previsit.portal.contact.normalize_contact)."""
     patient = find_or_create_patient(session, name, dob, sex, contact)
+    return book_appointment(session, settings, actor, patient, physician_name, scheduled_at, reason)
+
+
+def book_appointment(
+    session: Session, settings: Settings, actor: str, patient: Patient, physician_name: str, scheduled_at: datetime,
+    reason: str, booked_by: str = "clinic",
+) -> Appointment:
     appointment = Appointment(
         patient_id=patient.id, physician_name=physician_name.strip(), scheduled_at=scheduled_at,
-        reason=reason.strip(), token=secrets.token_urlsafe(32),
+        reason=reason.strip(), token=secrets.token_urlsafe(32), booked_by=booked_by,
     )
     session.add(appointment)
     session.flush()
     ensure_intake(session, appointment)
-    audit.record(session, actor, "appointment.created", "appointment", appointment.id)
+    audit.record(session, actor, "appointment.created", "appointment", appointment.id, {"booked_by": booked_by})
     link = f"{settings.base_url.rstrip('/')}/p/{appointment.token}"
     outbox.send_patient_message(
         session, appointment.id, MessageKind.INVITE,

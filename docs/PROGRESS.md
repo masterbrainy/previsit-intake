@@ -65,6 +65,7 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | PP.6 | Doctor's read-only "Open patient's view" button | B | done |
 | PP.7 | Tests: patient sees only own records (guessed IDs, old links); code expiry/lockout/rate limit; unapproved recs never shown in portal; preview is read-only; AI replies still checked before play | T | done |
 | PP.8 | Real sign-in code delivery by SMS/email | U+B | blocked: needs a messaging provider (same as F.3) |
+| PB.1 | Patient self-service: new patients set up their details after verifying their contact; patients book visits themselves (live immediately, marked for the doctor) | B | done |
 
 ## Demo release: working site + captioned video (final step, P-001)
 | ID | Task | Owner | Status |

@@ -101,8 +101,11 @@ class IntakeEngine:
         if intake.state is IntakeState.NOT_STARTED:
             return self.start(session, intake)
         turn = self._add_turn(session, intake, Speaker.PATIENT, text)
-        if intake.state in {IntakeState.ESCALATED, IntakeState.DECLINED, IntakeState.FAILED}:
+        if intake.state is IntakeState.ESCALATED:
             return self._after_end(session, intake)
+        # Screening runs until the call ends (red_flags.md D1), even after consent was refused or the intake failed:
+        # the escalation message is generic and safe to give anyone.
+        ended = intake.state in {IntakeState.DECLINED, IntakeState.FAILED}
 
         ctx = self._context(session, intake)
         modules = modules_for(intake.module_ids)
@@ -110,10 +113,12 @@ class IntakeEngine:
         try:
             assessment = assess_turn(self.llm, ctx, modules, transcript, intake.pending_clarification)
         except LLMError:
-            return self._fail(session, intake, "Safety check unavailable")
+            return self._after_end(session, intake) if ended else self._fail(session, intake, "Safety check unavailable")
 
         if assessment.status is SafetyStatus.RED_FLAG:
             return self._escalate(session, intake, ctx, modules, assessment.rf_ids, assessment.evidence or text, turn)
+        if ended:
+            return self._after_end(session, intake)
         if assessment.status is SafetyStatus.AMBIGUOUS:
             intake.pending_clarification = ",".join(assessment.rf_ids)
             session.add(intake)

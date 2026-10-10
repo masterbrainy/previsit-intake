@@ -73,7 +73,7 @@ def _code_page(request: Request, settings: Settings, contact: str, code: str | N
                status_code: int = 200) -> HTMLResponse:
     return templates.TemplateResponse(request, "portal_code.html", {
         "contact": contact, "masked": mask_contact(contact), "error": error,
-        "demo_code": code if settings.demo_mode else None, "demo_mode": settings.demo_mode, "code_sent": code is not None,
+        "demo_code": code if settings.demo_mode else None, "demo_mode": settings.demo_mode,
     }, status_code=status_code)
 
 
@@ -110,8 +110,7 @@ def request_code(
     except auth.SignInError as exc:
         session.commit()
         return _sign_in_page(request, contact=normalized, error=str(exc), status_code=429)
-    if issued.code:
-        auth.deliver_code(normalized, issued.code)
+    auth.deliver_code(normalized, issued.code)
     session.commit()
     return _code_page(request, settings, normalized, issued.code)
 
@@ -162,5 +161,8 @@ def portal_home(request: Request, user: PortalUser = Depends(portal_user), sessi
          "status": INTAKE_STATUS[i.state if i else IntakeState.NOT_STARTED]}
         for a, p, i in rows
     ]
-    names = sorted({p.name.split()[0] for _, p, _ in rows})
-    return templates.TemplateResponse(request, "portal_home.html", {"items": items, "names": names})
+    people = auth.patients_for(session, user.contact)  # includes people set up but not yet booked
+    names = sorted({p.name.split()[0] for p in people})
+    return templates.TemplateResponse(
+        request, "portal_home.html", {"items": items, "names": names, "has_people": bool(people)}
+    )

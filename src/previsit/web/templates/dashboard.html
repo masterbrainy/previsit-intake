@@ -25,7 +25,8 @@
       {% set state = row.intake.state.value if row.intake else 'not_started' %}
       <tr class="{{ 'emergency' if row.emergency }}">
         <td>{{ row.appointment.scheduled_at.strftime('%a %d %b, %H:%M') }}<br><span class="muted">{{ row.appointment.physician_name }}</span></td>
-        <td><a href="/patients/{{ row.appointment.id }}">{{ row.patient.name }}</a><br>
+        <td><a href="/patients/{{ row.appointment.id }}">{{ row.patient.name }}</a>
+          {% if row.appointment.booked_by == 'patient' %}<span class="badge info">booked by patient</span>{% endif %}<br>
           <span class="muted">{{ row.appointment.reason }}</span></td>
         <td><span class="badge {{ state }}">{{ state.replace('_', ' ') }}</span></td>
         <td>

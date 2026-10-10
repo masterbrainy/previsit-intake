@@ -80,9 +80,10 @@ def create_app(settings: Settings | None = None, llm: LLMClient | None = None) -
             request, "error.html", {"message": message}, status_code=exc.status_code, headers=exc.headers
         )
 
-    from previsit.web import patient, physician, portal, uploads
+    from previsit.web import patient, physician, portal, portal_booking, uploads
 
     app.include_router(portal.router)
+    app.include_router(portal_booking.router)
     app.include_router(physician.router)
     app.include_router(uploads.router)
     app.include_router(patient.router)

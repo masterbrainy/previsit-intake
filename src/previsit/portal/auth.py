@@ -51,11 +51,12 @@ def _recent_requests(session: Session, column, value: str, now: datetime) -> int
 
 @dataclass(frozen=True)
 class CodeRequest:
-    code: str | None  # None when the contact is on no appointment. Never shown outside demo mode.
+    code: str  # never shown outside demo mode
 
 
 def request_code(session: Session, key: bytes, contact: str, ip: str, now: datetime | None = None) -> CodeRequest:
-    """Issues a new code (replacing any earlier one). Callers must not reveal whether the contact was known."""
+    """Issues a new code (replacing any earlier one). Every contact gets one: new patients verify their contact this
+    way before setting up their details (P-004), so the response never reveals whether the contact was known."""
     now = now or now_utc()
     if (_recent_requests(session, SignInCode.contact, contact, now) >= MAX_CODES_PER_CONTACT
             or (ip and _recent_requests(session, SignInCode.ip, ip, now) >= MAX_CODES_PER_IP)):
@@ -65,9 +66,9 @@ def request_code(session: Session, key: bytes, contact: str, ip: str, now: datet
         old.used_at = now
         session.add(old)
     known = bool(patients_for(session, contact))
-    code = f"{secrets.randbelow(10 ** CODE_DIGITS):0{CODE_DIGITS}d}" if known else None
+    code = f"{secrets.randbelow(10 ** CODE_DIGITS):0{CODE_DIGITS}d}"
     session.add(SignInCode(
-        contact=contact, code_hash=_code_hash(key, contact, code) if code else "", ip=ip,
+        contact=contact, code_hash=_code_hash(key, contact, code), ip=ip,
         created_at=now, expires_at=now + CODE_TTL,
     ))
     audit.record(session, "patient", "portal.code_requested", "contact", None,

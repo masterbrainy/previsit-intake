@@ -4,7 +4,8 @@
 {% block main_class %}narrow{% endblock %}
 {% block content %}
 <h1 style="margin-top:12px">Sign in</h1>
-<p class="sub">Enter the mobile number or email your clinic has for your appointment. We'll send you a 6-digit code. No password needed.</p>
+<p class="sub">Enter your mobile number or email. We'll send you a 6-digit code. No password needed.
+  New patient? Use the same steps, then set up your details and book a visit.</p>
 {% if error %}<div class="banner danger" role="alert"><strong>{{ error }}</strong></div>{% endif %}
 <form class="card" method="post" action="/portal/code">
   <label for="contact">Mobile number or email</label>

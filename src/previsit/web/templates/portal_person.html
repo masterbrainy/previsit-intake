@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Your details · Patient portal{% endblock %}
+{% block header %}{% with signed_in = true %}{% include "_portal_header.html" %}{% endwith %}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1 style="margin-top:12px">Who is the appointment for?</h1>
+<p class="sub">Enter the details exactly as on their ID. The assistant checks the name and date of birth at the start of the pre-visit call.</p>
+{% if error %}<div class="banner danger" role="alert"><strong>{{ error }}</strong></div>{% endif %}
+<form class="card" method="post" action="/portal/people/new">
+  <label for="name">Full name</label>
+  <input id="name" name="name" value="{{ values.name or '' }}" required maxlength="120" autocomplete="name" style="width:100%">
+  <div class="form-grid">
+    <div><label for="dob">Date of birth</label><input id="dob" name="dob" type="date" value="{{ values.dob or '' }}" required></div>
+    <div><label for="sex">Sex</label>
+      <select id="sex" name="sex"><option value="">Prefer not to say</option>
+        {% for s in ['F', 'M', 'Other'] %}<option {{ 'selected' if values.sex == s }}>{{ s }}</option>{% endfor %}</select></div>
+  </div>
+  <p><button type="submit" class="big">Continue to booking</button></p>
+</form>
+<p class="muted" style="font-size:13px">Booking for a child or relative? Enter their details; you'll answer the questions for them.</p>
+{% endblock %}

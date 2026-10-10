@@ -4,6 +4,8 @@
 <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
   <div>
     <h1>{{ v.patient.name }}</h1>
+    {% if v.appointment.booked_by == 'patient' %}<span class="badge info">booked by patient</span>{% endif %}
+    {% if v.patient.self_registered %}<span class="badge review" title="Name, date of birth and sex were entered by the patient in the portal; only their phone or email was verified">self-registered: identity not checked by clinic</span>{% endif %}
     <p class="sub">{{ v.ctx.age_text }} · {{ v.appointment.scheduled_at.strftime('%a %d %b, %H:%M') }} with {{ v.appointment.physician_name }}
       · <span class="badge {{ v.intake.state.value }}">{{ v.intake.state.value.replace('_', ' ') }}</span></p>
   </div>

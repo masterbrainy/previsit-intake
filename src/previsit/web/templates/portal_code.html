@@ -4,11 +4,11 @@
 {% block main_class %}narrow{% endblock %}
 {% block content %}
 <h1 style="margin-top:12px">Enter your code</h1>
-<p class="sub">If {{ masked }} is on an appointment with us, we've sent it a 6-digit code. It works for 10 minutes.</p>
+<p class="sub">We've sent a 6-digit code to {{ masked }}. It works for 10 minutes.</p>
 {% if demo_mode %}
 <div class="banner warn" role="status">
   <strong>Demo mode: no text messages or emails are sent in this prototype.</strong>
-  <p>{% if demo_code %}Your code is <span class="mono code">{{ demo_code }}</span>{% elif code_sent is false and not error %}No appointment uses this contact, so no code was made.{% else %}Request a new code to see it here.{% endif %}</p>
+  <p>{% if demo_code %}Your code is <span class="mono code">{{ demo_code }}</span>{% else %}Request a new code to see it here.{% endif %}</p>
 </div>
 {% endif %}
 {% if error %}<div class="banner danger" role="alert"><strong>{{ error }}</strong></div>{% endif %}

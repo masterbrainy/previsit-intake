@@ -97,13 +97,15 @@ def test_escalated_intake_does_not_resume(settings, session, escalated):
     assert reply.ended is True
 
 
-@pytest.mark.parametrize("state_name", ["CONSENT", "IDENTITY", "INTERVIEW", "READBACK", "COMPLETE"])
+@pytest.mark.parametrize("state_name", ["CONSENT", "IDENTITY", "INTERVIEW", "READBACK", "COMPLETE", "FAILED", "DECLINED"])
 def test_red_flag_escalates_in_every_state(settings, session, appointment, state_name):
     llm = make_fake_llm(safety=_red_flag("RF-01"))
     intake = make_intake(session, appointment, state_name)
 
     reply = _turn(llm, settings, session, intake, "Yes, that's fine. Oh, and my chest feels really heavy.")
 
+    # FAILED/DECLINED (identity not confirmed, or consent refused) still screen: the escalation message is generic
+    # and safe to give anyone, and red_flags.md rule D1 says screening runs until the call ends (FEV-022 A/B run).
     assert "safety" in tasks_called(llm)
     assert reply.state == _state("ESCALATED")
 

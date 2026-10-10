@@ -60,6 +60,7 @@ class Patient(SQLModel, table=True):
     sex: str = ""
     phone: str = Field(default="", index=True)  # normalised by previsit.portal.contact
     email: str = Field(default="", index=True)  # normalised (lower case)
+    self_registered: bool = False  # set up by the patient in the portal: identity is self-declared, not clinic-checked
     created_at: datetime = Field(default_factory=utcnow)
 
 
@@ -69,6 +70,7 @@ class Appointment(SQLModel, table=True):
     physician_name: str
     scheduled_at: NaiveDatetime = Field(index=True)  # clinic-local wall-clock time
     reason: str = ""
+    booked_by: str = "clinic"  # "clinic" or "patient" (booked in the portal, live immediately)
     token: str = Field(unique=True, index=True)
     created_at: datetime = Field(default_factory=utcnow)
 

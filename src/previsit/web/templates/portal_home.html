@@ -4,7 +4,17 @@
 {% block main_class %}narrow{% endblock %}
 {% block content %}
 <h1 style="margin-top:12px">Hello{% if names|length == 1 %}, {{ names[0] }}{% endif %}</h1>
+{% if has_people %}
 <p class="sub">Your appointments. Open one to answer the pre-visit questions, see advice and tests from your doctor, log readings or send a report.</p>
+<p><a class="button" href="/portal/book">Book an appointment</a>
+  <a class="button ghost" href="/portal/people/new" style="margin-left:8px">Add another person</a></p>
+{% else %}
+<div class="card">
+  <h2>Welcome</h2>
+  <p>You're signed in. To book a visit, first tell us who the appointment is for.</p>
+  <p><a class="button big" href="/portal/people/new">Set up your details</a></p>
+</div>
+{% endif %}
 {% for item in items %}
 <a class="card door" href="/portal/appointments/{{ item.appointment.id }}">
   <h2>{% if names|length > 1 %}{{ item.patient.name }} · {% endif %}{{ item.appointment.scheduled_at.strftime('%A %d %B at %H:%M') }}</h2>
@@ -12,6 +22,6 @@
   <p style="margin:6px 0 0"><strong>{{ item.status }}</strong></p>
 </a>
 {% else %}
-<div class="card"><p>There are no appointments for this contact. If you think this is wrong, please contact your clinic.</p></div>
+{% if has_people %}<div class="card"><p>No appointments yet. Use <a href="/portal/book">Book an appointment</a> to make one.</p></div>{% endif %}
 {% endfor %}
 {% endblock %}

@@ -68,6 +68,10 @@ previsit/
   web/portal.py    Public: / (clinician + patient doors, no patient data), /portal/sign-in, /p/{token} (text-message
                    link: sign-in with contact pre-filled, opens no records), POST /portal/code, /portal/verify,
                    /portal/sign-out. Signed in: /portal (own appointments).
+                   Every contact gets a code (new patients verify their contact first, P-004).
+  web/portal_booking.py  Signed in: /portal/people/new (set up a person; marked Patient.self_registered) and
+                   /portal/book (book for one of the contact's own people, a listed doctor, a future time within a year,
+                   max 5 upcoming per patient; live immediately, Appointment.booked_by="patient"). No AI.
                    Dependencies: portal_user (cookie previsit_portal, HttpOnly, SameSite=Lax) and owned_appointment
                    (404 unless the appointment's patient matches the signed-in contact).
                    Physician (basic auth): /dashboard, /appointments/new, /appointments/import (CSV, column contact),

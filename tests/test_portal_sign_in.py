@@ -106,12 +106,14 @@ def test_one_ip_is_limited_across_contacts(session):
         _request(session, contact="+15559999999", ip="10.9.9.9", now=T0 + timedelta(seconds=11))
 
 
-def test_unknown_contact_gets_no_working_code(session, known):
-    from previsit.portal.auth import SignInError
+def test_new_contact_gets_a_code_but_reaches_no_records(session, known):
+    """P-004: new patients verify their contact with a code before setting up their details."""
+    from previsit.portal.auth import patients_for
 
-    assert _request(session, contact="+15558887777") is None
-    with pytest.raises(SignInError):
-        _verify(session, "000000", contact="+15558887777")
+    code = _request(session, contact="+15558887777")
+    assert code is not None and len(code) == 6
+    _verify(session, code, contact="+15558887777")
+    assert patients_for(session, "+15558887777") == []
 
 
 def test_codes_are_not_stored_in_plain_text(session, known):
