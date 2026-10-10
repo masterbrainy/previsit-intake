@@ -1,19 +1,20 @@
 {% extends "base.html" %}
 {% block title %}{{ v.patient.name }} · Pre-visit intake{% endblock %}
 {% block content %}
-<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+<div class="page-head">
   <div>
+    <span class="eyebrow">Pre-visit history</span>
     <h1>{{ v.patient.name }}</h1>
     {% if v.appointment.booked_by == 'patient' %}<span class="badge info">booked by patient</span>{% endif %}
     {% if v.patient.self_registered %}<span class="badge review" title="Name, date of birth and sex were entered by the patient in the portal; only their phone or email was verified">self-registered: identity not checked by clinic</span>{% endif %}
     <p class="sub">{{ v.ctx.age_text }} · {{ v.appointment.scheduled_at.strftime('%a %d %b, %H:%M') }} with {{ v.appointment.physician_name }}
       · <span class="badge {{ v.intake.state.value }}">{{ v.intake.state.value.replace('_', ' ') }}</span></p>
   </div>
-  <div class="no-print"><a class="button ghost" href="/patients/{{ v.appointment.id }}/patient-view">Open patient's view</a>
+  <div class="no-print actions"><a class="button ghost" href="/patients/{{ v.appointment.id }}/patient-view">Open patient's view</a>
     <a class="button ghost" href="/patients/{{ v.appointment.id }}/print" target="_blank">Print / PDF</a></div>
 </div>
 
-<section class="card" id="referrals">
+<section class="card" id="referrals" data-state="{{ v.intake.state.value }}">
   <h2>Care team</h2>
   <p style="margin:0">Booked with {{ v.appointment.physician_name }}.
     {% for r in referrals %}Referred to {{ names[r.to_doctor_id] }} by {{ names[r.from_doctor_id] }} on {{ r.created_at.strftime('%d %b') }}{% if r.note %} (“{{ r.note }}”){% endif %}. {% endfor %}</p>
@@ -27,7 +28,7 @@
           {% for d in refer_to %}<option value="{{ d.id }}">{{ d.name }} · {{ d.specialty }}</option>{% endfor %}</select></div>
         <div><label for="ref_note">Note (optional)</label><input id="ref_note" name="note" maxlength="500"></div>
       </div>
-      <p class="muted" style="font-size:13px">They will be able to see this patient's records.</p>
+      <p class="fine">They will be able to see this patient's records.</p>
       <p><button type="submit">Refer</button></p>
     </form>
   </details>

@@ -1,21 +1,22 @@
 {% extends "base.html" %}
+{% block shell %}patient{% endblock %}
 {% block title %}Book an appointment · Patient portal{% endblock %}
 {% block header %}{% with signed_in = true %}{% include "_portal_header.html" %}{% endwith %}{% endblock %}
 {% block main_class %}narrow{% endblock %}
 {% block content %}
-<h1 style="margin-top:12px">Book an appointment</h1>
+<h1>Book an appointment</h1>
 <p class="sub">Tell us briefly what the visit is about and we'll suggest the right doctor.</p>
 {% if error %}<div class="banner danger" role="alert"><strong>{{ error }}</strong></div>{% endif %}
 <form class="card" method="post" action="/portal/book/doctors">
   <label for="patient_id">Who is it for?</label>
-  <select id="patient_id" name="patient_id" required style="width:100%">
+  <select id="patient_id" name="patient_id" required class="wide">
     {% for p in people %}<option value="{{ p.id }}" {{ 'selected' if values.patient_id == p.id }}>{{ p.name }} (born {{ p.dob.strftime('%d %b %Y') }})</option>{% endfor %}
   </select>
-  <p style="margin:6px 0 0"><a href="/portal/people/new">Someone else?</a></p>
+  <p class="fine" style="margin:6px 0 0"><a href="/portal/people/new">Someone else?</a></p>
   <label for="reason">What is the visit about?</label>
-  <input id="reason" name="reason" value="{{ values.reason or '' }}" required maxlength="300" style="width:100%"
+  <input id="reason" name="reason" value="{{ values.reason or '' }}" required maxlength="300" class="wide"
          placeholder="e.g. fever and cough for 3 days, knee pain, check-up">
   <p><button type="submit" class="big">Find a doctor</button></p>
 </form>
-<p class="muted" style="font-size:13px">If you feel very unwell, don't book: call your local emergency number now.</p>
+<p class="fine">If you feel very unwell, don't book: call your local emergency number now.</p>
 {% endblock %}

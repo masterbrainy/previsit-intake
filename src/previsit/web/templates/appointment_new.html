@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}New appointment · Pre-visit intake{% endblock %}
 {% block content %}
+<span class="eyebrow">Clinic booking</span>
 <h1>New appointment</h1>
 <p class="sub">The patient signs in to their portal with this mobile number or email. Their text-message link opens sign-in with it filled in.</p>
 
@@ -29,7 +30,7 @@
         {% for d in doctors %}<option value="{{ d.id }}">{{ d.name }} · {{ d.specialty }}</option>{% endfor %}</select></div>
       <div><label for="scheduled_at">Appointment time</label><input id="scheduled_at" name="scheduled_at" type="datetime-local" required></div>
     </div>
-    <label for="reason">Reason for visit (optional)</label><input id="reason" name="reason" maxlength="300" style="width:100%">
+    <label for="reason">Reason for visit (optional)</label><input id="reason" name="reason" maxlength="300" class="wide">
     <p><button type="submit">Create and get link</button></p>
   </form>
 

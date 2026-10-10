@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% block shell %}patient{% endblock %}
 {% block title %}Choose a doctor · Patient portal{% endblock %}
 {% block header %}{% with signed_in = true %}{% include "_portal_header.html" %}{% endwith %}{% endblock %}
 {% block main_class %}narrow{% endblock %}
 {% block content %}
-<h1 style="margin-top:12px">Choose a doctor</h1>
+<h1>Choose a doctor</h1>
 <p class="sub">For {{ patient.name }}: “{{ reason }}”. <a href="/portal/book?patient_id={{ patient.id }}">Change</a></p>
 {% if urgent %}
 <div class="banner danger" role="alert"><strong>{{ emergency_script }}</strong>

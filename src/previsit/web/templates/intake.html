@@ -1,16 +1,16 @@
 {% extends "base.html" %}
+{% block shell %}patient{% endblock %}
 {% block title %}Pre-visit conversation{% endblock %}
 {% block header %}{% with signed_in = true %}{% include "_portal_header.html" %}{% endwith %}{% endblock %}
 {% block main_class %}narrow{% endblock %}
 {% block content %}
-<div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 16px;gap:12px;flex-wrap:wrap">
+<div class="chat-head">
   <div>
+    <span class="eyebrow">Pre-visit questions</span>
     <h1>Pre-visit conversation</h1>
-    <p class="sub" style="margin:0">For your appointment with {{ v.appointment.physician_name }}</p>
+    <p class="sub">For your appointment with {{ v.appointment.physician_name }}</p>
   </div>
-  <label style="display:flex;align-items:center;gap:8px;margin:0;font-size:14px">
-    <input type="checkbox" id="speak" checked style="min-height:auto"> Read replies aloud
-  </label>
+  <label class="toggle"><input type="checkbox" id="speak" checked> Read replies aloud</label>
 </div>
 
 <div id="chat" class="chat" aria-live="polite">
@@ -19,14 +19,14 @@
 <p id="status" class="status"></p>
 
 <div class="composer" id="composer">
-  <button type="button" id="mic" class="mic" aria-label="Hold to talk" title="Tap to talk, tap again to send">🎙</button>
-  <form id="textForm" style="display:flex;gap:10px;flex:1">
+  <button type="button" id="mic" class="mic" aria-label="Hold to talk" title="Tap to talk, tap again to send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+  <form id="textForm">
     <input id="text" autocomplete="off" placeholder="Or type your answer…" aria-label="Your answer">
     <button type="submit">Send</button>
   </form>
 </div>
 <p id="done" class="no-print" hidden><a class="button ghost" href="{{ base }}">Back to my appointment</a></p>
-<p class="muted" style="font-size:13px">If you feel very unwell, stop and call your local emergency number.</p>
+<p class="fine">If you feel very unwell, stop and call your local emergency number.</p>
 {% endblock %}
 {% block scripts %}
 <script>window.INTAKE = { base: {{ (base ~ "/intake")|tojson }} };</script>

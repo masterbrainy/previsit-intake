@@ -1,13 +1,14 @@
 {% extends "base.html" %}
+{% block shell %}patient{% endblock %}
 {% block title %}My appointments · Patient portal{% endblock %}
 {% block header %}{% with signed_in = true %}{% include "_portal_header.html" %}{% endwith %}{% endblock %}
 {% block main_class %}narrow{% endblock %}
 {% block content %}
-<h1 style="margin-top:12px">Hello{% if names|length == 1 %}, {{ names[0] }}{% endif %}</h1>
+<h1>Hello{% if names|length == 1 %}, {{ names[0] }}{% endif %}</h1>
 {% if has_people %}
 <p class="sub">Your appointments. Open one to answer the pre-visit questions, see advice and tests from your doctor, log readings or send a report.</p>
-<p><a class="button" href="/portal/book">Book an appointment</a>
-  <a class="button ghost" href="/portal/people/new" style="margin-left:8px">Add another person</a></p>
+<div class="form-actions" style="margin:0 0 28px"><a class="button" href="/portal/book">Book an appointment</a>
+  <a class="button ghost" href="/portal/people/new">Add another person</a></div>
 {% else %}
 <div class="card">
   <h2>Welcome</h2>
@@ -15,12 +16,18 @@
   <p><a class="button big" href="/portal/people/new">Set up your details</a></p>
 </div>
 {% endif %}
+{% if items %}<div class="appt-list">{% endif %}
 {% for item in items %}
-<a class="card door" href="/portal/appointments/{{ item.appointment.id }}">
-  <h2>{% if names|length > 1 %}{{ item.patient.name }} · {% endif %}{{ item.appointment.scheduled_at.strftime('%A %d %B at %H:%M') }}</h2>
-  <p class="muted" style="margin:0">With {{ item.appointment.physician_name }}{% if item.appointment.reason %} · {{ item.appointment.reason }}{% endif %}</p>
-  <p style="margin:6px 0 0"><strong>{{ item.status }}</strong></p>
+<a class="card appt" data-state="{{ item.state }}" href="/portal/appointments/{{ item.appointment.id }}">
+  <span class="when" aria-hidden="true">{{ item.appointment.scheduled_at.strftime('%b') }}<b>{{ item.appointment.scheduled_at.day }}</b>{{ item.appointment.scheduled_at.strftime('%a') }}</span>
+  <span>
+    <h2>{% if names|length > 1 %}{{ item.patient.name }} · {% endif %}{{ item.appointment.scheduled_at.strftime('%A %d %B at %H:%M') }}</h2>
+    <p>With {{ item.appointment.physician_name }}{% if item.appointment.reason %} · {{ item.appointment.reason }}{% endif %}</p>
+    <span class="badge {{ item.state }}">{{ item.status }}</span>
+  </span>
+  <span class="go" aria-hidden="true">→</span>
 </a>
+{% if loop.last %}</div>{% endif %}
 {% else %}
 {% if has_people %}<div class="card"><p>No appointments yet. Use <a href="/portal/book">Book an appointment</a> to make one.</p></div>{% endif %}
 {% endfor %}

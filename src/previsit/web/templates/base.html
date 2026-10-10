@@ -3,28 +3,47 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <title>{% block title %}Pre-visit intake{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,750&family=IBM+Plex+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="/static/app.css">
 </head>
-<body>
+{% set path = request.url.path %}
+<body class="{% block shell %}clinic{% endblock %}">
   {% if request.app.state.settings.demo_mode %}<div class="demo-strip">Demo · synthetic patients only · not for clinical use</div>{% endif %}
+  <div class="shell">
   {% block header %}
-  {% if doctor %}
-  <header class="top">
-    <a class="brand" href="/doctor">{{ doctor.name }} <span class="muted" style="font-weight:400">· {{ doctor.specialty }}</span></a>
-    <nav><a href="/doctor">My patients</a>
-      <form method="post" action="/doctor/sign-out" class="inline"><button type="submit" class="ghost link">Sign out</button></form></nav>
-  </header>
-  {% else %}
-  <header class="top">
-    <a class="brand" href="/dashboard">Hospital overview</a>
-    <nav><a href="/dashboard">All patients</a><a href="/appointments/new">New appointment</a><a href="/doctor/sign-in">Doctor sign-in</a></nav>
-  </header>
-  {% endif %}
+  <aside class="rail">
+    <a class="wordmark" href="{{ '/doctor' if doctor else '/dashboard' }}">
+      <span class="mark" aria-hidden="true"></span>
+      <span><b>{{ request.app.state.settings.clinic_name }}</b><small>Pre-visit</small></span>
+    </a>
+    <nav aria-label="Main">
+      {% if doctor %}
+      <a href="/doctor" {% if path == '/doctor' or path.startswith('/patients') %}aria-current="page"{% endif %}>My patients</a>
+      {% else %}
+      <a href="/dashboard" {% if path == '/dashboard' %}aria-current="page"{% endif %}>Hospital overview</a>
+      <a href="/appointments/new" {% if path.startswith('/appointments') %}aria-current="page"{% endif %}>New appointment</a>
+      <a href="/doctor/sign-in" {% if path.startswith('/doctor') %}aria-current="page"{% endif %}>Doctor sign-in</a>
+      {% endif %}
+    </nav>
+    {% if doctor %}
+    <div class="whoami">
+      <span class="avatar" aria-hidden="true">{{ doctor.name.removeprefix('Dr. ').split()|map('first')|join }}</span>
+      <span><b>{{ doctor.name }}</b><small>{{ doctor.specialty }}</small></span>
+      <form method="post" action="/doctor/sign-out"><button type="submit" class="link">Sign out</button></form>
+    </div>
+    {% else %}
+    <div class="whoami"><span><b>Hospital staff</b><small>Shared staff login</small></span></div>
+    {% endif %}
+  </aside>
   {% endblock %}
   <main class="{% block main_class %}{% endblock %}">
     {% block content %}{% endblock %}
   </main>
+  </div>
   {% block scripts %}{% endblock %}
 </body>
 </html>

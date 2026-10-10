@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% block shell %}patient{% endblock %}
 {% block title %}Enter your code · Patient portal{% endblock %}
 {% block header %}{% include "_portal_header.html" %}{% endblock %}
 {% block main_class %}narrow{% endblock %}
 {% block content %}
-<h1 style="margin-top:12px">Enter your code</h1>
+<h1>Enter your code</h1>
 <p class="sub">We've sent a 6-digit code to {{ masked }}. It works for 10 minutes.</p>
 {% if demo_mode %}
 <div class="banner warn" role="status">
@@ -16,12 +17,12 @@
   <input type="hidden" name="contact" value="{{ contact }}">
   <label for="code">6-digit code</label>
   <input id="code" name="code" required inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"
-         autofocus style="width:100%;font-size:22px;letter-spacing:0.3em">
+         autofocus class="code-input">
   <p><button type="submit" class="big">Sign in</button></p>
 </form>
-<form method="post" action="/portal/code" class="inline">
+<form method="post" action="/portal/code" class="form-actions">
   <input type="hidden" name="contact" value="{{ contact }}">
   <button type="submit" class="ghost">Send a new code</button>
-  <a href="/portal/sign-in" style="margin-left:12px">Use a different number or email</a>
+  <a href="/portal/sign-in">Use a different number or email</a>
 </form>
 {% endblock %}

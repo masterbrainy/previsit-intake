@@ -157,7 +157,7 @@ def portal_home(request: Request, user: PortalUser = Depends(portal_user), sessi
         .order_by(Appointment.scheduled_at)
     ).all()
     items = [
-        {"appointment": a, "patient": p,
+        {"appointment": a, "patient": p, "state": (i.state if i else IntakeState.NOT_STARTED).value,
          "status": INTAKE_STATUS[i.state if i else IntakeState.NOT_STARTED]}
         for a, p, i in rows
     ]

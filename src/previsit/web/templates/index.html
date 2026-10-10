@@ -1,21 +1,27 @@
 {% extends "base.html" %}
+{% block shell %}patient{% endblock %}
 {% block title %}{{ clinic }} · Pre-visit{% endblock %}
-{% block header %}<header class="top"><span class="brand">{{ clinic }}</span></header>{% endblock %}
+{% block header %}<header class="top"><span class="brand"><span class="mark" aria-hidden="true"></span>{{ clinic }}</span></header>{% endblock %}
 {% block main_class %}narrow{% endblock %}
 {% block content %}
-<h1 style="margin-top:12px">Before your visit</h1>
-<p class="sub">Answer a few questions before your appointment so your doctor is ready for you.</p>
+<section class="hero">
+  <span class="eyebrow">Pre-visit</span>
+  <h1>Before your visit</h1>
+  <p class="sub">Answer a few questions before your appointment so your doctor is ready for you.</p>
+</section>
 <div class="doors">
   <a class="card door" href="/portal/sign-in">
+    <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>
     <h2>I'm a patient</h2>
     <p class="muted">Sign in with the mobile number or email on your appointment. We'll send you a 6-digit code.</p>
     <span class="button big">Patient sign-in</span>
   </a>
-  <a class="card door" href="/dashboard">
+  <a class="card door alt" href="/dashboard">
+    <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg></span>
     <h2>I'm a clinician</h2>
     <p class="muted">Clinic staff: open the dashboard to see today's patients, history sheets and test approvals.</p>
     <span class="button big ghost">Clinician sign-in</span>
   </a>
 </div>
-<p class="muted" style="font-size:13px">If you feel very unwell, don't wait for your appointment: call your local emergency number.</p>
+<p class="fine">If you feel very unwell, don't wait for your appointment: call your local emergency number.</p>
 {% endblock %}

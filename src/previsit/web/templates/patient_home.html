@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block shell %}{{ 'clinic' if readonly else 'patient' }}{% endblock %}
 {% block title %}Your appointment{% endblock %}
 {% block header %}{% if readonly %}{{ super() }}{% else %}{% with signed_in = true %}{% include "_portal_header.html" %}{% endwith %}{% endif %}{% endblock %}
 {% block main_class %}narrow{% endblock %}
@@ -9,7 +10,7 @@
   <p>You can't act as the patient here. Buttons and forms are switched off. <a href="/patients/{{ v.appointment.id }}">Back to the history sheet</a></p>
 </div>
 {% endif %}
-<h1 style="margin-top:12px">Hello, {{ v.patient.name.split()[0] }}</h1>
+<h1>Hello, {{ v.patient.name.split()[0] }}</h1>
 <p class="sub">Your appointment with {{ v.appointment.physician_name }} is on {{ v.appointment.scheduled_at.strftime('%A %d %B at %H:%M') }}.</p>
 
 {% for m in escalations %}
@@ -47,7 +48,7 @@
       <div><label for="unit">Unit</label><select id="unit" name="unit"><option>°C</option><option>°F</option></select></div>
     </div>
     <label for="note">Anything else you've noticed? (optional)</label>
-    <input id="note" name="note" maxlength="500" style="width:100%">
+    <input id="note" name="note" maxlength="500" class="wide">
     <p><button type="submit">Save reading</button></p>
     </fieldset>
   </form>
@@ -71,5 +72,5 @@
   {% if v.results %}<p class="muted">Sent: {% for r in v.results %}{{ r.filename }}{{ ', ' if not loop.last }}{% endfor %}</p>{% endif %}
 </div>
 
-<p class="muted" style="font-size:13px">If you feel very unwell, don't wait for your appointment: call your local emergency number.</p>
+<p class="fine">If you feel very unwell, don't wait for your appointment: call your local emergency number.</p>
 {% endblock %}

@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Hospital overview · Pre-visit intake{% endblock %}
 {% block content %}
-<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
-  <div><h1>Hospital overview</h1>
+<div class="page-head">
+  <div><span class="eyebrow">{{ items|length }} appointments · {{ doctors|length }} doctors</span><h1>Hospital overview</h1>
     <p class="sub">Every patient and the doctor they are booked with. Records open only for the patient's own or referred doctor.</p></div>
-  <a class="button" href="/doctor/sign-in">Sign in as a doctor</a>
+  <div class="actions"><a class="button ghost" href="/appointments/new">New appointment</a><a class="button" href="/doctor/sign-in">Sign in as a doctor</a></div>
 </div>
 
 {% for row, alert in emergencies %}
@@ -16,10 +16,10 @@
 </div>
 {% endfor %}
 
-<div class="doors">
+<div class="tiles">
   {% for d in doctors %}
-  <div class="card"><h3 style="margin:0">{{ d.name }}</h3><p class="muted" style="margin:2px 0 0">{{ d.specialty }} ·
-    {{ items|selectattr('doctor')|selectattr('doctor.id', 'equalto', d.id)|list|length }} appointments</p></div>
+  <div class="tile"><span class="num">{{ items|selectattr('doctor')|selectattr('doctor.id', 'equalto', d.id)|list|length }}</span>
+    <b>{{ d.name }}</b><span>{{ d.specialty }} · appointments</span></div>
   {% endfor %}
 </div>
 
@@ -29,9 +29,9 @@
     <thead><tr><th>Appointment</th><th>Patient</th><th>Doctor</th><th>Pre-visit intake</th></tr></thead>
     <tbody>
     {% for row in items %}
-      <tr class="{{ 'emergency' if row.emergency }}">
-        <td>{{ row.appointment.scheduled_at.strftime('%a %d %b, %H:%M') }}</td>
-        <td>{{ row.patient.name }}{% if row.appointment.booked_by == 'patient' %} <span class="badge info">booked by patient</span>{% endif %}</td>
+      <tr class="{{ 'emergency' if row.emergency }}" data-state="{{ row.state }}">
+        <td><span class="when">{{ row.appointment.scheduled_at.strftime('%a %d %b, %H:%M') }}</span></td>
+        <td><b>{{ row.patient.name }}</b>{% if row.appointment.booked_by == 'patient' %} <span class="badge info">booked by patient</span>{% endif %}</td>
         <td>{{ row.doctor.name if row.doctor else row.appointment.physician_name }}<br>
           <span class="muted">{{ row.doctor.specialty if row.doctor else 'not assigned' }}</span></td>
         <td><span class="badge {{ row.state }}">{{ row.state.replace('_', ' ') }}</span>

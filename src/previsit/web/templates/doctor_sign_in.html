@@ -2,13 +2,13 @@
 {% block title %}Doctor sign-in · Pre-visit intake{% endblock %}
 {% block main_class %}narrow{% endblock %}
 {% block content %}
-<h1 style="margin-top:12px">Doctor sign-in</h1>
+<h1>Doctor sign-in</h1>
 <p class="sub">Choose your name. We'll send a 6-digit code to your work email. You'll see only your own patients and patients referred to you.</p>
 {% if error %}<div class="banner danger" role="alert"><strong>{{ error }}</strong></div>{% endif %}
 {% if not code_step %}
 <form class="card" method="post" action="/doctor/code">
   <label for="doctor_id">Doctor</label>
-  <select id="doctor_id" name="doctor_id" required style="width:100%">
+  <select id="doctor_id" name="doctor_id" required class="wide">
     {% for d in doctors %}<option value="{{ d.id }}">{{ d.name }} · {{ d.specialty }}</option>{% endfor %}
   </select>
   <p><button type="submit" class="big">Send me a code</button></p>
@@ -22,7 +22,7 @@
   <input type="hidden" name="doctor_id" value="{{ doctor_id }}">
   <label for="code">6-digit code</label>
   <input id="code" name="code" required inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"
-         autofocus style="width:100%;font-size:22px;letter-spacing:0.3em">
+         autofocus class="code-input">
   <p><button type="submit" class="big">Sign in</button></p>
 </form>
 <p><a href="/doctor/sign-in">Choose a different doctor</a></p>
