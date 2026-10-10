@@ -38,12 +38,17 @@ STAGE_URL = f"{DEMO_URL}/__film_stage"
 TYPE_MS = 40
 KEEP_HEAD_S, KEEP_TAIL_S = 0.45, 0.15  # what is left of each cut wait
 MIN_CUT_S = 0.9
-FF_SPEED = 4.0
-SETUP_SPEED = 2.0  # form filling the viewer has seen before
+CALL_FF_SPEED, RED_FF_SPEED = 5.0, 4.0
+SETUP_SPEED = 2.5  # form filling the viewer has seen before
+SILENT_PACE = 1.12  # stretches with nobody speaking (title, booking, the doctor's review) run a touch quicker
 AGENT_SPEECH_CAP = {"consent": 6.0, "identity": 4.5, "interview": 5.5, "readback": 5.5, "complete": 8.0, "escalated": 9.0}
-RED_FLAG_DISCLOSURE = "D2"  # DEMO-002's stiff-neck line
-HOLDING_LINE_CAP = 2.0  # "let me put together the main points" before the read-back
-PATIENT_SPEECH_CAP = 9.0  # long answers fade out while the transcript finishes
+HOLDING_LINE_CAP = 2.0
+# Scripted answers for the moments the film depends on (the rest of each call is the simulated patient).
+OPENING_ANSWER = ("I've had a fever for four days, worse in the evenings, up to 38.9. A dry cough started the next day, "
+                  "and for the last two days my whole body aches.")
+RED_FLAG_ANSWER = ("I've had a fever and a bad headache since yesterday. And my neck's really stiff. It hurts to bend my "
+                   "head forward, and the light hurts my eyes.")  # "let me put together the main points" before the read-back
+PATIENT_SPEECH_CAP = 11.0  # a long answer fades out at a sentence end while the transcript finishes
 AGENT_TEMPO, PATIENT_TEMPO = 1.1, 1.15
 PATIENT_VOICES = {"DEMO-001": ("ash", "A man in his forties with a fever, a little tired, speaking naturally and briefly."),
                   "DEMO-002": ("verse", "A twenty-year-old student who feels unwell and a bit worried, speaking naturally.")}
@@ -65,6 +70,7 @@ class Film:
         self.frames: list[tuple[float, str]] = []
         self.cuts: list[tuple[float, float]] = []
         self.speeds: list[list[float]] = []  # [start, end, factor]
+        self.paces: list[list[float]] = []  # gentle [start, end, factor] under the speeds above
         self._speeding = False
         self.audio: list[dict] = []
         self.marks: list[dict] = []
@@ -121,6 +127,9 @@ class Film:
         elif self._speeding:
             self.speeds[-1][1] = self.now()
             self._speeding = False
+
+    def pace(self, start: float, factor: float = SILENT_PACE) -> None:
+        self.paces.append([start, self.now(), factor])
 
     @property
     def speeding(self) -> bool:
@@ -206,9 +215,9 @@ class Film:
 
     # ----- voices -----------------------------------------------------------------------------------------------
 
-    def add_audio(self, path: Path, cap: float | None = None) -> float:
+    def add_audio(self, path: Path, cap: float | None = None, text: str = "") -> float:
         duration = media_duration(path)
-        length = min(duration, cap) if cap else duration
+        length = speech_cut(text, duration, cap)
         self.audio.append({"file": str(path), "t": self.now(), "length": length, "trimmed": length < duration})
         return length
 
@@ -217,7 +226,7 @@ class Film:
             return 0.0
         raw = self.out / "audio" / f"agent_{len(self.audio):03d}_raw.mp3"
         raw.write_bytes(base64.b64decode(data["audio"]))
-        return self.add_audio(quicken(raw, AGENT_TEMPO), cap)
+        return self.add_audio(quicken(raw, AGENT_TEMPO), cap, data.get("agent_text", ""))
 
     def patient_speech(self, text: str, voice: tuple[str, str]) -> Path:
         from openai import OpenAI
@@ -248,7 +257,7 @@ class Film:
         pt = self.frame("pt")
         await pt.evaluate("""() => { const m = document.getElementById('mic'); m.classList.add('recording');
           document.getElementById('status').textContent = 'Listening…'; }""")
-        length = self.add_audio(audio, PATIENT_SPEECH_CAP)
+        length = self.add_audio(audio, PATIENT_SPEECH_CAP, text)
         words = text.split()
         step = length * 0.92 / max(1, len(words))
         for i in range(1, len(words) + 1):
@@ -263,11 +272,23 @@ class Film:
         await self.frame("pt").evaluate("(t) => { document.getElementById('text').value = t; document.getElementById('textForm').requestSubmit(); }", text)
 
     def save(self, meta: dict) -> Path:
-        timeline = {"frames": self.frames, "cuts": self.cuts, "speeds": self.speeds, "audio": self.audio,
+        timeline = {"frames": self.frames, "cuts": self.cuts, "speeds": self.speeds, "paces": self.paces, "audio": self.audio,
                     "marks": self.marks, "end": self.now(), **meta}
         path = self.out / "timeline.json"
         path.write_text(json.dumps(timeline, indent=1))
         return path
+
+
+def speech_cut(text: str, duration: float, cap: float | None) -> float:
+    """How much of a voice clip to keep: all of it, or up to the last sentence end that fits the cap."""
+    if cap is None or duration <= cap:
+        return duration
+    if text:
+        ends = [m.end() for m in re.finditer(r"[.!?](?=\s|$)", text)]
+        fits = [duration * e / len(text) for e in ends if 2.0 <= duration * e / len(text) <= cap + 1.5]
+        if fits:
+            return min(duration, max(fits) + 0.3)
+    return cap
 
 
 def quicken(path: Path, tempo: float) -> Path:
@@ -286,25 +307,33 @@ def media_duration(path: Path) -> float:
 
 # ----- the pre-visit call -------------------------------------------------------------------------------------------
 
-async def set_fast_forward(film: Film, on: bool, caption=None, on_fast_forward=None) -> None:
-    if on and not film.speeding:
-        film.speed(FF_SPEED)
-        await film.stage("ff", f"Fast-forward ×{FF_SPEED:g}")
+async def set_fast_forward(film: Film, speed: float | None, caption=None, on_fast_forward=None) -> None:
+    if speed and not film.speeding:
+        film.speed(speed)
+        await film.stage("ff", f"Fast-forward ×{speed:g}")
         if caption:
             await film.caption(caption)
         if on_fast_forward:
             await on_fast_forward()
-    elif not on and film.speeding:
+    elif not speed and film.speeding:
         film.speed(None)
         await film.stage("ff", "")
 
 
-async def converse(film: Film, sim: SimulatedPatient, voice: tuple[str, str], live, captions: dict,
-                   on_fast_forward=None, live_on_disclosure: str | None = None) -> dict:
+def scripted_reply(sim: SimulatedPatient, agent_text: str, line: str):
+    """The patient says a scripted line; the simulator's history records it so later answers stay consistent."""
+    from evals.simulator import PatientTurnOut
+
+    sim._messages += [{"role": "user", "content": agent_text}, {"role": "assistant", "content": line}]
+    return PatientTurnOut(utterance=line, disclosed=[], hang_up=False)
+
+
+async def converse(film: Film, sim: SimulatedPatient, voice: tuple[str, str], live, captions: dict, ff_speed: float,
+                   script=None, on_fast_forward=None) -> dict:
     """Runs a real intake against the simulated patient.
 
-    live(state, interview_answers) picks real time or fast-forward for each assistant turn. With live_on_disclosure,
-    a fast-forwarded call drops back to real time for the answer that discloses that scenario row (e.g. a red flag).
+    live(state, interview_answers) picks real time or fast-forward for each assistant turn; script(state,
+    interview_answers) may return a line the patient says instead of the simulator's answer.
     """
     loop = asyncio.get_running_loop()
     data = await film.next_reply()
@@ -313,7 +342,7 @@ async def converse(film: Film, sim: SimulatedPatient, voice: tuple[str, str], li
         state = data["state"]
         is_live = live(state, answers)
         ff_caption = captions.get(f"ff_{state}", captions["ff"])
-        await set_fast_forward(film, not is_live, ff_caption, on_fast_forward)
+        await set_fast_forward(film, None if is_live else ff_speed, ff_caption, on_fast_forward)
         if is_live and state in captions and (not film.marks or film.marks[-1]["text"] != captions[state][1]):
             await film.caption(captions[state])
         cap = HOLDING_LINE_CAP if data.get("follow_up") else AGENT_SPEECH_CAP.get(state)
@@ -323,11 +352,15 @@ async def converse(film: Film, sim: SimulatedPatient, voice: tuple[str, str], li
             data = await film.next_reply()
             continue
         if data.get("ended"):
-            await set_fast_forward(film, False)
+            await set_fast_forward(film, None)
             await film.hold(max(speaking, 2.5) + 0.8)
             return data
 
-        reply = loop.run_in_executor(None, sim.reply, data["agent_text"])
+        line = script(state, answers) if script else None
+        if line:
+            reply = asyncio.ensure_future(asyncio.sleep(0, scripted_reply(sim, data["agent_text"], line)))
+        else:
+            reply = loop.run_in_executor(None, sim.reply, data["agent_text"])
         if is_live:
             async def with_speech(reply=reply):
                 out = await reply
@@ -335,16 +368,10 @@ async def converse(film: Film, sim: SimulatedPatient, voice: tuple[str, str], li
             ready = asyncio.ensure_future(with_speech())
             await film.hold(speaking + 0.5)
             out, audio = await film.waiting(ready)
-        else:
-            await film.hold(1.1)
-            out, audio = await film.waiting(reply), None
-            if live_on_disclosure and live_on_disclosure in out.disclosed:
-                await set_fast_forward(film, False)
-                await film.caption(captions["disclosure"])
-                audio = await film.waiting(loop.run_in_executor(None, film.patient_speech, out.utterance, voice))
-        if audio:
             await film.speak_patient(out.utterance, audio)
         else:
+            await film.hold(1.1)
+            out = await film.waiting(reply)
             await film.type_patient(out.utterance)
         if state == "interview":
             answers += 1
@@ -384,7 +411,8 @@ async def portal_sign_in(film: Film, contact: str) -> None:
 
 
 async def chapter_booking(film: Film, scenario, dob: date) -> int:
-    await film.card("chapter", C.CHAPTERS[1], 2.0)
+    started = film.now()
+    await film.card("chapter", C.CHAPTERS[1], 1.5)
     await film.stage("step", 1)
     await film.caption(C.SIGN_IN)
     await portal_sign_in(film, "+1 555 555 0142")
@@ -418,11 +446,12 @@ async def chapter_booking(film: Film, scenario, dob: date) -> int:
     await film.stage("zoom", 1)
     await film.stage("focus", "both")
     await film.hold(0.6)
+    film.pace(started)
     return appt_id
 
 
 async def chapter_call(film: Film, sim: SimulatedPatient, voice) -> None:
-    await film.card("chapter", C.CHAPTERS[2], 2.0)
+    await film.card("chapter", C.CHAPTERS[2], 1.5)
     await film.stage("step", 2)
     await film.stage("focus", "pt")
     await film.click(film.loc("pt", "a.button.big"), navigates="pt", pause=0)
@@ -434,13 +463,17 @@ async def chapter_call(film: Film, sim: SimulatedPatient, voice) -> None:
         await film.goto("doc", "/dashboard")
         await film.stage("focus", "both")
 
+    def script(state: str, answers: int) -> str | None:
+        return OPENING_ANSWER if state == "interview" and answers == 0 else None
+
     captions = {"consent": C.CONSENT, "ff_identity": C.IDENTITY, "interview": C.INTERVIEW, "ff": C.FAST_FORWARD,
                 "readback": C.READBACK, "complete": C.ADVICE}
-    await converse(film, sim, voice, live, captions, on_fast_forward=show_front_desk)
+    await converse(film, sim, voice, live, captions, CALL_FF_SPEED, script, on_fast_forward=show_front_desk)
 
 
 async def chapter_review(film: Film, settings, appt_id: int) -> None:
-    await film.card("chapter", C.CHAPTERS[3], 2.0)
+    started = film.now()
+    await film.card("chapter", C.CHAPTERS[3], 1.5)
     await film.stage("step", 3)
     await film.stage("role", f"{PHYSICIAN} · General practice")
     await film.stage("focus", "doc")
@@ -494,10 +527,12 @@ async def chapter_review(film: Film, settings, appt_id: int) -> None:
     await film.caption(C.SENT)
     await film.scroll_to("pt", ".card:has(h2:text-is('Tests your doctor has asked for'))", hold=3.0)
     await film.stage("focus", "both")
+    film.pace(started)
 
 
-async def chapter_safety(film: Film, settings, sim: SimulatedPatient, voice, contact: str) -> None:
-    await film.card("chapter", C.CHAPTERS[4], 2.0)
+async def chapter_safety(film: Film, sim: SimulatedPatient, voice, contact: str, name: str, dob: date) -> None:
+    await film.goto("doc", "/dashboard")
+    await film.card("chapter", C.CHAPTERS[4], 1.5)
     await film.stage("step", 4)
     await film.stage("role", "Hospital · front desk")
     await film.stage("focus", "pt")
@@ -509,14 +544,21 @@ async def chapter_safety(film: Film, settings, sim: SimulatedPatient, voice, con
     film.speed(None)
 
     def live(state: str, answers: int) -> bool:
-        return state == "escalated"
+        return state in ("interview", "escalated")
 
-    captions = {"ff": (C.C4, "Fast-forward: consent, identity and the first symptoms.", ""),
-                "disclosure": C.RED_INTERVIEW, "escalated": C.RED_STOP}
-    await converse(film, sim, voice, live, captions, live_on_disclosure=RED_FLAG_DISCLOSURE)
+    lines = {"consent": "Yes, that's fine.", "identity": f"{name}, born {dob.day} {dob:%B %Y}. It's me."}
+
+    def script(state: str, answers: int) -> str | None:
+        if state == "interview" and answers == 0:
+            return RED_FLAG_ANSWER
+        return lines.get(state)
+
+    captions = {"ff": C.RED_FAST_FORWARD, "interview": C.RED_INTERVIEW, "escalated": C.RED_STOP}
+    await converse(film, sim, voice, live, captions, RED_FF_SPEED, script)
     await film.hold(1.0)
     await film.goto("doc", "/dashboard")
     await film.stage("focus", "doc")
+    alert_shown = film.now()
     await film.caption(C.RED_ALERT)
     banner = film.loc("doc", ".banner.danger")
     await film.zoom_on(banner, 1.25)
@@ -524,6 +566,7 @@ async def chapter_safety(film: Film, settings, sim: SimulatedPatient, voice, con
     await film.stage("zoom", 1)
     await film.stage("focus", "both")
     await film.hold(0.8)
+    film.pace(alert_shown, 1.15)
 
 
 # ----- run ----------------------------------------------------------------------------------------------------------
@@ -564,20 +607,22 @@ async def film_it(out: Path) -> Path:
         await film.stage("card", "title", C.TITLE)
         await film.hold(1.2)
         await film.start_capture()
-        await film.hold(5.0)
+        started = film.now()
+        await film.hold(4.0)
         await film.stage("card", None, None)
         await film.hold(0.8)
+        film.pace(started, 1.15)
 
         appt_id = await chapter_booking(film, full, full_dob)
         await chapter_call(film, SimulatedPatient(llm, full, full_dob), PATIENT_VOICES[FILM_FULL_SCENARIO])
         await chapter_review(film, settings, appt_id)
-        await chapter_safety(film, settings, SimulatedPatient(llm, red, red_dob), PATIENT_VOICES[FILM_RED_SCENARIO],
-                             "+1 555 555 0143")
+        await chapter_safety(film, SimulatedPatient(llm, red, red_dob), PATIENT_VOICES[FILM_RED_SCENARIO],
+                             "+1 555 555 0143", red.patient_name, red_dob)
 
         await film.stage("caption", "", "", "")
         await film.stage("card", "end", C.END)
         film.marks.append({"t": film.now(), "text": "End card"})
-        await film.hold(5.0)
+        await film.hold(4.0)
         await film.stop_capture()
         await context.close()
         await browser.close()

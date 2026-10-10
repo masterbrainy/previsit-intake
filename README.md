@@ -97,7 +97,7 @@ The Python package is still called `previsit`.
 ## Status and limits
 
 - Prototype with synthetic data only; clinical content is a draft pending clinician sign-off.
-- Latest eval runs: red-flag recall 100%, key-fact accuracy 89.8–91.7% (target ≥ 90%), 1–3 fabricated facts per full run (target 0). Not yet at the bar.
+- Latest eval runs: red-flag recall below 100%: FEV-025 (pregnancy and severe pain mentioned far apart in a long call) escalated late; a fix (1.15) awaits re-testing. Key-fact accuracy 89.8–91.7% (target ≥ 90%), 1–3 fabricated facts per full run (target 0). Not yet at the bar.
 - No SMS, email or phone calls yet. The intake runs in the browser; sign-in codes reach users only in demo mode.
 - The hospital overview uses one shared staff login; doctors have individual accounts.
 - Not for clinical use.

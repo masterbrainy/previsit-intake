@@ -20,7 +20,11 @@ FADE_IN_S, FADE_OUT_S = 0.6, 1.0
 CHORDS = ((146.83, 220.0, 329.63, 369.99, 554.37), (123.47, 185.0, 220.0, 293.66, 440.0),
           (98.0, 146.83, 185.0, 246.94, 369.99), (110.0, 164.81, 185.0, 246.94, 329.63))
 CHORD_STEP_S, CHORD_LEN_S = 8.0, 11.0
-MUSIC_GAIN = 0.2
+ARP_STEP_S = 0.5  # a soft plucked note every half beat-ish: 16 per chord
+ARP_PATTERN = (0, 1, 2, 3, 2, 1, 2, 3, 0, 1, 2, 3, 2, 3, 1, 2)
+MUSIC_GAIN = 0.13
+MIN_SPEEDUP_FILM_S = 2.2  # a fast-forward stays on screen long enough to read its caption
+MAX_VOICE_TEMPO = 1.3  # voices in a gently paced stretch speed up with it; faster stretches (fast-forwards) have none
 
 
 def ffmpeg(*args: str) -> None:
@@ -64,6 +68,9 @@ class TimeMap:
                 return film + (max(t, a) - a) / factor
         return self.duration
 
+    def factor_at(self, t: float) -> float:
+        return next((factor for a, b, factor, _ in self.pieces if a <= t < b), 1.0)
+
     def rec_time(self, film_t: float) -> float:
         for a, b, factor, film in self.pieces:
             if not factor:
@@ -93,31 +100,75 @@ def video_list(frames: list, tmap: TimeMap, frames_dir: Path, out: Path) -> int:
     return n
 
 
+def _pad_expr(notes: tuple[float, ...], detune: float) -> str:
+    swell = "(1+0.25*sin(2*PI*0.13*t))"
+    pad = "+".join(f"sin(2*PI*{f * detune:.3f}*t)" for f in notes)
+    bass = f"0.35*sin(2*PI*{notes[0] / 2 * detune:.3f}*t)"
+    return f"{swell}*({pad})/{len(notes)}+{bass}"
+
+
+def _arp_expr(notes: tuple[float, ...], detune: float) -> str:
+    """Plucked chord tones an octave up: a short attack, a fast decay, a touch of second harmonic."""
+    tones = [f * 2 * detune for f in notes[1:]]
+    freq = "0"
+    for i in reversed(range(len(ARP_PATTERN))):
+        freq = f"if(eq(floor(t/{ARP_STEP_S}),{i}),{tones[ARP_PATTERN[i] % len(tones)]:.3f},{freq})"
+    phase = f"mod(t,{ARP_STEP_S})"
+    env = f"min(1,{phase}*250)*exp(-7*{phase})"
+    return f"{env}*(sin(2*PI*({freq})*t)+0.25*sin(4*PI*({freq})*t))"
+
+
 def music_bed(duration: float, out: Path) -> None:
-    """Overlapping, slowly faded chords with a slight left/right detune, softened and given some space."""
-    inputs, filters, labels = [], [], []
+    """A slow pad with a low root, overlapping chord to chord, plus a soft arpeggio on the same chords."""
+    inputs, filters, pads, arps = [], [], [], []
     n = int(duration // CHORD_STEP_S) + 1
     for k in range(n):
         notes = CHORDS[k % len(CHORDS)]
-        left = "+".join(f"sin(2*PI*{f}*t)" for f in notes)
-        right = "+".join(f"sin(2*PI*{f * 1.003:.3f}*t)" for f in notes)
-        swell = "(1+0.25*sin(2*PI*0.13*t))"
-        expr = f"{swell}*({left})/{len(notes)}|{swell}*({right})/{len(notes)}"
-        inputs += ["-f", "lavfi", "-i", f"aevalsrc='{expr}':s=48000:d={CHORD_LEN_S}"]
         delay = int(k * CHORD_STEP_S * 1000)
-        filters.append(f"[{k}:a]afade=t=in:d=3.5,afade=t=out:st={CHORD_LEN_S - 4.0}:d=4.0,adelay={delay}|{delay}[c{k}]")
-        labels.append(f"[c{k}]")
-    filters.append(f"{''.join(labels)}amix=inputs={n}:normalize=0,lowpass=f=1400,aecho=0.8:0.6:140|310:0.22|0.15,"
+        pad = f"{_pad_expr(notes, 1.0)}|{_pad_expr(notes, 1.003)}"
+        inputs += ["-f", "lavfi", "-i", f"aevalsrc='{pad}':s=48000:d={CHORD_LEN_S}"]
+        filters.append(f"[{2 * k}:a]afade=t=in:d=3.5,afade=t=out:st={CHORD_LEN_S - 4.0}:d=4.0,adelay={delay}|{delay}[p{k}]")
+        arp = f"{_arp_expr(notes, 1.0)}|{_arp_expr(notes, 1.002)}"
+        inputs += ["-f", "lavfi", "-i", f"aevalsrc='{arp}':s=48000:d={CHORD_STEP_S}"]
+        filters.append(f"[{2 * k + 1}:a]afade=t=in:d=0.02,afade=t=out:st={CHORD_STEP_S - 0.05}:d=0.05,"
+                       f"adelay={delay}|{delay}[a{k}]")
+        pads.append(f"[p{k}]")
+        arps.append(f"[a{k}]")
+    filters.append(f"{''.join(pads)}amix=inputs={n}:normalize=0,lowpass=f=1200,volume=1.0[pad]")
+    filters.append(f"{''.join(arps)}amix=inputs={n}:normalize=0,highpass=f=300,lowpass=f=3200,"
+                   f"aecho=0.8:0.55:{int(ARP_STEP_S * 1500)}|{int(ARP_STEP_S * 3000)}:0.3|0.15,volume=0.4[arp]")
+    filters.append(f"[pad][arp]amix=inputs=2:normalize=0,aecho=0.8:0.6:140|310:0.2|0.12,"
                    f"volume={MUSIC_GAIN},atrim=0:{duration:.3f}[m]")
     ffmpeg(*inputs, "-filter_complex", ";".join(filters), "-map", "[m]", "-ar", "48000", str(out))
+
+
+def readable_speeds(speeds: list, cuts: list) -> list:
+    """Slows any fast-forward that would flash by too quickly to read its caption."""
+    out = []
+    for a, b, factor in speeds:
+        shown = (b - a) - sum(max(0.0, min(b, cb) - max(a, ca)) for ca, cb in cuts)
+        out.append([a, b, max(1.0, min(factor, shown / MIN_SPEEDUP_FILM_S))])
+    return out
+
+
+def _paced_voice(clip: dict, factor: float, out_dir: Path) -> tuple[str, float]:
+    """A voice clip sped up with the stretch it starts in, rendered to its own file (atempo inside the big amix graph
+    ends the whole mix early). Returns the file and its length on the film."""
+    length = float(clip["length"])
+    if not 1.0 < factor <= MAX_VOICE_TEMPO:
+        return clip["file"], length
+    out_dir.mkdir(exist_ok=True)
+    paced = out_dir / f"{Path(clip['file']).stem}_x{factor:.2f}.wav"
+    ffmpeg("-i", clip["file"], "-af", f"aresample=48000,atrim=0:{length:.3f},atempo={factor:.4f}", str(paced))
+    return str(paced), length / factor
 
 
 def mix_audio(clips: list, tmap: TimeMap, duration: float, music: Path, out: Path) -> int:
     inputs, filters, labels = [], [], []
     for i, clip in enumerate(clips):
         at = tmap.film_time(float(clip["t"]))
-        length = float(clip["length"])
-        inputs += ["-i", clip["file"]]
+        source, length = _paced_voice(clip, tmap.factor_at(float(clip["t"])), out.parent / "paced")
+        inputs += ["-i", source]
         fade = f",afade=t=out:st={max(0.0, length - 0.35):.3f}:d=0.35" if clip.get("trimmed") else ""
         delay = int(at * 1000)
         filters.append(f"[{i}:a]aresample=48000,atrim=0:{length:.3f}{fade},adelay={delay}|{delay}[a{i}]")
@@ -139,6 +190,8 @@ def build(timeline_path: Path) -> Path:
     timeline = json.loads(timeline_path.read_text())
     run_dir = timeline_path.parent
     frames = sorted(timeline["frames"])
+    # fast-forwards first: where they overlap a gentle pace, the fast-forward wins (TimeMap takes the first match)
+    timeline["speeds"] = readable_speeds(timeline["speeds"], timeline["cuts"]) + timeline.get("paces", [])
     tmap = TimeMap(frames[0][0], float(timeline["end"]), timeline["cuts"], timeline["speeds"])
     duration = tmap.duration
 
@@ -156,6 +209,8 @@ def build(timeline_path: Path) -> Path:
            "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", str(final))
 
     final_duration = probe_duration(final)
+    if final_duration < duration - 0.5:
+        raise RuntimeError(f"film is {final_duration:.1f}s but the timeline is {duration:.1f}s: a track ended early")
     checks = run_dir / "check_frames"
     checks.mkdir(exist_ok=True)
     for i, mark in enumerate(timeline["marks"]):
