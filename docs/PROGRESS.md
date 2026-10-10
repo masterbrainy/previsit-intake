@@ -1,6 +1,6 @@
 # Progress
 
-Plan version: v0.2 · Status values: `todo` · `doing` · `done` · `blocked: <reason>`
+Plan version: v0.3 · Status values: `todo` · `doing` · `done` · `blocked: <reason>`
 Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / clinician / decision)
 
 ## Phase 0: Foundations
@@ -54,12 +54,24 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | 4.2 | Physician notification on results | B | done |
 | 4.3 | Tests: results never sent to LLM | T | done |
 
+## Patient portal (P-002, before the demo release)
+| ID | Task | Owner | Status |
+|---|---|---|---|
+| PP.1 | Front page: clinician and patient doors; no patient data on public pages | B | todo |
+| PP.2 | Patient contact (email or phone) on appointment form + CSV import | B | todo |
+| PP.3 | One-time-code sign-in: 6 digits, 10-min expiry, lockout after 5 tries, rate limit, HttpOnly session, sign-out; demo mode shows the code on screen | B | todo |
+| PP.4 | Portal home: patient's own appointments; per appointment intake call, advice, approved tests, reading log, report upload, messages | B | todo |
+| PP.5 | Text-message link opens portal sign-in with contact pre-filled | B | todo |
+| PP.6 | Doctor's read-only "Open patient's view" button | B | todo |
+| PP.7 | Tests: patient sees only own records (guessed IDs, old links); code expiry/lockout/rate limit; unapproved recs never shown in portal; preview is read-only; AI replies still checked before play | T | todo |
+| PP.8 | Real sign-in code delivery by SMS/email | U+B | blocked: needs a messaging provider (same as F.3) |
+
 ## Demo release: working site + captioned video (final step, P-001)
 | ID | Task | Owner | Status |
 |---|---|---|---|
 | D.1 | Demo-ready site: one-command start, clean reset script, synthetic demo patients (incl. backdated temperature readings) | B | todo |
 | D.2 | Decide hosting: local only, or a URL clinicians/researchers can open | U | todo |
-| D.3 | Demo patient scripts (fever full flow + stiff-neck escalation); run each ≥3× through the simulator to confirm they reliably hit every scene | T | todo |
+| D.3 | Demo patient scripts (portal sign-in → fever full flow, + stiff-neck escalation); run each ≥3× through the simulator to confirm they reliably hit every scene | T | doing |
 | D.4 | Automated recorder in `demo/`: Playwright drives physician + patient windows, records each | B | todo |
 | D.5 | Assemble video with ffmpeg: side by side, captions on every step, AI voice audio, pauses-shortened note, closing limits card; check extracted frames | B | todo |
 | D.6 | Caption review: every claim true vs code and latest eval results; wording right for clinicians | T | todo |

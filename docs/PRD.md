@@ -1,6 +1,6 @@
 # PRD: Pre-Visit AI History Taking & Physician-Gated Recommendations
 
-**Status:** Draft v0.1, ready for review · **Date:** 2026-10-09 · **Owner:** TBD
+**Status:** Draft v0.3 (P-002: patient portal) · **Date:** 2026-10-09 · **Owner:** TBD
 **Working name:** Pre-Visit Intake (placeholder)
 
 ---
@@ -44,6 +44,7 @@ Fever is only the worked example. The system is **specialty-agnostic**: any comp
 - Ordering any test without explicit physician sign-off. There is **no auto-approve**, ever.
 - Replacing emergency care. Red-flag symptoms get escalated, not handled (§9).
 - Appointment booking. We assume a booking already exists and trigger off it.
+- **An open-ended AI chat assistant for patients.** In the patient portal the AI only conducts the pre-visit intake call; everything else in the portal is plain pages (P-002).
 
 ---
 
@@ -51,7 +52,7 @@ Fever is only the worked example. The system is **specialty-agnostic**: any comp
 
 | User | What they need |
 |------|----------------|
-| **Patient** | An easy conversation in their own language, clear instructions on what to do before the visit, and to know when to go to the ER instead |
+| **Patient** | A **patient portal** to sign in to, an easy conversation in their own language, clear instructions on what to do before the visit, and to know when to go to the ER instead |
 | **Physician** | A scannable history sheet, a one-click approve/reject on suggested tests, and the results attached before the visit |
 | **Clinic / hospital staff** | Visibility into which patients completed intake, which tests are approved, and lab coordination |
 | **Clinical lead / admin** | To author and approve complaint modules, red-flag rules and recommendation libraries, plus the audit trail |
@@ -151,7 +152,7 @@ Priority: **P0** = MVP must have · **P1** = pilot should have · **P2** = later
 
 ### 8.1 Trigger and onboarding
 - **P0** Intake is triggered from an appointment record (manual entry or CSV in MVP; scheduling-system integration later).
-- **P0** Patient is reached by outbound call, or by SMS/WhatsApp link to start the call themselves.
+- **P0** Patient is reached by outbound call, or by SMS/WhatsApp link to start the call themselves. The link opens the **patient portal** (§8.10).
 - **P0** Identity check (name + DOB) and recorded consent covering AI use, call recording, and sharing with the physician.
 - **P1** Caregiver/proxy mode (parent for a child, family member for an elderly patient), with the informant recorded on the sheet.
 
@@ -218,6 +219,18 @@ Fever is the first module. New complaints and specialties are added as **content
 - **P1** Five to ten common primary-care complaints (cough, sore throat, abdominal pain, headache, diarrhoea, back pain, UTI symptoms, rash).
 - **P2** Specialty packs (OB/GYN, pediatrics, cardiology, psychiatry), each with its clinical owner.
 
+### 8.10 Patient portal (added in P-002)
+The patient's home in the product. The AI's only job here is the intake call (§8.2); every other part of the portal is plain pages with no AI.
+- **P0** Front page with two doors: **clinicians** (dashboard sign-in) and **patients** (portal sign-in). No patient names or lists are shown on any public page.
+- **P0** **Sign-in with a one-time code:** the patient enters the email or phone number on their appointment and receives a 6-digit code. Codes expire after 10 minutes, lock after 5 wrong tries, and requests are rate-limited. No passwords. Session cookie is HttpOnly with sign-out. In demo mode only (synthetic data), the code may be shown on screen because no SMS/email sending exists yet; this is never allowed outside demo mode.
+- **P0** The text-message link opens the portal sign-in with the contact pre-filled; the patient still needs the code.
+- **P0** Portal home lists the patient's own appointments. Per appointment: start or resume the **pre-visit intake call with the AI (OpenAI)**, self-care advice, tests the doctor has asked for (only after approval and sending, as today), log readings, upload test reports, messages from the clinic.
+- **P0** A patient can only ever see their own records.
+- **P0** Voice is **tap-to-talk**: every AI reply passes the red-flag check and scope guard **before** the patient sees or hears it. Hands-free live voice (e.g. OpenAI Realtime) is out of scope until it can keep this guarantee.
+- **P0** Doctor side: an **"Open patient's view"** button on each patient page, read-only (the doctor cannot act as the patient).
+- **P1** Real code delivery by SMS/email (needs a messaging provider; same blocker as phone/SMS).
+- **P2** Caregiver/proxy access to a patient's portal (ties to §8.1 caregiver mode).
+
 ---
 
 ## 9. Safety and clinical governance
@@ -232,6 +245,7 @@ Fever is the first module. New complaints and specialties are added as **content
 ## 10. Privacy, security and regulatory
 
 - All data is PHI: encrypted in transit and at rest, role-based access, defined retention, recordings handled per consent.
+- **Patient portal accounts (P-002):** one-time-code sign-in, code expiry and lockout, rate limiting, secure session cookies, each patient sees only their own records, and sign-in events go to the audit log.
 - Applicable regime depends on market (Q1): **HIPAA** (US), **DPDP Act 2023** (India), **GDPR** (EU/UK).
 - **Regulatory position (needs counsel):** physician-facing suggestions with a visible, reviewable rationale are designed to fit the FDA's non-device clinical decision support criteria. Patient-facing output is deliberately limited to general self-care and safety-netting. Both claims need validating for the target market before the pilot.
 
@@ -243,6 +257,7 @@ Fever is the first module. New complaints and specialties are added as **content
 | EHR | PDF download | FHIR push |
 | Lab | Staff hand-off + PDF upload | LIS order + results (HL7 ORM/ORU or FHIR) |
 | Patient messaging | SMS | WhatsApp, app push |
+| Patient portal sign-in codes | Shown on screen in demo mode only | SMS / email delivery |
 | Voice / telephony | One provider, one language | Multilingual, inbound and outbound |
 
 ## 12. Success metrics

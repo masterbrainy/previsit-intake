@@ -1,6 +1,6 @@
 # Roadmap: Pre-Visit AI History Taking
 
-**Status:** Draft v0.2 (P-001: demo release added) · **Date:** 2026-10-09 · Companion to [PRD.md](PRD.md)
+**Status:** Draft v0.3 (P-001: demo release; P-002: patient portal) · **Date:** 2026-10-09 · Companion to [PRD.md](PRD.md)
 
 Each phase ships one arrow from the whiteboard and has to pass its exit gate before the next one starts. Safety (red-flag escalation) ships in Phase 1, because the agent talks to patients from day one.
 
@@ -12,6 +12,7 @@ Phase 1  Voice intake → history sheet     ██████                  
 Phase 2  General recs + symptom logs            ████               wk 10–14
 Phase 3  Medical recs + physician OK                ██████         wk 14–20
 Phase 4  Results routing                                  ████     wk 20–24
+Portal   Patient portal (sign-in, intake, advice, tests)          █     before the demo (P-002)
 Demo     Working site + captioned demo video                  █     final step of the prototype
 Phase 5  Scale: modules, specialties, integrations            ███→ wk 24+
 ```
@@ -103,6 +104,27 @@ Phase 5  Scale: modules, specialties, integrations            ███→ wk 24
 
 ---
 
+## Patient portal (added in P-002, before the demo release)
+
+**Goal:** patients have their own portal, a key part of the product, not just a private link. Full requirements: PRD §8.10.
+
+- Front page with **clinician** and **patient** doors; no patient data on any public page
+- Patient contact (email or phone) on the appointment form and CSV import
+- **One-time-code sign-in** (6 digits, 10-minute expiry, lockout after 5 wrong tries, rate limit, HttpOnly session, sign-out). Demo mode shows the code on screen; real SMS/email delivery waits for a messaging provider
+- Portal home: the patient's own appointments; per appointment the intake call with the AI (OpenAI), self-care advice, approved tests, reading log, report upload, clinic messages
+- The text-message link opens portal sign-in with the contact pre-filled
+- Doctor's read-only **"Open patient's view"** button
+- Voice stays **tap-to-talk with every AI reply checked before it plays**; make it faster and smoother (F.1, F.2)
+- The AI in the portal only conducts the intake call. No chat assistant
+
+**Exit gate:**
+- A patient can only ever reach their own records (tested, including guessed IDs and old links)
+- Codes expire, lock out and rate-limit as specified (tested)
+- An unapproved recommendation still never appears anywhere in the portal (existing hard-rule tests extended to the portal)
+- Every AI reply in the portal still passes the safety check and scope guard before the patient sees or hears it
+
+---
+
 ## Demo release: working site + demo video (final step of the prototype)
 
 **Added in P-001.** The prototype build ends here. Audience: **clinicians and researchers**.
@@ -116,11 +138,11 @@ Phase 5  Scale: modules, specialties, integrations            ███→ wk 24
 - Waiting time may be cut, with a visible "pauses shortened" note. Nothing else is staged.
 
 **Scenes the video must show** (clinician/researcher cut, ~5–8 min):
-1. Physician books an appointment; the patient gets a private link
-2. Intake: consent and identity check, adaptive history questions (HOPI), read-back, general advice ending with ER safety-netting
+1. Front page with clinician and patient doors. Physician books an appointment; the patient gets the portal link
+2. Patient signs in to the **patient portal** with a one-time code (caption notes the code is shown on screen in demo mode only), sees their appointment, and starts the intake call. Intake: consent and identity check, adaptive history questions (HOPI), read-back, general advice ending with ER safety-netting
 3. History sheet in the PRD §7 structure; click a statement to show the patient's own words it came from; "could not answer" items; red-flag screen
-4. Suggested investigation (CBC) with its rationale and module rule, visible to the physician only. The patient page shows nothing until the physician approves **and** sends it, then shows the instruction
-5. Patient logs temperatures; the physician sees them on the sheet
+4. Suggested investigation (CBC) with its rationale and module rule, visible to the physician only. The patient's portal shows nothing until the physician approves **and** sends it, then shows the instruction
+5. Patient logs temperatures in the portal; the physician sees them on the sheet
 6. Lab report upload appears for the physician exactly as issued; caption states that results are never sent to the AI
 7. Separate case: a red-flag symptom (stiff neck) stops the intake, sends the patient to emergency care, alerts staff, and generates no advice or tests
 8. Closing card with honest limits: draft clinical content pending clinician sign-off, current eval results, single shared physician login, browser channel only (no phone/SMS yet), not for clinical use
