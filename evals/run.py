@@ -145,7 +145,7 @@ def render_sheet(sheet) -> str:
 def statement_lines(sheet) -> list[str]:
     from previsit.sheet.schema import SECTIONS
 
-    lines = [f"[chief complaint] {c.complaint}, {c.duration} (cites turns {list(c.source_turn_ids)})"
+    lines = [f"[chief complaint] {c.complaint} (duration: {c.duration}) (cites turns {list(c.source_turn_ids)})"
              for c in sheet.chief_complaints]
     for section in SECTIONS:
         lines += [f"[{section.title}] {s.text} (cites turns {list(s.source_turn_ids)})"

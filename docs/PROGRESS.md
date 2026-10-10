@@ -27,7 +27,7 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | 1.7 | History sheet generation with transcript links | B | done |
 | 1.8 | Physician view: patient list, sheet, PDF export (print-to-PDF view) | B | done |
 | 1.9 | Audit log | B | done |
-| 1.10 | Eval runner: accuracy, fabrication, red-flag recall | T | doing |
+| 1.10 | Eval runner: accuracy, fabrication, red-flag recall | T | done |
 | 1.11 | Exit gate: eval ≥90% / 0 fabricated / 100% red-flag recall | T | todo |
 
 ## Phase 2: General recommendations + symptom logs
@@ -37,7 +37,7 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | 2.2 | Delivery at end of call + patient page, with safety-netting (SMS needs Twilio) | B | done |
 | 2.3 | Symptom logging (SMS/app/voice) → physician sheet | B | done |
 | 2.4 | Threshold breach → escalation | B | done |
-| 2.5 | Tests: no out-of-library advice ever sent | T | doing |
+| 2.5 | Tests: no out-of-library advice ever sent | T | todo |
 
 ## Phase 3: Medical recommendations + physician OK
 | ID | Task | Owner | Status |
@@ -45,14 +45,14 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | 3.1 | Suggested investigations with rationale | B | done |
 | 3.2 | Approve / Modify / Reject / Add UI | B | done |
 | 3.3 | Patient notification on approval (patient page; SMS needs Twilio) | B | done |
-| 3.4 | Tests: unapproved recommendation can never reach patient | T | doing |
+| 3.4 | Tests: unapproved recommendation can never reach patient | T | done |
 
 ## Phase 4: Results routing
 | ID | Task | Owner | Status |
 |---|---|---|---|
 | 4.1 | Result upload + attach to sheet | B | done |
 | 4.2 | Physician notification on results | B | done |
-| 4.3 | Tests: results never sent to LLM | T | doing |
+| 4.3 | Tests: results never sent to LLM | T | done |
 
 ## Build follow-ups (found while building)
 | ID | Task | Owner | Status |
