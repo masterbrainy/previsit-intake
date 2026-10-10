@@ -38,3 +38,10 @@ The earlier figures of 79% / 0 fabricated are out of date and must not appear in
 ## Recorder
 
 `demo/config.py` should use the D.3 scripts: `FULL_FLOW_SCENARIO = "DEMO-001"`, `RED_FLAG_SCENARIO = "DEMO-002"`. `uv run python -m evals.demo_check --runs 3` confirmed every scene in 4/4 (DEMO-001, final script) and 3/3 (DEMO-002) live runs. Patient turns: 28–35 (full flow), 10–13 (red flag).
+
+## Rules for the final pass (added at plan v0.7)
+
+- **P-006 name:** captions say "PATH". They must never say or imply that PATH triages, assesses, diagnoses or prioritises. It **takes the history** and stops to escalate red flags with a fixed script. If the acronym is spelled out on screen, follow it at once with a plain line such as "PATH takes the patient's history before the visit. It does not triage or assess."
+- **P-005 overview:** the RED_STAFF replacement above should say "hospital overview" instead of "clinic dashboard". Escalations show on the overview for every patient and can be acknowledged there even when the patient's doctor is signed out.
+- **P-005 doctors:** any caption about the doctor's view must say each doctor sees only their own and referred patients. Do not show one doctor opening another doctor's patient.
+- **Doctor suggestions:** if the booking scene shows suggested doctors, the caption calls them "suggested from the words you typed (rule-based, no AI)". It must not say "matched to your condition".
