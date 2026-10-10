@@ -13,14 +13,14 @@ key_facts:
   - Fever for 2 days, max 38.9 °C
   - Sore throat for 2 days
   - Headache for 1 day
-  - Passed out briefly in the bathroom this morning
+  - Passed out for about a second in the bathroom this morning
   - No chronic illness
   - No regular medicines
   - No known allergies
 fabrication_traps:
   - Head injury from the faint
   - Seizure or jerking
-  - Any duration of unconsciousness
+  - Unconscious for longer than a moment (she said "just for a second")
   - Recommendations given (none must be generated)
 ---
 

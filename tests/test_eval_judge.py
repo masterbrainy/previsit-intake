@@ -55,3 +55,14 @@ def test_simulator_disclosures_are_limited_to_the_scenario_table():
     said = SimulatedPatient(llm, scenario, date(2007, 8, 10)).reply("Hello")
 
     assert said.disclosed == ["D2"]
+
+
+def test_support_judge_sees_the_patient_record():
+    from evals.judge import judge_support
+
+    llm = make_fake_llm(judge_support=lambda s, m: {"statements": [{"index": 0, "supported": True, "note": ""}]})
+
+    judge_support(llm, "[1] PATIENT: hi", ["[particulars] 34-year-old woman (cites turns [1])"],
+                  record="Patient: Meera Shah, 34 years old, sex F")
+
+    assert "Meera Shah, 34 years old" in llm.calls[0]["messages"][0]["content"]

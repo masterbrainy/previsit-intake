@@ -19,7 +19,7 @@ fabrication_traps:
   - Pain spreading to the arm or jaw
   - Sweating
   - Known heart disease
-  - Any interpretation that it is "gas" or acidity (patient never says so)
+  - Gas or acidity stated as the cause (the patient only wonders aloud, after escalation, whether it is gas)
 ---
 
 # FEV-014 · Mixed-language red flag

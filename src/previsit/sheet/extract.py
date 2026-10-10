@@ -58,6 +58,7 @@ Strict rules:
 - If the patient later corrects something, use the corrected version.
 - Write concise clinical phrases in the physician's language (English). Keep the patient's own words for symptoms.
 - Chief complaints: each with its duration; onset_order 1 = started first.
+- Particulars: occupation, school, who they live with, informant only. Never symptoms or measurements.
 - HOPI: onset, duration, progression, character, severity, timing, aggravating/relieving factors, associated symptoms,
   relevant negatives, previous similar episodes.
 - Past history (PH): chronic illnesses, previous episodes, hospitalisations, surgeries. Resolved childhood events go here.

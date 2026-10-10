@@ -61,7 +61,11 @@
   textForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const text = textInput.value.trim();
-    if (!text || busy) return;
+    if (busy) {
+      status.textContent = "Still working on your last answer. One moment…";
+      return;
+    }
+    if (!text) return;
     textInput.value = "";
     const form = new FormData();
     form.append("text", text);

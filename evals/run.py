@@ -80,7 +80,9 @@ def _run(scenario, system_llm, sim_llm, judge_llm, settings, db_url, today, run,
         facts, traps_hit = judge.judge_sheet(judge_llm, render_sheet(sheet), transcript_text, scenario.key_facts,
                                              scenario.fabrication_traps,
                                              only_mentioned=scenario.expected_outcome == "escalate")
-        unsupported = judge.judge_support(judge_llm, transcript_text, statement_lines(sheet))
+        record = (f"Patient: {scenario.patient_name}, date of birth {dob.isoformat()}, age {scenario.age}, "
+                  f"sex {scenario.sex}. Speaking: {scenario.informant}.")
+        unsupported = judge.judge_support(judge_llm, transcript_text, statement_lines(sheet), record=record)
     result = ScenarioResult(scenario_id=scenario.id, run=run, expected_outcome=scenario.expected_outcome,
                             final_state=final_state, red_flag=rf, facts=facts,
                             fabrication=judge.fabrication(traps_hit, unsupported),

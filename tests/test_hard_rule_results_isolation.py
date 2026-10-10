@@ -9,7 +9,7 @@ import source_scan
 from factories import interview, make_fake_llm, make_intake
 
 RESULT_FILENAME = "SENTINEL_RESULT_cbc_report.pdf"
-RESULT_CONTENT = b"HAEMOGLOBIN SENTINEL-7f3a 9.1 g/dL (L) WBC SENTINEL-7f3a 14.2 (H)"
+RESULT_CONTENT = b"%PDF-1.4\n% HAEMOGLOBIN SENTINEL-7f3a 9.1 g/dL (L) WBC SENTINEL-7f3a 14.2 (H)\n%%EOF\n"
 SENTINELS = ("SENTINEL-7f3a", "SENTINEL_RESULT")
 LLM_PACKAGES = ("previsit.llm", "openai")
 COMPOSITION_ROOTS = {"previsit.web.app", "previsit.web"}

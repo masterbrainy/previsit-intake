@@ -55,7 +55,9 @@ def create_app(settings: Settings | None = None, llm: LLMClient | None = None) -
                 )
         response = await call_next(request)
         response.headers["X-Frame-Options"] = "DENY"
-        response.headers["Referrer-Policy"] = "no-referrer"
+        # same-origin keeps patient link tokens from leaking to other sites. ("no-referrer" would make browsers send
+        # Origin: null on our own form posts, which the CSRF check above rightly rejects.)
+        response.headers["Referrer-Policy"] = "same-origin"
         response.headers["X-Content-Type-Options"] = "nosniff"
         return response
 

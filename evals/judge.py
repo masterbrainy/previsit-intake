@@ -24,7 +24,9 @@ SUPPORT_PROMPT = """You check a clinical history sheet for fabrication. For each
 cites (with the assistant question just before each one for context).
 supported=true if those turns say it. supported=false if the statement adds a fact, number, label, diagnosis or
 interpretation the cited turns don't contain, or attributes something to the wrong person.
-Clinical rephrasing of the patient's words is fine. Return one verdict per statement index."""
+Clinical rephrasing of the patient's words is fine. Facts in the PATIENT RECORD (name, age, sex, who is speaking)
+come from the appointment record and the identity check, so restating them is supported.
+Return one verdict per statement index."""
 
 
 class Verdict(BaseModel):
@@ -68,11 +70,11 @@ def judge_sheet(llm, sheet_text: str, transcript_text: str, key_facts: tuple[str
     return FactScore(total=len(in_scope), correct=len(in_scope) - len(missed), missed=missed), traps_hit
 
 
-def judge_support(llm, transcript_text: str, statements: list[str]) -> tuple[str, ...]:
-    """Returns the statements the judge found unsupported by their cited turns."""
+def judge_support(llm, transcript_text: str, statements: list[str], record: str = "") -> tuple[str, ...]:
+    """Returns the statements the judge found unsupported by their cited turns (or the patient record)."""
     if not statements:
         return ()
-    user = f"TRANSCRIPT:\n{transcript_text}\n\nSTATEMENTS:\n{numbered(statements)}"
+    user = f"PATIENT RECORD:\n{record}\n\nTRANSCRIPT:\n{transcript_text}\n\nSTATEMENTS:\n{numbered(statements)}"
     out = llm.complete_json(SUPPORT_TASK, SUPPORT_PROMPT, [{"role": "user", "content": user}], SupportJudgement)
     unsupported = {v.index for v in out.statements if not v.supported}
     return tuple(s for i, s in enumerate(statements) if i in unsupported)
