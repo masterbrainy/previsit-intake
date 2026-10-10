@@ -1,6 +1,6 @@
 # Progress
 
-Plan version: v0.3 · Status values: `todo` · `doing` · `done` · `blocked: <reason>`
+Plan version: v0.4 · Status values: `todo` · `doing` · `done` · `blocked: <reason>`
 Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / clinician / decision)
 
 ## Phase 0: Foundations
@@ -69,7 +69,7 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 ## Demo release: working site + captioned video (final step, P-001)
 | ID | Task | Owner | Status |
 |---|---|---|---|
-| D.1 | Demo-ready site: one-command start, clean reset script, synthetic demo patients (incl. backdated temperature readings) | B | todo |
+| D.1 | Demo-ready site: one-command start, clean reset script, synthetic demo patients (incl. backdated temperature readings) | B | done: `uv run --group demo python -m demo.serve` (resets, seeds, serves :8010 in demo mode) |
 | D.2 | Decide hosting: local only, or a URL clinicians/researchers can open | U | todo |
 | D.3 | Demo patient scripts (portal sign-in → fever full flow, + stiff-neck escalation); run each ≥3× through the simulator to confirm they reliably hit every scene | T | done |
 | D.4 | Automated recorder in `demo/`: Playwright drives physician + patient windows, records each | B | todo |
@@ -86,3 +86,5 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | F.6 | After an escalation, a patient who accepts gets a fixed acknowledgement and close, not the refusal script | B | todo |
 | F.3 | Twilio adapter for real SMS invites and phone calls (needs account) | U+B | blocked: no Twilio account |
 | F.4 | Physician auth is a single shared basic-auth login; needs per-physician accounts before any pilot | B | todo |
+| A.1 | Read-only admin panel (/admin): links to every page + browse every table; secrets masked, no edits, no LLM, views audited (spec in P-003) | B | todo: deferred by user (P-003); use Datasette locally meanwhile |
+| A.2 | Booking form warns when a contact is already used by another patient (shared-contact risk, P-003) | B | todo |

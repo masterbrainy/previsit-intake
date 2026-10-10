@@ -1,6 +1,6 @@
 # PRD: Pre-Visit AI History Taking & Physician-Gated Recommendations
 
-**Status:** Draft v0.3 (P-002: patient portal) · **Date:** 2026-10-09 · **Owner:** TBD
+**Status:** Draft v0.4 (P-003: portal identity rules) · **Date:** 2026-10-09 · **Owner:** TBD
 **Working name:** Pre-Visit Intake (placeholder)
 
 ---
@@ -229,7 +229,10 @@ The patient's home in the product. The AI's only job here is the intake call (§
 - **P0** Voice is **tap-to-talk**: every AI reply passes the red-flag check and scope guard **before** the patient sees or hears it. Hands-free live voice (e.g. OpenAI Realtime) is out of scope until it can keep this guarantee.
 - **P0** Doctor side: an **"Open patient's view"** button on each patient page, read-only (the doctor cannot act as the patient).
 - **P1** Real code delivery by SMS/email (needs a messaging provider; same blocker as phone/SMS).
-- **P2** Caregiver/proxy access to a patient's portal (ties to §8.1 caregiver mode).
+- **P0** **Shared contacts (P-003, user decision):** signing in with a phone or email shows every appointment booked with that contact (e.g. a household phone for two children), each labelled with the patient's name. This acts as light caregiver access without a separate consent step.
+- **P0** **Same patient across bookings (P-003):** bookings with the same name, date of birth and contact belong to one patient. A typo creates a separate patient record; it never merges two people.
+- **P0** **Physician access to the patient side (P-003):** only through the read-only "Open patient's view". The patient's own link does not work for staff.
+- **P2** Caregiver/proxy access to a patient's portal with explicit consent (ties to §8.1 caregiver mode); revisit the shared-contact rule when this is designed.
 
 ---
 
@@ -283,6 +286,7 @@ The patient's home in the product. The AI's only job here is the intake call (§
 | Rubber-stamp approvals | Show rationale, monitor approval patterns, keep suggestion sets small |
 | Patient treats general advice as treatment | Clear wording, no drugs or doses, explicit "your doctor will decide" |
 | Scope creep into result interpretation | Written non-goal; no code path from results to the LLM |
+| Shared contact exposes records (P-003): adults sharing a phone/email, or staff entering one placeholder number for many patients, see each other's appointments | Accepted for now by user decision. Before any real-patient use: warn staff on the booking form when a contact is already used by another patient, and revisit with caregiver consent (§8.10 P2) |
 
 ## 14. Open questions
 
