@@ -48,6 +48,13 @@ class OpenAILLM:
             return self._settings.extraction_model
         return self._settings.interview_model
 
+    def _effort_for(self, task: str) -> str:
+        if task in SAFETY_TASKS:
+            return self._settings.safety_reasoning
+        if task in EXTRACTION_TASKS:
+            return self._settings.extraction_reasoning
+        return self._settings.interview_reasoning
+
     def complete_json(self, task: str, system: str, messages: list[Message], schema: type[T]) -> T:
         model = self._model_for(task)
         started = time.monotonic()
@@ -57,7 +64,7 @@ class OpenAILLM:
                 instructions=system,
                 input=messages,
                 text_format=schema,
-                reasoning={"effort": "low"},
+                reasoning={"effort": self._effort_for(task)},
                 store=False,
             )
         except Exception as exc:  # network, auth, rate limit, schema rejection

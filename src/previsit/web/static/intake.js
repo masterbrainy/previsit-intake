@@ -13,12 +13,22 @@
   let player = null;
 
   const addBubble = (who, text) => {
-    if (!text) return;
     const div = document.createElement("div");
     div.className = `bubble ${who}`;
     div.textContent = text;
     chat.appendChild(div);
     div.scrollIntoView({ behavior: "smooth", block: "end" });
+    return div;
+  };
+
+  // "…" shown while the assistant's reply is being prepared and checked.
+  let typing = null;
+  const showTyping = () => {
+    if (!typing) typing = addBubble("agent typing", "…");
+  };
+  const hideTyping = () => {
+    if (typing) typing.remove();
+    typing = null;
   };
 
   const setBusy = (value, message = "") => {
@@ -35,28 +45,52 @@
     player.play().catch(() => {});
   };
 
-  const handle = async (response) => {
+  // A patient bubble whose turn failed gets a retry link that resends the same form.
+  const markFailed = (bubble, path, form, message) => {
+    if (!bubble) return;
+    bubble.classList.add("failed");
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.className = "retry";
+    retry.textContent = "Not sent · tap to retry";
+    retry.addEventListener("click", () => {
+      if (busy) return;
+      retry.remove();
+      bubble.classList.remove("failed");
+      post(path, form, message, bubble);
+    });
+    bubble.appendChild(retry);
+  };
+
+  const handle = async (response, bubble, path, form, message) => {
     const data = await response.json().catch(() => ({ error: "Something went wrong. Please try again." }));
+    hideTyping();
     if (!response.ok || data.error) {
       setBusy(false, data.error || data.detail || "Something went wrong. Please try again.");
+      markFailed(bubble, path, form, message);
       return;
     }
-    if (data.patient_text) addBubble("patient", data.patient_text);
-    addBubble("agent", data.agent_text);
+    // Typed answers are already on screen; a voice answer's bubble gets its transcribed text now.
+    if (bubble && data.patient_text) bubble.textContent = data.patient_text;
+    if (data.agent_text) addBubble("agent", data.agent_text);
     play(data.audio);
     setBusy(false);
+    textInput.focus();
     if (data.ended) done.hidden = false;
     // Two-step read-back: the holding line is showing; fetch the summary straight away.
     if (data.follow_up) post("readback", new FormData(), "Putting together the main points…");
   };
 
-  const post = async (path, form, message) => {
+  const post = async (path, form, message, bubble = null) => {
     setBusy(true, message);
-    form.append("speak", speak.checked ? "true" : "false");
+    showTyping();
+    if (!form.has("speak")) form.append("speak", speak.checked ? "true" : "false");
     try {
-      await handle(await fetch(`${base}/${path}`, { method: "POST", body: form }));
+      await handle(await fetch(`${base}/${path}`, { method: "POST", body: form }), bubble, path, form, message);
     } catch {
+      hideTyping();
       setBusy(false, "Connection problem. Please check your internet and try again.");
+      markFailed(bubble, path, form, message);
     }
   };
 
@@ -69,9 +103,11 @@
     }
     if (!text) return;
     textInput.value = "";
+    textInput.focus();
+    const bubble = addBubble("patient", text); // shown straight away, before the server replies
     const form = new FormData();
     form.append("text", text);
-    post("turn", form, "Thinking…");
+    post("turn", form, "", bubble);
   });
 
   const stopRecording = () => {
@@ -98,7 +134,7 @@
         if (blob.size < 1000) return setBusy(false, "That was very short. Tap the microphone and try again.");
         const form = new FormData();
         form.append("audio", blob, "turn.webm");
-        post("turn", form, "Listening…");
+        post("turn", form, "", addBubble("patient", "🎙 …"));
       };
       recorder.start();
       mic.classList.add("recording");

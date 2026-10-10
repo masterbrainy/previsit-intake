@@ -105,3 +105,10 @@ button.link { border: 0; background: none; color: var(--accent); padding: 0; min
 header.top nav form.inline { display: inline; margin-left: 16px; }
 .code { font-size: 22px; letter-spacing: 0.2em; font-weight: 700; }
 .demo-strip { background: var(--warn-bg); color: var(--warn); text-align: center; font-size: 13px; padding: 4px 12px; }
+
+/* Intake chat: typing indicator and failed-send retry */
+.bubble.typing { color: var(--muted); letter-spacing: 0.2em; animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.4; } }
+.bubble.failed { opacity: 0.7; }
+.bubble .retry { display: block; margin-top: 6px; border: 0; background: none; color: inherit; padding: 0; min-height: auto;
+  font-size: 13px; text-decoration: underline; cursor: pointer; }

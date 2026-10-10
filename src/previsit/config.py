@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     transcribe_model: str = "gpt-4o-transcribe"
     tts_model: str = "gpt-4o-mini-tts"
     tts_voice: str = "alloy"
+    # Reasoning effort per task group ("none", "minimal", "low", ...); lower is faster.
+    interview_reasoning: str = "none"  # 0.9 s vs 1.4 s per question (benchmarked); safety stays "low"
+    safety_reasoning: str = "low"
+    extraction_reasoning: str = "low"
 
     emergency_number: str = "911"
     crisis_line: str = "988"
