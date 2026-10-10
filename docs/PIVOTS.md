@@ -96,3 +96,13 @@ Why: user decision; the film is for the hackathon pitch as a best-vision piece.
 Plan & Pivot advised adding a "simulated" tag on the text message and a one-line "prototype, not for clinical use" closing line (~2 s), because clinician judges may read the SMS as a working feature and medical-AI demos without a disclaimer can look like overclaiming. The user chose to keep the film as is. Limits remain stated in the README and the written submission.
 Impact on in-flight work: D.4/D.5 done as delivered. D.6 (caption review) can run now; captions must still be true and must not claim SMS works or that PATH triages/assesses. D.7 is the user's review. N.3 (GitHub description) approved by the user; repo rename not approved.
 Tasks added / removed / changed (PROGRESS.md IDs): ROADMAP demo spec updated (staged elements listed, limits card dropped). No task IDs added.
+
+## P-008 · 2026-10-09 · Symptom-specific red-flag screening as a Phase 1 gate item; red-flag film take re-recorded
+Plan version: v0.8 → v0.9
+What changed:
+- **Safety gap → Phase 1 gate.** Test's new eval case FEV-023 (stiff neck revealed only when asked) is caught 4/4, but only 7–10 questions in, and in 3/4 runs the agent never asked about the headache itself, so a sudden "worst ever" headache (proposed RF-16) would go unscreened. New P0 requirement (PRD §8.2): any mentioned symptom with its own red flags gets its screening questions early. New Phase 1 exit-gate item: screening asked in reveal-only-when-asked cases, with escalation within a question limit agreed with the clinical lead. Tasks 1.12 (Build), 1.13 (Test), 1.14 (clinician sign-off, user).
+- **Film fix.** The best-vision film's red-flag scene shows the same question asked three times (demo-script issue, fixed by Test, 6/6 clean runs) and the alert time in UTC (display bug, with Build). Re-record only that take and re-render with Test's 6 caption fixes (three of which corrected wording against plan rules: "code arrives by text", non-rule-based "suggests the right doctor", and an alert caption implying paging). Task D.8.
+Why: user decisions in this session, on Test's D.6 findings.
+Hard rules: unchanged; this strengthens "red-flag symptoms stop the intake and escalate".
+Impact on in-flight work: Phase 1 stays unpassed until 1.12–1.14 are met, alongside the existing accuracy bar. Overlaps F.5 (coverage checklist); Build may implement both together. D.7 (user review) follows D.8.
+Tasks added / removed / changed (PROGRESS.md IDs): added 1.12, 1.13, 1.14, D.8.

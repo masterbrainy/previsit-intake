@@ -160,6 +160,7 @@ Priority: **P0** = MVP must have · **P1** = pilot should have · **P2** = later
 - **P0** Follows the §7 structure, with adaptive follow-up questions driven by the active complaint module(s).
 - **P0** Handles multiple complaints in one call and orders them chronologically.
 - **P0** **Red-flag screening runs continuously.** On any trigger, the agent stops the intake and escalates (§9).
+- **P0** **Symptom-specific red-flag screening (P-008).** When the patient mentions a symptom that has its own red flags (e.g. headache, chest pain, abdominal pain, breathlessness), the agent asks that symptom's screening questions early, without waiting for the patient to volunteer them. Example: any headache gets onset (sudden / "worst ever"), neck stiffness, rash, confusion and visual or neurological change. Screening lists are clinician-owned content in the complaint modules.
 - **P0** Reads a short summary back to the patient ("Let me make sure I got this right...") and corrects anything they dispute.
 - **P0** Never diagnoses or speculates about a cause. It says "your doctor will review this."
 - **P1** Resumes a dropped call where it left off.

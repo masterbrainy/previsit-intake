@@ -53,6 +53,7 @@ Phase 5  Scale: modules, specialties, integrations            ███→ wk 24
 
 **Exit gate:**
 - Eval set: ≥ 90% key-fact accuracy, **0 fabricated facts**, **100% red-flag recall**
+- **Symptom-specific screening (P-008):** in eval cases where a red-flag feature is only revealed when asked (e.g. FEV-023), the agent asks the screening questions for every mentioned red-flag-bearing symptom, and escalates within a set number of questions after the symptom is mentioned (limit agreed with the clinical lead)
 - Shadow pilot with 20+ real patients: physicians compare the sheet to their own history and rate it useful (≥ 4/5)
 
 ---

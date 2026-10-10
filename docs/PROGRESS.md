@@ -1,6 +1,6 @@
 # Progress
 
-Plan version: v0.8 · Status values: `todo` · `doing` · `done` · `blocked: <reason>`
+Plan version: v0.9 · Status values: `todo` · `doing` · `done` · `blocked: <reason>`
 Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / clinician / decision)
 
 ## Phase 0: Foundations
@@ -12,7 +12,7 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | 0.4 | Draft history sheet template (PRD §7) as a schema | B | done |
 | 0.5 | Draft baseline red-flag list + escalation script (pending clinician sign-off) | T | done |
 | 0.6 | Draft Fever (adult) complaint module (pending clinician sign-off) | B | done |
-| 0.7 | Eval set: 30–50 simulated patient scripts with expected sheets (22 fever drafts so far, see evals/README.md) | T | doing |
+| 0.7 | Eval set: 30–50 simulated patient scripts with expected sheets (23 fever drafts so far, see evals/README.md) | T | doing |
 | 0.8 | Regulatory / privacy read for the chosen market | U | todo |
 
 ## Phase 1: Voice intake → history sheet
@@ -29,6 +29,9 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | 1.9 | Audit log | B | done |
 | 1.10 | Eval runner: accuracy, fabrication, red-flag recall | T | done |
 | 1.11 | Exit gate: eval ≥90% / 0 fabricated / 100% red-flag recall | T | todo |
+| 1.12 | Symptom-specific red-flag screening: any mentioned symptom with its own red flags (headache, chest pain, abdominal pain, breathlessness) gets its screening questions early; screening lists live in module content (P-008) | B | todo |
+| 1.13 | Eval cases where red-flag features appear only when asked (FEV-023 and siblings for chest pain, abdominal pain); gate on screening asked + escalation within the agreed question limit (P-008) | T | doing |
+| 1.14 | Clinician sign-off of symptom screening lists and proposed RF-16 (thunderclap headache) (P-008) | U | todo |
 
 ## Phase 2: General recommendations + symptom logs
 | ID | Task | Owner | Status |
@@ -94,7 +97,8 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | D.3 | Demo patient scripts (portal sign-in → fever full flow, + stiff-neck escalation); run each ≥3× through the simulator to confirm they reliably hit every scene | T | done |
 | D.4 | Automated recorder in `demo/`: Playwright drives physician + patient windows, records each | B | done: `python -m demo.record` films the real app on a stage (browser + phone), screencast frames, simulated patients with synthetic voices |
 | D.5 | Assemble video with ffmpeg: side by side, captions on every step, AI voice audio, pauses-shortened note, closing limits card; check extracted frames | B | done: `python -m demo.assemble` → `demo/output/PATH-demo.mp4` (175.8 s, 1080p30, voices + ducked music bed). User asked for an ideal-vision film: no limits card; AI waits cut, fast-forwards badged on screen |
-| D.6 | Caption review: every claim true vs code and latest eval results; wording right for clinicians | T | blocked: paused until the video is recorded (P-003); first pass in evals/caption_review.md |
+| D.6 | Caption review: every claim true vs code and latest eval results; wording right for clinicians | T | done: final pass in evals/caption_review.md (6 caption changes for Build; re-recording the red-flag take is a user decision, D.7) |
+| D.8 | Re-record the red-flag take only (fixed demo script, local-time alert display) and re-render with Test's 6 caption fixes (P-008) | B | todo |
 | D.7 | Final review: user watches and accepts the video | U | todo |
 
 ## Rename to PATH (P-006)
