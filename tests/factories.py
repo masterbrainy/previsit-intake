@@ -25,10 +25,12 @@ def _save(session: Session, row):
     return row
 
 
-def make_patient(session: Session, name: str = "Test Patient", dob: date = date(1992, 3, 14)):
+def make_patient(session: Session, name: str = "Test Patient", dob: date = date(1992, 3, 14), phone: str = "",
+                 email: str = ""):
+    """phone/email must already be normalised (previsit.portal.contact.normalize_contact)."""
     from previsit.models import Patient
 
-    return _save(session, Patient(name=name, dob=dob))
+    return _save(session, Patient(name=name, dob=dob, phone=phone, email=email))
 
 
 def make_appointment(session: Session, patient=None, physician: str = TEST_PHYSICIAN):
@@ -61,6 +63,25 @@ def portal_sign_in(client, session: Session, settings, appointment) -> str:
     session.commit()
     client.cookies.set(COOKIE, token)
     return f"/portal/appointments/{appointment.id}"
+
+
+def portal_client(settings, llm, demo: bool = True):
+    from fastapi.testclient import TestClient
+
+    from previsit.web.app import create_app
+
+    app_settings = settings.model_copy(update={"demo_mode": demo})
+    return TestClient(create_app(settings=app_settings, llm=llm), follow_redirects=False)
+
+
+def sign_in_with_code(client, contact: str):
+    """The real portal flow: request a code (demo mode shows it on screen), then verify it."""
+    import re
+
+    page = client.post("/portal/code", data={"contact": contact}).text
+    match = re.search(r'class="mono code">\s*(\d{6})', page)
+    assert match, "demo mode should show the code"
+    return client.post("/portal/verify", data={"contact": contact, "code": match.group(1)})
 
 
 def make_intake(session: Session, appointment, state_name: str = "INTERVIEW"):

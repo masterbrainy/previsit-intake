@@ -5,6 +5,7 @@ Inputs are transcripts, sheets and module content. Lab results are never passed 
 """
 
 import logging
+import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Protocol, TypeVar
@@ -49,6 +50,7 @@ class OpenAILLM:
 
     def complete_json(self, task: str, system: str, messages: list[Message], schema: type[T]) -> T:
         model = self._model_for(task)
+        started = time.monotonic()
         try:
             response = self._client.responses.parse(
                 model=model,
@@ -61,6 +63,7 @@ class OpenAILLM:
         except Exception as exc:  # network, auth, rate limit, schema rejection
             logger.exception("LLM call failed: task=%s model=%s", task, model)
             raise LLMError(f"{task} call failed: {exc.__class__.__name__}") from exc
+        logger.info("LLM %s (%s) took %.2fs", task, model, time.monotonic() - started)
         parsed = response.output_parsed
         if parsed is None:
             raise LLMError(f"{task} returned no parseable output")

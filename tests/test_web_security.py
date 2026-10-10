@@ -1,6 +1,8 @@
 """Physician forms: same-origin posts work, cross-site posts are blocked (CSRF), referrer policy keeps Origin usable."""
 from __future__ import annotations
 
+import re
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -66,3 +68,15 @@ def test_referrer_policy_lets_browsers_send_a_real_origin(client, appointment, p
     response = client.get(f"/patients/{appointment.id}", auth=physician_auth)
 
     assert response.headers.get("referrer-policy", "").lower() not in ("", "no-referrer")
+
+
+@pytest.mark.parametrize("path", ["/", "/portal/sign-in", "/dashboard"])
+def test_pages_can_only_be_framed_by_this_site(client, physician_auth, path):
+    """The recorder frames real pages side by side on the same origin; any other site must not frame them."""
+    response = client.get(path, auth=physician_auth)
+    csp = response.headers.get("content-security-policy", "")
+
+    assert response.headers.get("x-frame-options", "").upper() in ("SAMEORIGIN", "DENY")
+    ancestors = re.search(r"frame-ancestors ([^;]+)", csp)
+    assert ancestors, f"no frame-ancestors in CSP for {path}"
+    assert ancestors.group(1).split() in (["'self'"], ["'none'"])

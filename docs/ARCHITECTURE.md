@@ -75,6 +75,11 @@ previsit/
                    /recs/{id}/decide, /appointments/{id}/recs/add
                    Patient portal (signed in, owned_appointment): /portal/appointments/{id} (+ /intake, /intake/start,
                    /intake/turn, /symptoms, /results)
+  intake/engine.py IntakeEngine(llm, settings, *, defer=None, on_candidate=None). Web passes defer (FastAPI background
+                   task via web/sheet_jobs.run_sheet_job, one job at a time per intake) so escalation and completion reply
+                   before the sheet is rebuilt, and the read-back is two-step (AgentReply.follow_up, then
+                   POST .../intake/readback). on_candidate lets web/speech.SpeechPrefetch synthesise while the scope guard
+                   runs; only audio for the text the guard returned is sent. Without hooks (evals, tests) all runs inline.
   Settings         DEMO_MODE=true shows the sign-in code on screen (synthetic data only; never in a real deployment).
 ```
 

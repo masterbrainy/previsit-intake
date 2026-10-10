@@ -46,6 +46,8 @@
     play(data.audio);
     setBusy(false);
     if (data.ended) done.hidden = false;
+    // Two-step read-back: the holding line is showing; fetch the summary straight away.
+    if (data.follow_up) post("readback", new FormData(), "Putting together the main points…");
   };
 
   const post = async (path, form, message) => {

@@ -8,6 +8,7 @@ Exit code 0 only if every run of every demo script reaches every scene.
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import sys
 import tempfile
@@ -130,14 +131,14 @@ def snapshot(db_url: str, events: list[Event]) -> Snapshot:
         )
 
 
-def run_checks(runs: int, workers: int) -> tuple[list[dict], bool]:
+def run_checks(runs: int, workers: int, only: list[str] | None = None) -> tuple[list[dict], bool]:
     from previsit.config import Settings
 
     settings = Settings()
     system_llm, sim_llm = _live_llms(settings)
     scenarios = {s.id: s for s in load_all(ids=[FULL_FLOW_ID, RED_FLAG_ID])}
     tmp = Path(tempfile.mkdtemp(prefix="previsit-demo-"))
-    jobs = [(sid, r) for sid in (FULL_FLOW_ID, RED_FLAG_ID) for r in range(1, runs + 1)]
+    jobs = [(sid, r) for sid in (only or [FULL_FLOW_ID, RED_FLAG_ID]) for r in range(1, runs + 1)]
 
     def job(item):
         sid, run = item
@@ -145,7 +146,7 @@ def run_checks(runs: int, workers: int) -> tuple[list[dict], bool]:
         db_url = f"sqlite:///{tmp / f'{sid}-{run}.db'}"
         result, events = run_scenario(scenario, system_llm, sim_llm, sim_llm, settings, db_url, run=run)
         if result.final_state == "error":
-            return {"id": sid, "run": run, "problems": [result.error], "turns": len(events)}
+            return {"id": sid, "run": run, "problems": [result.error], "turns": len(events), "transcript": []}
         snap = snapshot(db_url, events)
         if sid == FULL_FLOW_ID:
             problems = check_full_flow(events, snap, settings.emergency_number)
@@ -157,7 +158,8 @@ def run_checks(runs: int, workers: int) -> tuple[list[dict], bool]:
                 problems.append(f"{timing.agent_turns_after_disclosure} agent turns after the stiff neck (max 1)")
         patient_turns = sum(1 for e in events if e.speaker == "patient")
         logger.info("%s run %s: %s (%s patient turns)", sid, run, "OK" if not problems else problems, patient_turns)
-        return {"id": sid, "run": run, "problems": problems, "turns": patient_turns}
+        transcript = [{"speaker": e.speaker, "state": e.state, "text": e.text} for e in events]
+        return {"id": sid, "run": run, "problems": problems, "turns": patient_turns, "transcript": transcript}
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         rows = list(pool.map(job, jobs))
@@ -172,6 +174,7 @@ def write_report(rows: list[dict], passed: bool) -> Path:
     lines += [f"| {r['id']} | {r['run']} | {r['turns']} | {'all scenes' if not r['problems'] else '; '.join(r['problems'])} |"
               for r in rows]
     (target / "demo_check.md").write_text("\n".join(lines) + "\n")
+    (target / "transcripts.json").write_text(json.dumps(rows, indent=2))
     return target
 
 
@@ -179,9 +182,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--workers", type=int, default=6)
+    parser.add_argument("--only", action="append", choices=[FULL_FLOW_ID, RED_FLAG_ID], help="check one script")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    rows, passed = run_checks(args.runs, args.workers)
+    rows, passed = run_checks(args.runs, args.workers, args.only)
     target = write_report(rows, passed)
     print(f"{'PASS' if passed else 'FAIL'}: report in {target / 'demo_check.md'}")
     return 0 if passed else 1

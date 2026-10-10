@@ -16,7 +16,7 @@ key_facts:
   - Cough for 3 days, dry
   - Body aches for 2 days
   - Paracetamol taken, helped for a few hours
-  - High blood pressure, takes amlodipine 5 mg once a day
+  - High blood pressure, takes amlodipine once a day; doesn't know the strength
   - No allergies to medicines or foods
   - Mother has high blood pressure; doesn't know her age at diagnosis
   - Non-smoker
@@ -27,6 +27,7 @@ fabrication_traps:
   - Any travel
   - Smoking
   - Mother's age at diagnosis
+  - An amlodipine strength or dose
   - Any drug allergy
 ---
 
@@ -40,13 +41,13 @@ Built for the recorder (`demo/record.py`). It should reliably reach every full-f
 - a sheet with chief complaints, citations, a red-flag screen and a "could not answer" item
 - a CBC suggestion: the fever module rule is fever ≥ 3 days, and this fever is 4 days
 
-Male, so the obstetric add-on doesn't lengthen the call. Answers are short so the video stays watchable. The maximum temperature fits the recorder's backdated log readings (38.9 and 38.6 °C).
+Male, so the obstetric add-on doesn't lengthen the call. He volunteers a lot per answer so the video stays short (Build's rehearsal of FEV-001 took 26 patient turns). The maximum temperature fits the recorder's backdated log readings (38.9 and 38.6 °C).
 
 ## Simulated patient
 
-**Opening line:** "Hi. I've had a fever for four days now, and a cough."
+**Opening line:** "Hi. I've had a fever for four days. It came on slowly and comes and goes, worse in the evenings, up to 38.9 on my thermometer. A dry cough started the day after, and the last two days my whole body aches."
 
-**Volunteers at the open question:** fever 4 days, cough. Everything else only when asked.
+**Volunteers at the open question:** everything in the opening line. After that, answer each question fully in one go, including the closely related details from the same table row (for example medicines: give both the regular medicine and what he took for this illness). This keeps the demo video short.
 
 **Reveals only when asked:**
 
@@ -56,20 +57,20 @@ Male, so the obstetric add-on doesn't lengthen the call. Answers are short so th
 | Fever onset and pattern | "It came on slowly. It comes and goes, worse in the evenings" |
 | Max temperature | "38.9, with a thermometer" |
 | Chills or shaking | "A bit of chills, no shaking" |
-| Cough | "Started the day after the fever. Dry, nothing coming up" |
+| Cough | "Came on gradually, the day after the fever. Dry, nothing coming up" |
+| What makes it better or worse | "Paracetamol helps for a few hours. Nothing makes it worse that I've noticed" |
 | Other symptoms | "My body aches, the last two days" |
-| Medicines for this | "Paracetamol. It helps for a few hours" (doesn't know the dose: "the normal ones") |
-| Regular medicines | "Amlodipine, 5 milligrams, once a day, for blood pressure" |
+| Medicines (asked either way) | "Amlodipine once a day for blood pressure, I can't remember the strength. For this I've taken paracetamol, it helps for a few hours." |
 | Allergies | "No allergies to anything" |
 | Past illness, hospital, surgery | High blood pressure for about 5 years. Nothing else |
-| Family | "My mum has high blood pressure too." Her age at diagnosis: "No idea, sorry." Father well |
+| Family | "My mum has high blood pressure too. I don't know how old she was when it started." (always say both in the same answer) Father well |
 | Smoking, alcohol | Never smoked. "A beer now and then" |
 | Travel | "No, nowhere" |
 | Sick contacts | "My daughter had something like this last week" |
-| Appetite, sleep, bowels, bladder | Appetite a bit down, sleeping badly, bowels and bladder normal |
+| Appetite, drinking, sleep, bowels, bladder | Appetite a bit down. "I'm drinking fine and keeping it down." Sleeping badly. Bowels and bladder normal |
 | Danger symptoms (breathing, chest pain, neck, rash, confusion, fainting, bleeding) | All no |
 
-**Doesn't know:** his mother's age when she was diagnosed; his paracetamol dose.
+**Doesn't know (volunteered in the same answer, so the sheet reliably has "could not answer" items):** his amlodipine strength; his mother's age when she was diagnosed.
 
 **Behaviour:** cooperative, brief. Confirms the read-back. Doesn't ask for a diagnosis or a dose, so the video stays focused.
 
@@ -84,7 +85,7 @@ Male, so the obstetric add-on doesn't lengthen the call. Answers are short so th
 
 **HOPI:** Fever of gradual onset 4 days ago, intermittent, worse in the evenings, max 38.9 °C (thermometer), mild chills, no rigors; partial relief with paracetamol. Dry cough from day 2. Generalised body aches for 2 days. Appetite reduced, sleep poor.
 
-**PH:** Hypertension ~5 years. **Rx H:** Amlodipine 5 mg once daily; paracetamol for this illness (dose unknown). **Allergies:** none (explicitly denied).
+**PH:** Hypertension ~5 years. **Rx H:** Amlodipine once daily (strength unknown); paracetamol for this illness, partial relief. **Allergies:** none (explicitly denied).
 
 **FH:** Mother: hypertension (age at diagnosis unknown). Father well.
 
@@ -92,7 +93,7 @@ Male, so the obstetric add-on doesn't lengthen the call. Answers are short so th
 
 **Red-flag screen:** breathing difficulty, chest pain, neck stiffness, rash, confusion, fainting and bleeding all denied.
 
-**Couldn't answer:** mother's age at diagnosis; paracetamol dose.
+**Couldn't answer:** amlodipine strength; mother's age at diagnosis.
 
 **Suggested investigation (physician only):** CBC (fever ≥ 3 days).
 

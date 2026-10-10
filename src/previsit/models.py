@@ -79,6 +79,7 @@ class Intake(SQLModel, table=True):
     state: IntakeState = IntakeState.NOT_STARTED
     informant: str = "self"
     module_ids: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    readback_pending: bool = False  # two-step read-back: holding line said, summary not yet read back
     pending_clarification: str | None = None
     identity_attempts: int = 0
     started_at: datetime | None = None

@@ -4,6 +4,7 @@ Every patient turn, in every state (including after completion), goes through re
 """
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from sqlmodel import Session, func, select
@@ -33,6 +34,7 @@ MAX_TURN_CHARS = 2000
 MAX_IDENTITY_ATTEMPTS = 2
 MAX_READBACK_ROUNDS = 3
 READBACK_QUESTION = "Is that right, or is there anything you'd like to correct or add?"
+READBACK_HOLDING = "Thank you, that's all my questions. Give me a moment to put together the main points to read back to you."
 ANYTHING_ELSE_QUESTION = "Is there anything else you'd like your doctor to know?"
 IDENTITY_QUESTION = (
     "Thank you. First, please tell me the patient's full name and date of birth. "
@@ -45,12 +47,31 @@ class AgentReply:
     text: str
     state: IntakeState
     ended: bool = False
+    follow_up: bool = False  # the client should call read_back() next (two-step read-back, web only)
+
+
+@dataclass(frozen=True)
+class SheetJob:
+    """Sheet (re)extraction that can run after the reply has been sent (F.2)."""
+
+    intake_id: int
+    partial: bool = False
+    suggestions: bool = False
 
 
 class IntakeEngine:
-    def __init__(self, llm: LLMClient, settings: Settings) -> None:
+    def __init__(
+        self, llm: LLMClient, settings: Settings, *,
+        defer: Callable[[SheetJob], None] | None = None,
+        on_candidate: Callable[[str], None] | None = None,
+    ) -> None:
+        """`defer` schedules slow sheet work after the reply (web); without it everything runs inline (evals, tests).
+        `on_candidate` sees each AI utterance before the scope guard, so speech can be prepared in parallel; the
+        caller must only play audio for text the guard returned."""
         self.llm = llm
         self.settings = settings
+        self.defer = defer
+        self.on_candidate = on_candidate
 
     # ----- public API -------------------------------------------------------------------------------
 
@@ -106,6 +127,31 @@ class IntakeEngine:
         except LLMError:
             return self._fail(session, intake, "Model unavailable during intake")
 
+    def read_back(self, session: Session, intake: Intake) -> AgentReply:
+        """Second step of the two-step read-back: builds the sheet and reads the main points back."""
+        if intake.state is not IntakeState.READBACK or not intake.readback_pending:
+            return AgentReply(self._last_agent_text(session, intake), intake.state, intake.state.is_terminal)
+        try:
+            sheet = self._save_sheet(session, intake, self._context(session, intake), modules_for(intake.module_ids))
+        except LLMError:
+            return self._fail(session, intake, "Model unavailable during read-back")
+        intake.readback_pending = False
+        session.add(intake)
+        return self._say(session, intake, f"{readback_text(sheet)} {READBACK_QUESTION}")
+
+    def run_sheet_job(self, session: Session, job: SheetJob) -> None:
+        intake = session.get(Intake, job.intake_id)
+        modules = modules_for(intake.module_ids)
+        sheet = self._save_sheet(session, intake, self._context(session, intake), modules, partial=job.partial)
+        if job.suggestions:
+            self._save_suggestions(session, intake, modules, sheet)
+
+    def _sheet_work(self, session: Session, job: SheetJob) -> None:
+        if self.defer is not None:
+            self.defer(job)
+        else:
+            self.run_sheet_job(session, job)
+
     # ----- state handlers ---------------------------------------------------------------------------
 
     def _advance(
@@ -118,6 +164,8 @@ class IntakeEngine:
         if intake.state is IntakeState.INTERVIEW:
             return self._on_interview(session, intake, ctx, modules)
         if intake.state is IntakeState.READBACK:
+            if intake.readback_pending:
+                return self.read_back(session, intake)
             return self._on_readback(session, intake, ctx, modules, text)
         return self._on_after_complete(session, intake, ctx, modules, text)
 
@@ -183,9 +231,14 @@ class IntakeEngine:
         if not step.interview_complete:
             return self._say_guarded(session, intake, step.utterance)
         modules = modules_for(intake.module_ids)
-        sheet = self._save_sheet(session, intake, ctx, modules)
         intake.state = IntakeState.READBACK
         session.add(intake)
+        if self.defer is not None:
+            # Two-step: say the interviewer's thank-you now, read back once the sheet is built (F.2).
+            intake.readback_pending = True
+            reply = self._say(session, intake, READBACK_HOLDING)
+            return AgentReply(reply.text, reply.state, follow_up=True)
+        sheet = self._save_sheet(session, intake, ctx, modules)
         return self._say(session, intake, f"Thank you. {readback_text(sheet)} {READBACK_QUESTION}")
 
     def _on_readback(
@@ -206,8 +259,7 @@ class IntakeEngine:
         decision = gates.classify_yes_no(self.llm, "consent", ANYTHING_ELSE_QUESTION, text)
         if decision == "no":
             return self._say(session, intake, "Thank you. Take care, and goodbye.", ended=True)
-        sheet = self._save_sheet(session, intake, ctx, modules)
-        self._save_suggestions(session, intake, modules, sheet)
+        self._sheet_work(session, SheetJob(intake.id, suggestions=True))
         return self._say(
             session, intake,
             "Thank you, I've added that for your doctor. You can end the call whenever you're ready.",
@@ -217,13 +269,21 @@ class IntakeEngine:
     def _complete(
         self, session: Session, intake: Intake, ctx: PatientContext, modules: list[ComplaintModule]
     ) -> AgentReply:
-        sheet = self._save_sheet(session, intake, ctx, modules)
+        latest = self._latest_sheet(session, intake) if self.defer is not None else None
+        if latest is not None:
+            # Advice needs only the chief complaints, which the read-back sheet has; the final sheet and test
+            # suggestions are rebuilt after the reply (F.2).
+            sheet = latest
+            self.defer(SheetJob(intake.id, suggestions=True))
+        else:
+            sheet = self._save_sheet(session, intake, ctx, modules)
         recs = select_general_recs(self.llm, modules, sheet, ctx)
         outbox.send_patient_message(
             session, intake.appointment_id, MessageKind.GENERAL_RECS, recs.render(self.settings), actor="system",
             meta={"item_ids": [item.id for item in recs.items]},
         )
-        self._save_suggestions(session, intake, modules, sheet)
+        if latest is None:
+            self._save_suggestions(session, intake, modules, sheet)
         intake.state = IntakeState.COMPLETE
         intake.ended_at = utcnow()
         session.add(intake)
@@ -251,6 +311,9 @@ class IntakeEngine:
         intake.ended_at = utcnow()
         session.add(intake)
         reply = self._say(session, intake, escalation.escalation_message(rf_ids, ctx, self.settings), ended=True)
+        if self.defer is not None:
+            self.defer(SheetJob(intake.id, partial=True))  # the emergency message must not wait for the sheet
+            return reply
         try:
             self._save_sheet(session, intake, ctx, modules, partial=True)
         except LLMError:
@@ -313,6 +376,8 @@ class IntakeEngine:
         return AgentReply(text, intake.state, ended or intake.state.is_terminal)
 
     def _say_guarded(self, session: Session, intake: Intake, text: str) -> AgentReply:
+        if self.on_candidate is not None:
+            self.on_candidate(text)
         ctx = self._context(session, intake)
         redirect = redirect_for(ctx.first_name if ctx.is_caregiver_call else None)
         result = check_agent_utterance(self.llm, text, redirect)
@@ -353,6 +418,13 @@ class IntakeEngine:
             name=patient.name, dob=patient.dob, sex=patient.sex, on_date=appointment.scheduled_at.date(),
             informant=intake.informant, physician_name=appointment.physician_name,
         )
+
+    def _latest_sheet(self, session: Session, intake: Intake) -> HistorySheet | None:
+        record = session.exec(
+            select(HistorySheetRecord).where(HistorySheetRecord.intake_id == intake.id)
+            .order_by(HistorySheetRecord.version.desc())
+        ).first()
+        return HistorySheet.model_validate(record.data) if record else None
 
     def _save_sheet(
         self, session: Session, intake: Intake, ctx: PatientContext, modules: list[ComplaintModule], partial: bool = False
