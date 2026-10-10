@@ -1,6 +1,6 @@
 # Progress
 
-Plan version: v0.6 · Status values: `todo` · `doing` · `done` · `blocked: <reason>`
+Plan version: v0.7 · Status values: `todo` · `doing` · `done` · `blocked: <reason>`
 Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / clinician / decision)
 
 ## Phase 0: Foundations
@@ -92,10 +92,17 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | D.1 | Demo-ready site: one-command start, clean reset script, synthetic demo patients (incl. backdated temperature readings) | B | done: `uv run --group demo python -m demo.serve` (resets, seeds, serves :8010 in demo mode) |
 | D.2 | Decide hosting: local only, or a URL clinicians/researchers can open | U | todo |
 | D.3 | Demo patient scripts (portal sign-in → fever full flow, + stiff-neck escalation); run each ≥3× through the simulator to confirm they reliably hit every scene | T | done |
-| D.4 | Automated recorder in `demo/`: Playwright drives physician + patient windows, records each | B | todo |
-| D.5 | Assemble video with ffmpeg: side by side, captions on every step, AI voice audio, pauses-shortened note, closing limits card; check extracted frames | B | todo |
+| D.4 | Automated recorder in `demo/`: Playwright drives physician + patient windows, records each | B | done: `python -m demo.record` films the real app on a stage (browser + phone), screencast frames, simulated patients with synthetic voices |
+| D.5 | Assemble video with ffmpeg: side by side, captions on every step, AI voice audio, pauses-shortened note, closing limits card; check extracted frames | B | done: `python -m demo.assemble` → `demo/output/PATH-demo.mp4` (175.8 s, 1080p30, voices + ducked music bed). User asked for an ideal-vision film: no limits card; AI waits cut, fast-forwards badged on screen |
 | D.6 | Caption review: every claim true vs code and latest eval results; wording right for clinicians | T | blocked: paused until the video is recorded (P-003); first pass in evals/caption_review.md |
 | D.7 | Final review: user watches and accepts the video | U | todo |
+
+## Rename to PATH (P-006)
+| ID | Task | Owner | Status |
+|---|---|---|---|
+| N.1 | README rewritten for PATH (what it is, safety rules, current run instructions, current auth, status/limits) | B | todo |
+| N.2 | Product name "PATH" in the UI (page titles, headers, portal, emails/messages copy), pyproject description, CLAUDE.md heading | B | done: wordmark, page titles, portal header, the assistant's greeting ("I'm PATH…"), FastAPI title, pyproject, CLAUDE.md heading |
+| N.3 | GitHub repo description/topics updated to PATH (repo rename only if the user confirms) | B | todo |
 
 ## Build follow-ups (found while building)
 | ID | Task | Owner | Status |

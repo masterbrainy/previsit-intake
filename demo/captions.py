@@ -1,104 +1,67 @@
-"""Every on-screen caption in the demo video. Test & Support reviews each claim against the code (PROGRESS D.6).
+"""Every word on screen in the PATH demo film (demo/record.py). Test & Support reviews each claim against the code.
 
-Each caption: (scene label, what is happening, safety rule shown or "").
+A caption is (chapter chip, what is happening, safety rule or ""). Cards are shown full screen between chapters.
 """
 
-INTRO_TITLE = "Pre-visit intake: prototype walkthrough"
-INTRO_LINES = (
-    "Recorded automatically from the running prototype, with a synthetic patient.",
-    "The patient's typed answers come from a scripted case played by a second AI.",
-    "Not for clinical use. Clinical content is a draft pending clinician sign-off.",
-)
-PAUSES_NOTE = "Synthetic patients · pauses while the AI responds are shortened"
+TITLE = {
+    "kicker": "PATH · pre-visit intake",
+    "title": "The history is taken <em>before</em> the patient walks in.",
+    "lede": "PATH is a voice assistant that takes a patient's history at home and hands the doctor a structured, "
+            "cited history sheet. Nothing medical reaches the patient without the doctor's approval.",
+}
 
-BOOKING = ("1 · Booking", "The physician books an appointment. The system creates a private link for the patient.", "")
-OPEN_LINK = (
-    "1 · Booking",
-    "The patient opens the private link. In a pilot it would arrive by SMS; SMS is not connected in this prototype.",
-    "",
-)
-CONSENT = (
-    "2 · Intake",
-    "The assistant explains it is automated, not a doctor, that the call is recorded and shared, and asks for consent.",
-    "",
-)
-IDENTITY = ("2 · Intake", "Identity check: the name and date of birth must match the booking before any history is taken.", "")
-INTERVIEW = (
-    "2 · Intake",
-    "Adaptive history taking: each answer is checked for red-flag symptoms first, then the next question is chosen.",
-    "Every patient turn is screened for emergencies before the interview continues",
-)
-FAST_FORWARD = (
-    "2 · Intake",
-    "Fast-forward ×4 (speech muted): the interview continues through the remaining history sections and the red-flag screen.",
-    "Every patient turn is screened for emergencies before the interview continues",
-)
-READBACK = ("2 · Intake", "Read-back: the assistant summarises the main points and asks the patient to correct anything.", "")
-ADVICE = (
-    "2 · Intake",
-    "General self-care advice, chosen only from a clinician-authored library, ending with when to go to the emergency department.",
-    "No diagnosis, no medication advice",
-)
-DASHBOARD = ("3 · History sheet", "The physician's dashboard shows the intake is complete.", "")
-SHEET = (
-    "3 · History sheet",
-    "The history sheet follows the standard structure: chief complaints in order of onset, HOPI, past, treatment, family and personal history.",
-    "",
-)
-CITATION = (
-    "3 · History sheet",
-    "Every line cites the transcript turn it came from. Clicking a citation jumps to the patient's own words.",
-    "Statements without a valid citation are dropped automatically",
-)
-SCREEN = ("3 · History sheet", "The red-flag screen and anything the patient could not answer are listed explicitly.", "")
-SUGGESTED = (
-    "4 · Approval gate",
-    "A suggested test (CBC) with its rationale and the module rule that produced it. Only the physician sees this.",
-    "Nothing medical reaches the patient without physician approval",
-)
-PATIENT_NOTHING = ("4 · Approval gate", "The patient's page shows no test: suggestions are invisible to patients.", "")
-APPROVED = (
-    "4 · Approval gate",
-    "The physician approves. The patient still sees nothing until the physician also presses send.",
-    "There is no auto-approval and no approval on timeout",
-)
-SENT = ("4 · Approval gate", "After the physician sends it, the patient sees the test and its instructions.", "")
-TEMPS = (
-    "5 · Symptom log",
-    "The patient logs a temperature. The two earlier readings were pre-entered (backdated) for this demo.",
-    "",
-)
-TEMPS_DOCTOR = ("5 · Symptom log", "The physician sees the readings as a table and chart on the patient's page.", "")
-UPLOAD = ("6 · Lab result", "The patient uploads the lab report (a synthetic image).", "")
-RESULT = (
-    "6 · Lab result",
-    "The physician sees the report exactly as issued, and is alerted that it arrived.",
-    "Results are never sent to the AI and never interpreted by it",
-)
-RED_OPEN = ("7 · Red-flag stop", "A second synthetic patient starts their intake.", "")
-RED_INTERVIEW = (
-    "7 · Red-flag stop",
-    "The patient describes their symptoms. Each answer is screened for emergency signs first.",
-    "Every patient turn is screened for emergencies before the interview continues",
-)
-RED_STOP = (
-    "7 · Red-flag stop",
-    "Fever with a stiff neck is a red flag: the intake stops and the patient is told to seek emergency care now.",
-    "Red flags stop the intake; the escalation wording is fixed, not AI-written",
-)
-RED_STAFF = (
-    "7 · Red-flag stop",
-    "Clinic staff are alerted immediately. The partial sheet is marked INTAKE STOPPED, and no advice or tests are generated.",
-    "",
-)
-RED_PATIENT = ("7 · Red-flag stop", "The patient's page shows only the emergency instruction.", "")
+CHAPTERS = {
+    1: {"num": 1, "title": "The patient books", "lede": "Online, in a minute. PATH suggests the right doctor."},
+    2: {"num": 2, "title": "The pre-visit call", "lede": "At home, before the visit, PATH takes the full history by voice."},
+    3: {"num": 3, "title": "The doctor reviews", "lede": "Each doctor sees only their own patients, with the history ready."},
+    4: {"num": 4, "title": "The safety net", "lede": "Red-flag symptoms stop the call and send the patient to emergency care."},
+}
 
-LIMITS_TITLE = "Limits of this prototype"
-LIMITS_LINES = (
-    "Clinical content (red flags, fever module, advice library, test rules) is a DRAFT pending clinician sign-off.",
-    "Safety evaluation on {n_scenarios} simulated cases: red-flag recall {recall}; key-fact accuracy {accuracy} (target 90%); "
-    "fabricated facts {fabricated} (target 0).",
-    "One shared physician login; no individual accounts yet.",
-    "Browser channel only: no phone calls or SMS yet.",
-    "Synthetic patients only. Not for clinical use.",
-)
+C1 = "01 · Patient books"
+SIGN_IN = (C1, "The patient signs in with just a phone number. A one-time code arrives by text.", "")
+DETAILS = (C1, "First visit? They add their details once.", "")
+REASON = (C1, "They say what the visit is about.", "")
+RECOMMEND = (C1, "PATH recommends doctors and explains each match. The patient chooses a doctor and a time.", "")
+BOOKED = (C1, "The booking appears on the hospital's overview straight away.", "")
+
+C2 = "02 · Pre-visit call"
+CONSENT = (C2, "PATH introduces itself as an automated assistant, not a doctor, and asks for consent.", "")
+IDENTITY = (C2, "Fast-forward: PATH checks the name and date of birth against the booking.", "")
+INTERVIEW = (C2, "Then it takes the history, choosing each question from the last answer.",
+             "Every answer is screened for emergency signs first")
+FAST_FORWARD = (C2, "Fast-forward: symptoms, past illnesses, medicines, allergies, family and social history.",
+                "Every answer is screened for emergency signs first")
+READBACK = (C2, "PATH reads back the main points so the patient can correct anything.", "")
+ADVICE = (C2, "The call ends with general self-care advice and clear signs to seek urgent care.",
+          "No diagnosis. No prescribing. No dosing.")
+
+C3 = "03 · Doctor reviews"
+DOCTOR_SIGN_IN = (C3, "Dr. Rao signs in to a personal account with a one-time code.", "")
+MY_PATIENTS = (C3, "Only patients booked with Dr. Rao, or referred to Dr. Rao by another doctor, appear here.", "")
+SHEET = (C3, "The history sheet is ready before the visit: complaints in order, history, medicines and allergies.", "")
+CITATION = (C3, "Every line links back to the patient's own words in the transcript.", "Statements without a source are dropped")
+SUGGESTED = (C3, "PATH suggests investigations, with the reason, to the doctor only.",
+             "Nothing medical reaches the patient without the doctor's approval")
+PATIENT_WAITS = (C3, "The patient has the self-care advice, but no test yet.", "")
+APPROVE = (C3, "The doctor approves the test and sends it.", "No auto-approval, ever")
+SENT = (C3, "Only now does the test, with its instructions, appear on the patient's phone.", "")
+
+C4 = "04 · Safety net"
+RED_START = (C4, "Another patient starts a pre-visit call.", "")
+RED_INTERVIEW = (C4, "Each answer is checked for emergency signs before the next question.",
+                 "Every answer is screened for emergency signs first")
+RED_STOP = (C4, "Fever with a stiff neck and light sensitivity is a red flag. PATH stops and gives fixed emergency instructions.",
+            "Emergency wording is fixed, never written by AI")
+RED_ALERT = (C4, "The hospital is alerted at once, with the patient's contact details.", "")
+
+END = {
+    "kicker": "PATH",
+    "title": "Better first visits, <em>safely</em>.",
+    "lines": [
+        ("01", "The history is taken at home, by voice, before the visit."),
+        ("02", "Doctors get a structured, cited history sheet and suggested tests."),
+        ("03", "Nothing medical reaches the patient without the doctor's approval."),
+        ("04", "Red flags stop the call and send the patient to emergency care."),
+    ],
+    "foot": "All patients, doctors and the clinic shown are fictional.",
+}

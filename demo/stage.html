@@ -2,82 +2,226 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Demo stage</title>
+<title>Pre-visit intake · film stage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,750&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
+  :root {
+    --navy: #0a1520; --ink: #e8eef3; --muted: #8fa3b5; --teal: #3cc2b6; --teal-deep: #0b6b66; --yellow: #f2c230;
+    --display: "Bricolage Grotesque", system-ui, sans-serif; --body: "Atkinson Hyperlegible", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, monospace;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
   * { box-sizing: border-box; }
-  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #e9e7e1;
-    font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; color: #1d1d1b; }
-  .labels { position: absolute; top: 0; left: 0; right: 0; height: 56px; display: flex; align-items: center; padding: 0 24px; }
-  .label { font-size: 17px; font-weight: 600; color: #3f3e3a; letter-spacing: 0.01em; }
-  .label small { font-weight: 400; color: #6d6c66; margin-left: 8px; }
-  #docLabel { position: absolute; left: 24px; }
-  #ptLabel { position: absolute; left: 1332px; }
-  #note { position: absolute; right: 24px; font-size: 14px; color: #6d6c66; background: #fff; border: 1px solid #d6d4cc;
-    border-radius: 999px; padding: 6px 14px; }
-  iframe { position: absolute; top: 56px; height: 800px; border: 1px solid #cfcdc4; border-radius: 12px; background: #f6f5f1; }
-  #doc { left: 24px; width: 1284px; }
-  #pt { left: 1332px; width: 564px; border-radius: 28px; }
-  #captionBar { position: absolute; left: 0; right: 0; top: 868px; bottom: 0; background: #1d1d1b; color: #fff;
-    padding: 22px 40px; display: flex; flex-direction: column; gap: 10px; }
-  #scene { font-size: 16px; text-transform: uppercase; letter-spacing: 0.12em; color: #9fc6e2; font-weight: 600; }
-  #caption { font-size: 30px; line-height: 1.3; font-weight: 500; }
-  #rule { align-self: flex-start; font-size: 18px; color: #1d1d1b; background: #f2c14e; border-radius: 6px; padding: 5px 12px;
-    font-weight: 600; }
-  #rule:empty { display: none; }
-  #card { position: absolute; inset: 0; background: #1d1d1b; color: #fff; display: none; flex-direction: column;
-    justify-content: center; padding: 0 180px; z-index: 50; }
-  #card h1 { font-size: 52px; font-weight: 600; margin: 0 0 36px; letter-spacing: -0.01em; }
-  #card ul { margin: 0; padding-left: 28px; }
-  #card li { font-size: 30px; line-height: 1.45; margin: 14px 0; color: #ecebe6; }
-  #card .foot { margin-top: 48px; font-size: 22px; color: #9a9890; }
-  #ff { position: absolute; top: 470px; left: 1332px; width: 564px; text-align: center; z-index: 30; display: none; }
-  #ff span { display: inline-block; background: rgba(29,29,27,0.88); color: #fff; font-size: 30px; font-weight: 700;
-    padding: 14px 26px; border-radius: 14px; letter-spacing: 0.02em; }
-  #cursor { position: absolute; z-index: 40; width: 26px; height: 26px; left: 900px; top: 500px; pointer-events: none;
-    transition: left 0.45s ease, top 0.45s ease; filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.35)); }
-  #cursor.click::after { content: ""; position: absolute; left: -14px; top: -14px; width: 28px; height: 28px; border-radius: 50%;
-    border: 3px solid #2a78d6; animation: ping 0.5s ease-out; }
-  @keyframes ping { from { transform: scale(0.4); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; color: var(--ink); font-family: var(--body);
+    background: radial-gradient(900px 600px at 8% -10%, rgba(60, 194, 182, 0.18), transparent 70%),
+      radial-gradient(800px 600px at 105% 110%, rgba(242, 194, 48, 0.10), transparent 70%), var(--navy); }
+  body::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.35;
+    background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 48px 48px; }
+
+  /* top bar */
+  .topbar { position: absolute; left: 48px; right: 48px; top: 26px; height: 44px; display: flex; align-items: center; gap: 28px; }
+  .brand { display: flex; align-items: center; gap: 12px; font-family: var(--display); font-weight: 750; font-size: 20px; letter-spacing: -0.01em; }
+  .mark { position: relative; width: 32px; height: 32px; border-radius: 9px; background: var(--teal-deep); box-shadow: inset 0 -3px 0 var(--yellow); }
+  .mark::before, .mark::after { content: ""; position: absolute; inset: 0; margin: auto; background: #fff; border-radius: 2px; }
+  .mark::before { width: 15px; height: 5px; } .mark::after { width: 5px; height: 15px; }
+  .steps { display: flex; gap: 6px; margin-left: auto; }
+  .step { display: flex; align-items: center; gap: 10px; padding: 8px 16px 8px 10px; border-radius: 999px; font-size: 14px; font-weight: 700;
+    color: var(--muted); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); transition: all 0.5s var(--ease); }
+  .step b { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font-family: var(--mono); font-size: 11px;
+    font-weight: 500; background: rgba(255,255,255,0.08); transition: all 0.5s var(--ease); }
+  .step.on { color: #0a1520; background: var(--ink); }
+  .step.on b { background: var(--teal-deep); color: #fff; }
+  .step.done { color: var(--ink); }
+  .step.done b { background: var(--teal); color: #0a1520; }
+
+  /* the two devices */
+  .label { position: absolute; font-family: var(--mono); font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+    display: flex; align-items: center; gap: 10px; transition: opacity 0.6s var(--ease); }
+  .label i { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 0 4px rgba(60,194,182,0.18); }
+  #docLabel { left: 52px; top: 92px; }
+  #ptLabel { left: 1452px; top: 1000px; }
+
+  .device { position: absolute; transition: transform 0.9s var(--ease), opacity 0.7s var(--ease), filter 0.7s var(--ease); }
+  .device.dim { opacity: 0.38; filter: saturate(0.6); }
+  #browser { left: 48px; top: 122px; width: 1260px; height: 750px; border-radius: 16px; overflow: hidden; background: #f2f5f7;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.08); transform-origin: 50% 50%; }
+  .chrome { height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 16px; background: #e4e9ed; border-bottom: 1px solid #d3dbe1; }
+  .chrome .dot { width: 12px; height: 12px; border-radius: 50%; background: #c8d0d6; }
+  .chrome .dot:nth-child(1) { background: #ff5f57; } .chrome .dot:nth-child(2) { background: #febc2e; } .chrome .dot:nth-child(3) { background: #28c840; }
+  .url { margin: 0 auto; width: 560px; height: 28px; border-radius: 8px; background: #fff; color: #4a5b6b; font-size: 13.5px;
+    display: flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--body); }
+  .url svg { width: 12px; height: 12px; }
+  #viewport { position: absolute; left: 0; top: 44px; width: 1260px; height: 706px; overflow: hidden; }
+  #doc { position: absolute; left: 0; top: 0; width: 1260px; height: 706px; border: 0; background: #f2f5f7;
+    transition: transform 0.9s var(--ease); }
+
+  #phone { left: 1430px; top: 112px; width: 412px; height: 872px; border-radius: 64px; padding: 13px; background: #05090d;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 0 0 2px #2a3640, inset 0 0 0 2px #10181f; }
+  .screen { position: relative; width: 386px; height: 846px; border-radius: 52px; overflow: hidden; background: #f2f5f7; }
+  .statusbar { position: absolute; z-index: 3; left: 0; right: 0; top: 0; height: 50px; display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 34px 0 40px; color: #0f1e2e; font-weight: 700; font-size: 15px; font-family: -apple-system, var(--body);
+    background: linear-gradient(#f2f5f7 70%, rgba(242,245,247,0)); }
+  .island { position: absolute; left: 50%; top: 11px; width: 118px; height: 34px; margin-left: -59px; border-radius: 20px; background: #05090d; }
+  .sb-icons { display: flex; gap: 6px; align-items: center; }
+  .sb-icons span { display: block; background: #0f1e2e; border-radius: 2px; }
+  #pt { position: absolute; left: 0; top: 50px; width: 386px; height: 796px; border: 0; background: #f2f5f7; }
+  .homebar { position: absolute; z-index: 3; bottom: 8px; left: 50%; width: 134px; height: 5px; margin-left: -67px; border-radius: 3px; background: #0f1e2e; opacity: 0.85; }
+
+  /* SMS notification sliding into the phone */
+  #sms { position: absolute; z-index: 5; left: 10px; right: 10px; top: 12px; padding: 12px 14px; border-radius: 22px;
+    background: rgba(250, 251, 252, 0.94); backdrop-filter: blur(20px); color: #0f1e2e; font-family: -apple-system, var(--body);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.18); transform: translateY(-140%); transition: transform 0.6s var(--ease); display: flex; gap: 11px; }
+  #sms.show { transform: translateY(0); }
+  #sms .app { flex: none; width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(#5bf675, #18c23c); display: grid; place-items: center; }
+  #sms .app svg { width: 22px; height: 22px; }
+  #sms .top { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; }
+  #sms .top span { font-weight: 400; color: #6b7a87; }
+  #sms p { margin: 2px 0 0; font-size: 13.5px; line-height: 1.35; }
+
+  /* lower third */
+  #lower { position: absolute; left: 48px; top: 896px; width: 1260px; height: 150px; }
+  .cap { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 10px; opacity: 0; transform: translateY(14px);
+    transition: opacity 0.45s var(--ease), transform 0.6s var(--ease); }
+  .cap.show { opacity: 1; transform: none; }
+  .chip { align-self: flex-start; font-family: var(--mono); font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--teal); }
+  .cap .text { font-family: var(--display); font-weight: 650; font-size: 31px; line-height: 1.22; letter-spacing: -0.015em; max-width: 1220px; }
+  .rule { align-self: flex-start; display: flex; align-items: center; gap: 10px; padding: 7px 14px 7px 10px; border-radius: 10px;
+    background: var(--yellow); color: #0a1520; font-weight: 700; font-size: 16px; }
+  .rule::before { content: ""; width: 18px; height: 18px; border-radius: 5px; background: #0a1520;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2l8 3v6c0 5-3.5 9.5-8 11-4.5-1.5-8-6-8-11V5z'/%3E%3C/svg%3E") center / 16px no-repeat; }
+
+  /* fast-forward chip on the phone */
+  #ff { position: absolute; z-index: 6; left: 50%; top: 92px; transform: translate(-50%, -20px); opacity: 0; transition: all 0.5s var(--ease);
+    display: flex; align-items: center; gap: 10px; padding: 10px 18px; border-radius: 999px; background: rgba(10, 21, 32, 0.92); color: #fff;
+    font-weight: 700; font-size: 15px; white-space: nowrap; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+  #ff.show { opacity: 1; transform: translate(-50%, 0); }
+  #ff svg { width: 18px; height: 18px; fill: var(--yellow); }
+
+  /* full-screen cards */
+  #card { position: absolute; inset: 0; z-index: 50; display: flex; flex-direction: column; justify-content: center; padding: 0 200px;
+    background: radial-gradient(900px 700px at 15% 0%, rgba(60,194,182,0.22), transparent 70%), var(--navy);
+    opacity: 0; pointer-events: none; transition: opacity 0.6s var(--ease); }
+  #card.show { opacity: 1; }
+  #card > * { opacity: 0; transform: translateY(24px); transition: opacity 0.7s var(--ease), transform 0.9s var(--ease); }
+  #card.show > * { opacity: 1; transform: none; }
+  #card.show > *:nth-child(2) { transition-delay: 0.12s; } #card.show > *:nth-child(3) { transition-delay: 0.24s; }
+  #card.show > *:nth-child(4) { transition-delay: 0.36s; }
+  #card .kicker { font-family: var(--mono); font-size: 18px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--teal); margin-bottom: 26px;
+    display: flex; align-items: center; gap: 16px; }
+  #card .kicker .mark { width: 40px; height: 40px; border-radius: 11px; }
+  #card .kicker .mark::before { width: 19px; height: 6px; } #card .kicker .mark::after { width: 6px; height: 19px; }
+  #card h1 { margin: 0; font-family: var(--display); font-size: 88px; font-weight: 750; letter-spacing: -0.04em; line-height: 1.0; max-width: 1400px; }
+  #card h1 em { font-style: normal; color: var(--yellow); }
+  #card .lede { margin: 30px 0 0; font-size: 28px; line-height: 1.45; color: #b9c7d3; max-width: 1180px; }
+  #card ul { list-style: none; margin: 40px 0 0; padding: 0; display: grid; gap: 18px; max-width: 1300px; }
+  #card li { display: flex; gap: 18px; align-items: baseline; font-size: 28px; line-height: 1.4; color: #dfe7ee; }
+  #card li b { flex: none; font-family: var(--mono); font-size: 16px; color: var(--yellow); letter-spacing: 0.1em; }
+  #card .foot { margin-top: 56px; font-family: var(--mono); font-size: 15px; letter-spacing: 0.08em; color: #6f8496; }
+  #card.chapter { align-items: flex-start; }
+  #card.chapter .num { font-family: var(--display); font-size: 220px; font-weight: 750; line-height: 0.85; letter-spacing: -0.06em;
+    color: transparent; -webkit-text-stroke: 2px rgba(60,194,182,0.7); margin-bottom: 18px; }
+
+  /* cursor */
+  #cursor { position: absolute; z-index: 40; left: 960px; top: 1200px; width: 28px; height: 28px; pointer-events: none;
+    transition: left 0.7s var(--ease), top 0.7s var(--ease), opacity 0.4s; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.4)); }
+  #cursor .ring { position: absolute; left: -18px; top: -18px; width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--teal); opacity: 0; }
+  #cursor.click .ring { animation: ping 0.55s ease-out; }
+  @keyframes ping { from { transform: scale(0.3); opacity: 1; } to { transform: scale(1.5); opacity: 0; } }
 </style>
 </head>
 <body>
-  <div class="labels">
-    <div class="label" id="docLabel">Physician <small>dashboard</small></div>
-    <div class="label" id="ptLabel">Patient <small>phone browser</small></div>
-    <div id="note"></div>
+  <div class="topbar">
+    <div class="brand"><span class="mark"></span>PATH</div>
+    <div class="steps" id="steps">
+      <div class="step"><b>1</b>Patient books</div>
+      <div class="step"><b>2</b>Pre-visit call</div>
+      <div class="step"><b>3</b>Doctor reviews</div>
+      <div class="step"><b>4</b>Safety net</div>
+    </div>
   </div>
-  <iframe id="doc" name="doc" src="about:blank"></iframe>
-  <iframe id="pt" name="pt" src="about:blank"></iframe>
-  <div id="captionBar">
-    <div id="scene"></div>
-    <div id="caption"></div>
-    <div id="rule"></div>
+
+  <div class="label" id="docLabel"><i></i><span id="docRole">Hospital · front desk</span></div>
+  <div class="device" id="browser">
+    <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <div class="url"><svg viewBox="0 0 24 24" fill="none" stroke="#4a5b6b" stroke-width="2.5"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span id="url">riverside.health</span></div>
+    </div>
+    <div id="viewport"><iframe id="doc" name="doc" src="about:blank"></iframe></div>
   </div>
-  <div id="ff"><span>⏩ Fast-forward ×4 · speech muted</span></div>
+
+  <div class="device" id="phone">
+    <div class="screen">
+      <div class="statusbar"><span>9:41</span><span class="island"></span>
+        <span class="sb-icons"><span style="width:3px;height:6px"></span><span style="width:3px;height:8px"></span><span style="width:3px;height:10px"></span><span style="width:3px;height:12px"></span><span style="width:24px;height:12px;border-radius:4px;margin-left:4px"></span></span></div>
+      <div id="sms"><div class="app"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 3C6.5 3 2 6.6 2 11c0 2.4 1.3 4.6 3.4 6.1L4.5 21l4.2-2.2c1 .3 2.1.4 3.3.4 5.5 0 10-3.6 10-8S17.5 3 12 3z"/></svg></div>
+        <div style="flex:1"><div class="top">Riverside Clinic <span>now</span></div><p id="smsText"></p></div></div>
+      <div id="ff"><svg viewBox="0 0 24 24"><path d="M3 5l9 7-9 7zM12 5l9 7-9 7z"/></svg><span id="ffText">Fast-forward</span></div>
+      <iframe id="pt" name="pt" src="about:blank"></iframe>
+      <div class="homebar"></div>
+    </div>
+  </div>
+  <div class="label" id="ptLabel"><i></i><span>Patient · phone</span></div>
+
+  <div id="lower"></div>
   <div id="card"></div>
-  <svg id="cursor" viewBox="0 0 24 24"><path d="M5 3L19 12L12 13L9 20L5 3Z" fill="white" stroke="black" stroke-width="1.5" stroke-linejoin="round"/></svg>
+  <div id="cursor"><svg viewBox="0 0 28 28" width="28" height="28"><path d="M6 3l16 11.5-7.2 1.3L11 23z" fill="#fff" stroke="#0a1520" stroke-width="1.6" stroke-linejoin="round"/></svg><span class="ring"></span></div>
+
 <script>
-  const esc = (t) => String(t).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const $ = (id) => document.getElementById(id);
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  let capId = 0;
   window.stage = {
-    note(text) { document.getElementById("note").textContent = text; },
-    caption(scene, text, rule) {
-      document.getElementById("scene").textContent = scene || "";
-      document.getElementById("caption").textContent = text || "";
-      document.getElementById("rule").textContent = rule ? `Safety rule: ${rule}` : "";
+    caption(chip, text, rule) {
+      const old = [...$("lower").children];
+      old.forEach((el) => { el.classList.remove("show"); setTimeout(() => el.remove(), 600); });
+      if (!text) return;
+      const el = document.createElement("div");
+      el.className = "cap"; el.id = `cap${++capId}`;
+      el.innerHTML = `<div class="chip">${esc(chip)}</div><div class="text">${esc(text)}</div>` + (rule ? `<div class="rule">${esc(rule)}</div>` : "");
+      $("lower").appendChild(el);
+      requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("show")));
     },
-    card(title, lines, foot) {
-      const el = document.getElementById("card");
-      if (!title) { el.style.display = "none"; return; }
-      el.innerHTML = `<h1>${esc(title)}</h1><ul>${lines.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>` +
-        (foot ? `<div class="foot">${esc(foot)}</div>` : "");
-      el.style.display = "flex";
+    step(n) {
+      [...$("steps").children].forEach((el, i) => { el.className = "step" + (i + 1 === n ? " on" : i + 1 < n ? " done" : ""); });
     },
-    ff(on) { document.getElementById("ff").style.display = on ? "block" : "none"; },
+    url(text) { $("url").textContent = text; },
+    role(text) { $("docRole").textContent = text; },
+    focus(side) {
+      $("browser").classList.toggle("dim", side === "pt");
+      $("phone").classList.toggle("dim", side === "doc");
+    },
+    zoom(scale, x, y) {
+      // zooms the page inside the browser window around the stage point (x, y); the window itself stays put
+      const d = $("doc");
+      if (!scale || scale === 1) { d.style.transform = ""; return; }
+      const left = $("browser").offsetLeft + $("viewport").offsetLeft, top = $("browser").offsetTop + $("viewport").offsetTop;
+      d.style.transformOrigin = `${x - left}px ${y - top}px`;
+      d.style.transform = `scale(${scale})`;
+    },
+    sms(text) { $("smsText").textContent = text; $("sms").classList.add("show"); setTimeout(() => $("sms").classList.remove("show"), 3800); },
+    ff(text) { if (text) $("ffText").textContent = text; $("ff").classList.toggle("show", !!text); },
+    card(kind, data) {
+      const el = $("card");
+      if (!kind) { el.classList.remove("show"); return; }
+      el.className = kind === "chapter" ? "chapter" : "";
+      if (kind === "chapter") {
+        el.innerHTML = `<div class="num">0${esc(data.num)}</div><h1>${esc(data.title)}</h1><p class="lede">${esc(data.lede)}</p>`;
+      } else {
+        el.innerHTML = `<div class="kicker"><span class="mark"></span>${esc(data.kicker)}</div><h1>${data.title}</h1>` +
+          (data.lede ? `<p class="lede">${esc(data.lede)}</p>` : "") +
+          (data.lines ? `<ul>${data.lines.map(([k, v]) => `<li><b>${esc(k)}</b><span>${esc(v)}</span></li>`).join("")}</ul>` : "") +
+          (data.foot ? `<div class="foot">${esc(data.foot)}</div>` : "");
+      }
+      requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("show")));
+    },
     cursor(x, y, click) {
-      const c = document.getElementById("cursor");
-      c.style.left = `${x}px`; c.style.top = `${y}px`;
+      const c = $("cursor");
+      c.style.left = `${x - 6}px`; c.style.top = `${y - 3}px`;
       if (click) { c.classList.remove("click"); void c.offsetWidth; c.classList.add("click"); }
     },
+    hideCursor() { $("cursor").style.top = "1200px"; },
   };
 </script>
 </body>

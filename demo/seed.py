@@ -46,12 +46,12 @@ def tomorrow_at(hour: int, minute: int = 0) -> datetime:
     return (datetime.now() + timedelta(days=1)).replace(hour=hour, minute=minute, second=0, microsecond=0)
 
 
-def reset(red_flag_case: DemoPatient | None = None) -> dict[str, int]:
+def reset(red_flag_case: DemoPatient | None = None, with_mid_intake: bool = True, clinic: str | None = None) -> dict[str, int]:
     """Deletes the demo database and uploads, then seeds fresh synthetic appointments."""
     if DEMO_DIR.exists():
         shutil.rmtree(DEMO_DIR)
     ensure_dirs()
-    settings = demo_settings()
+    settings = demo_settings(clinic) if clinic else demo_settings()
     engine = make_engine(settings.database_url)
     init_db(engine)
     ids: dict[str, int] = {}
@@ -68,6 +68,9 @@ def reset(red_flag_case: DemoPatient | None = None) -> dict[str, int]:
                 session, settings, "demo-seed", p.name, p.dob, p.sex, p.contact, doctor, tomorrow_at(10 + i), p.reason
             )
             ids[p.name] = appt.id
+        if not with_mid_intake:
+            engine.dispose()
+            return ids
         # A patient whose pre-visit call is nearly finished: a few calm answers complete it (no emergency).
         appt = create_appointment(session, settings, "demo-seed", mid_intake.NAME, mid_intake.DOB, mid_intake.SEX,
                                   mid_intake.CONTACT, doctors[mid_intake.DOCTOR], tomorrow_at(15), mid_intake.REASON)
