@@ -22,7 +22,7 @@
 {% else %}
   <h3>Chief complaints (chronological)</h3>
   {% if v.sheet.chief_complaints %}
-  <ol class="cc">{% for c in v.sheet.chief_complaints %}<li>{{ c.complaint }} × {{ c.duration }}{{ cites(c.source_turn_ids) }}</li>{% endfor %}</ol>
+  <ol class="cc">{% for c in v.sheet.chief_complaints %}<li>{{ c.complaint }}{% if c.duration %} × {{ c.duration }}{% else %} <span class="muted">(duration not given)</span>{% endif %}{{ cites(c.source_turn_ids) }}</li>{% endfor %}</ol>
   {% else %}<p class="empty">Not recorded</p>{% endif %}
 
   {% for section in sections %}

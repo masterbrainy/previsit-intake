@@ -43,7 +43,7 @@ def test_llm_client_accepts_no_attachment_channel():
     assert params == ["self", "task", "system", "messages", "schema"]
 
 
-def test_stored_result_never_appears_in_any_llm_payload(settings, session, appointment, physician_auth):
+def test_stored_result_never_appears_in_any_llm_payload(settings, session, appointment, physician_auth, tmp_path):
     from fastapi.testclient import TestClient
 
     from previsit import results, symptoms
@@ -52,7 +52,8 @@ def test_stored_result_never_appears_in_any_llm_payload(settings, session, appoi
 
     steps = iter([interview("Any other symptoms?"), interview("Thanks, that's everything.", complete=True)])
     llm = make_fake_llm(interview=lambda s, m: next(steps, interview(complete=True)))
-    results.store_result(session, appointment, RESULT_FILENAME, RESULT_CONTENT, uploaded_by="lab")
+    results.store_result(session, appointment, RESULT_FILENAME, RESULT_CONTENT, uploaded_by="lab",
+                         upload_dir=tmp_path / "uploads")
 
     engine = IntakeEngine(llm, settings)
     intake = make_intake(session, appointment, "INTERVIEW")

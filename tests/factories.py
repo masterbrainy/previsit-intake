@@ -47,9 +47,14 @@ def make_appointment(session: Session, patient=None, physician: str = TEST_PHYSI
 
 
 def make_intake(session: Session, appointment, state_name: str = "INTERVIEW"):
+    """The appointment's intake in the given state (reusing one the web layer may already have created)."""
     from previsit.models import Intake, IntakeState
 
-    return _save(session, Intake(appointment_id=appointment.id, state=IntakeState[state_name]))
+    intake = session.exec(select(Intake).where(Intake.appointment_id == appointment.id)).first()
+    if intake is None:
+        intake = Intake(appointment_id=appointment.id)
+    intake.state = IntakeState[state_name]
+    return _save(session, intake)
 
 
 def make_rec(session: Session, appointment, name: str = "CBC", status_name: str | None = None,
@@ -88,14 +93,11 @@ def guard(allowed: bool = True, reason: str = "") -> dict:
     return {"allowed": allowed, "reason": reason}
 
 
-SHEET_LIST_SECTIONS = ("chief_complaints", "particulars", "hopi", "past_history", "treatment_history", "allergies",
-                       "family_history", "personal_history", "review_of_systems", "specialty_addons",
-                       "could_not_answer", "findings")
-
-
 def minimal_sheet() -> dict:
-    """An empty SheetOut (previsit.sheet.extract)."""
-    return {key: [] for key in SHEET_LIST_SECTIONS}
+    """An empty SheetOut (previsit.sheet.extract); every field is a list, so new sections need no change here."""
+    from previsit.sheet.extract import SheetOut
+
+    return {name: [] for name in SheetOut.model_fields}
 
 
 DEFAULT_RESPONSES = {

@@ -196,3 +196,26 @@ def test_baseline_red_flags_mirror_the_clinical_list():
     }
 
     assert in_code == documented
+
+
+def test_self_care_advice_is_withdrawn_from_the_patient_page_after_escalation(settings, session, appointment):
+    """FEV-018: once a red flag fires, stay-at-home advice no longer applies; only the emergency message shows."""
+    from fastapi.testclient import TestClient
+
+    from previsit import outbox
+    from previsit.models import MessageKind
+    from previsit.web.app import create_app
+
+    advice = "ZZ-ADVICE-SENTINEL: rest and drink plenty of fluids."
+    outbox.send_patient_message(session, appointment.id, MessageKind.GENERAL_RECS, advice, actor="system")
+    session.commit()
+    client = TestClient(create_app(settings=settings, llm=make_fake_llm()))
+    assert advice in client.get(f"/p/{appointment.token}").text, "control: advice shows before any red flag"
+
+    intake = make_intake(session, appointment, "COMPLETE")
+    _turn(make_fake_llm(safety=_red_flag("RF-02")), settings, session, intake, "She's breathing really fast now")
+    session.commit()
+    page = client.get(f"/p/{appointment.token}").text
+
+    assert advice not in page
+    assert EMERGENCY_NUMBER in page

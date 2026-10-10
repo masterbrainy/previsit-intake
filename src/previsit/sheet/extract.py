@@ -42,6 +42,7 @@ class SheetOut(BaseModel):
     review_of_systems: list[StatementOut]
     specialty_addons: list[StatementOut]
     could_not_answer: list[StatementOut]
+    red_flag_screen: list[StatementOut] = Field(default_factory=list)
     findings: list[FindingOut]
 
 
@@ -57,8 +58,12 @@ Strict rules:
 - Never write statements about what was "not mentioned" or "not reported"; leave it out instead.
 - If the patient later corrects something, use the corrected version.
 - Write concise clinical phrases in the physician's language (English). Keep the patient's own words for symptoms.
-- Chief complaints: each with its duration; onset_order 1 = started first.
-- Particulars: occupation, school, who they live with, informant only. Never symptoms or measurements.
+- Chief complaints: each with its duration EXACTLY as the patient gave it for that complaint. If they never said when
+  that complaint started, set duration to an empty string. Never copy another complaint's duration. onset_order 1 = started first.
+- Particulars: occupation, school, who they live with only. Never name, age, sex or informant (those come from the
+  clinic record), never symptoms or measurements.
+- Red-flag screen: one statement per danger symptom the patient explicitly denied when asked (e.g. "No chest pain").
+- A single "no" to a question listing several symptoms denies exactly the symptoms in that question, nothing more.
 - HOPI: onset, duration, progression, character, severity, timing, aggravating/relieving factors, associated symptoms,
   relevant negatives, previous similar episodes.
 - Past history (PH): chronic illnesses, previous episodes, hospitalisations, surgeries. Resolved childhood events go here.
@@ -100,7 +105,14 @@ def build_sheet(
     user = f"Conversation:\n{format_transcript(transcript)}"
     output = llm.complete_json("sheet", system, [{"role": "user", "content": user}], SheetOut)
     patient_turns = {line.seq for line in transcript if line.speaker == "patient"}
-    return _validate(output, patient_turns, specs, tuple(m.id for m in modules), partial)
+    result = _validate(output, patient_turns, specs, tuple(m.id for m in modules), partial)
+    record = {
+        "name": ctx.name,
+        "age": ctx.age_text,
+        "sex": ctx.sex or "not recorded",
+        "informant": "self" if not ctx.is_caregiver_call else ctx.informant,
+    }
+    return ExtractionResult(sheet=result.sheet.model_copy(update={"record": record}), dropped=result.dropped)
 
 
 def _cited(turns: list[int], patient_turns: set[int]) -> tuple[int, ...]:

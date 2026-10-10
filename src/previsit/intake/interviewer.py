@@ -28,18 +28,22 @@ How to talk:
   ("it's probably nothing").
 - If a caregiver is answering, refer to the patient by name.
 
-Cover these sections, in roughly this order, skipping what has already been answered:
+Cover these sections, in roughly this order, skipping only what the patient has ALREADY clearly answered:
 1. Particulars: occupation (or school/daycare for a child), who they live with.
-2. Chief complaints: every complaint and how long each has lasted.
+2. Chief complaints: every complaint. For EACH complaint, ask when it started unless the patient gave that exact
+   complaint's start themselves. Never assume one complaint started when another did.
 3. History of presenting illness, for each complaint: onset, duration, pattern, severity, what makes it better or worse,
    associated symptoms, relevant negatives, and whether this has happened before. Use the module questions below.
-4. Past history: long-term conditions, previous similar illness, hospital stays, operations.
-5. Treatment history: regular medicines (name, dose), anything taken for this illness and whether it helped.
-   Allergies to medicines or foods, and what happened.
+4. Past history: long-term conditions, previous similar illness, hospital stays, operations, and any past fits,
+   faints or serious illnesses.
+5. Treatment history: regular medicines and supplements (name, dose), anything taken for this illness, when, and whether
+   it helped. Allergies to medicines or foods, and what happened.
 6. Family history: health problems in parents, brothers and sisters, children (ages, causes of death if any).
 7. Personal history: diet and appetite, sleep, bowel and bladder, smoking, alcohol, other substances, travel, sick contacts.
-8. Brief review of other body systems not yet covered.
-9. Specialty add-ons when they apply (below).
+8. Specialty add-ons: MANDATORY whenever they apply (pregnancy, children). Ask every add-on question.
+9. Safety screen, before finishing: ask plainly about each of these that has not already been asked, a few per question:
+{screen}
+10. Brief review of other body systems not yet covered.
 
 Complaint modules available (put the IDs of every module matching the patient's complaints in module_ids):
 {catalog}
@@ -84,6 +88,25 @@ def _module_questions(modules: list[ComplaintModule]) -> str:
     return "\n".join(blocks)
 
 
+SCREEN_QUESTIONS = {
+    "RF-01": "chest pain or tightness",
+    "RF-02": "trouble breathing or breathlessness at rest",
+    "RF-04": "fainting, passing out or fits during this illness",
+    "RF-05": "bleeding that won't stop, vomiting blood or black stools",
+    "RF-07": "a stiff neck (can they bend their head forward)",
+    "RF-08": "any rash, and whether it fades when pressed",
+    "RF-10": "if pregnant: vaginal bleeding or severe tummy pain",
+    "RF-11": "confusion, unusual sleepiness or being hard to wake",
+    "RF-15": "being able to keep fluids down",
+}
+BASELINE_SCREEN = ("RF-01", "RF-02", "RF-04", "RF-05", "RF-11")
+
+
+def _screen(modules: list[ComplaintModule]) -> str:
+    ids = dict.fromkeys([*BASELINE_SCREEN, *[rf for m in modules for rf in m.red_flags]])
+    return "\n".join(f"   - {SCREEN_QUESTIONS[i]}" for i in ids if i in SCREEN_QUESTIONS)
+
+
 def to_messages(transcript: list[TranscriptLine]) -> list[dict[str, str]]:
     return [
         {"role": "assistant" if line.speaker == "agent" else "user", "content": line.text} for line in transcript
@@ -102,6 +125,7 @@ def next_step(
         physician=ctx.physician_name or "their doctor",
         catalog=_catalog(),
         module_questions=_module_questions(modules),
+        screen=_screen(modules),
         patient=ctx.describe(),
     )
     output = llm.complete_json("interview", system, to_messages(transcript), InterviewOut)

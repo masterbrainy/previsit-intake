@@ -30,12 +30,16 @@ addons:
     questions:
       - Could you be pregnant, or are you pregnant now? If pregnant, how many weeks?
       - When was the first day of your last period?
+      - "If pregnant: is this your first pregnancy? Any previous pregnancies or deliveries, and how did they go?"
+      - "If pregnant: is the baby moving normally? Any bleeding, fluid loss or tummy pain?"
+      - "If pregnant: are you having antenatal check-ups, and taking any pregnancy vitamins or other medicines?"
   - name: Birth, feeding, development and immunisation history
     applies_when: patient is a child under 12
     questions:
       - Was the child born at term? Any problems after birth?
       - How is the child feeding and drinking? How many wet nappies today?
       - Are the child's vaccinations up to date?
+      - Is the child developing normally for their age (sitting, walking, talking), and playing normally when the fever is down?
 
 findings:
   - {key: fever_duration_days, type: number, description: "How many days the fever has lasted so far"}

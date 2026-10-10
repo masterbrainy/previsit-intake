@@ -36,6 +36,7 @@ SECTIONS: tuple[SectionDef, ...] = (
     SectionDef(key="review_of_systems", title="Review of systems", abbrev="ROS"),
     SectionDef(key="specialty_addons", title="Specialty add-ons", abbrev=""),
     SectionDef(key="could_not_answer", title="Couldn't answer", abbrev=""),
+    SectionDef(key="red_flag_screen", title="Danger symptoms asked about and denied", abbrev=""),
 )
 
 
@@ -51,6 +52,8 @@ class HistorySheet(Frozen):
     review_of_systems: tuple[Statement, ...] = ()
     specialty_addons: tuple[Statement, ...] = ()
     could_not_answer: tuple[Statement, ...] = ()
+    red_flag_screen: tuple[Statement, ...] = ()
+    record: dict[str, str] = {}  # name, age, sex, informant from the clinic record and identity step, not the LLM
     findings: dict[str, float | bool | str] = {}
     module_ids: tuple[str, ...] = ()
     partial: bool = False

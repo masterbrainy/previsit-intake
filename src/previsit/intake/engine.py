@@ -33,6 +33,7 @@ MAX_TURN_CHARS = 2000
 MAX_IDENTITY_ATTEMPTS = 2
 MAX_READBACK_ROUNDS = 3
 READBACK_QUESTION = "Is that right, or is there anything you'd like to correct or add?"
+ANYTHING_ELSE_QUESTION = "Is there anything else you'd like your doctor to know?"
 IDENTITY_QUESTION = (
     "Thank you. First, please tell me the patient's full name and date of birth. "
     "If you're answering for someone else, please also tell me how you're related to them."
@@ -118,7 +119,7 @@ class IntakeEngine:
             return self._on_interview(session, intake, ctx, modules)
         if intake.state is IntakeState.READBACK:
             return self._on_readback(session, intake, ctx, modules, text)
-        return self._on_after_complete(session, intake, ctx, modules)
+        return self._on_after_complete(session, intake, ctx, modules, text)
 
     def _on_consent(self, session: Session, intake: Intake, text: str) -> AgentReply:
         decision = gates.classify_yes_no(self.llm, "consent", "Are you happy to continue?", text)
@@ -200,8 +201,11 @@ class IntakeEngine:
         return self._complete(session, intake, ctx, modules)
 
     def _on_after_complete(
-        self, session: Session, intake: Intake, ctx: PatientContext, modules: list[ComplaintModule]
+        self, session: Session, intake: Intake, ctx: PatientContext, modules: list[ComplaintModule], text: str
     ) -> AgentReply:
+        decision = gates.classify_yes_no(self.llm, "consent", ANYTHING_ELSE_QUESTION, text)
+        if decision == "no":
+            return self._say(session, intake, "Thank you. Take care, and goodbye.", ended=True)
         sheet = self._save_sheet(session, intake, ctx, modules)
         self._save_suggestions(session, intake, modules, sheet)
         return self._say(
@@ -228,7 +232,7 @@ class IntakeEngine:
             session, intake,
             f"Thank you, that's everything I need. Your doctor will see this before your appointment. "
             f"{recs.spoken(self.settings)} You'll find this advice on your patient page too, where you can also log "
-            "your readings. Is there anything else you'd like your doctor to know?",
+            f"your readings. {ANYTHING_ELSE_QUESTION}",
             ended=True,
         )
 
@@ -259,6 +263,11 @@ class IntakeEngine:
                 select(RedFlagEvent).where(RedFlagEvent.intake_id == intake.id).order_by(RedFlagEvent.id.desc())
             ).first()
             rf_ids = tuple(event.rf_ids) if event else ()
+            if self._follow_up_already_given(session, intake, event):
+                # red_flags.md §5.2: say the follow-up once, then close so the line is free.
+                return self._say(
+                    session, intake, f"This call has ended. Please call {self.settings.emergency_number} now.", ended=True
+                )
             return self._say(session, intake, escalation.follow_up_message(rf_ids, self.settings), ended=True)
         return self._say(
             session, intake,
@@ -266,6 +275,16 @@ class IntakeEngine:
             f"{self.settings.emergency_number}.",
             ended=True,
         )
+
+    def _follow_up_already_given(self, session: Session, intake: Intake, event: RedFlagEvent | None) -> bool:
+        trigger = session.get(Turn, event.turn_id) if event and event.turn_id else None
+        since = trigger.seq if trigger else 0
+        agent_turns = session.exec(
+            select(func.count()).select_from(Turn).where(
+                Turn.intake_id == intake.id, Turn.speaker == Speaker.AGENT, Turn.seq > since
+            )
+        ).one()
+        return agent_turns >= 2  # the escalation message itself, then one follow-up
 
     def _fail(self, session: Session, intake: Intake, reason: str) -> AgentReply:
         logger.error("Intake %s failed: %s", intake.id, reason)
