@@ -7,6 +7,7 @@ from datetime import date, datetime, timedelta
 from PIL import Image, ImageDraw, ImageFont
 from sqlmodel import select
 
+from demo import mid_intake
 from demo.config import DEMO_DIR, PHYSICIAN, demo_settings, ensure_dirs
 from previsit.db import init_db, make_engine, session_scope
 from previsit.models import Appointment, Doctor, SymptomLog, utcnow
@@ -67,6 +68,11 @@ def reset(red_flag_case: DemoPatient | None = None) -> dict[str, int]:
                 session, settings, "demo-seed", p.name, p.dob, p.sex, p.contact, doctor, tomorrow_at(10 + i), p.reason
             )
             ids[p.name] = appt.id
+        # A patient whose pre-visit call is nearly finished: a few calm answers complete it (no emergency).
+        appt = create_appointment(session, settings, "demo-seed", mid_intake.NAME, mid_intake.DOB, mid_intake.SEX,
+                                  mid_intake.CONTACT, doctors[mid_intake.DOCTOR], tomorrow_at(15), mid_intake.REASON)
+        mid_intake.seed_mid_intake(session, appt.id)
+        ids[mid_intake.NAME] = appt.id
     engine.dispose()
     return ids
 
