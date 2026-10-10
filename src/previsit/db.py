@@ -11,6 +11,10 @@ from previsit import models  # noqa: F401  (registers tables on SQLModel.metadat
 
 
 def make_engine(url: str) -> Engine:
+    # Hosted Postgres hands out postgres:// or postgresql:// URLs; SQLAlchemy needs the psycopg (v3) driver named.
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            url = "postgresql+psycopg://" + url.removeprefix(prefix)
     if url.startswith("sqlite:///"):
         Path(url.removeprefix("sqlite:///")).parent.mkdir(parents=True, exist_ok=True)
         return create_engine(url, connect_args={"check_same_thread": False})

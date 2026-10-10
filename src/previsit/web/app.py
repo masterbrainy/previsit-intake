@@ -34,13 +34,18 @@ def clock(value: datetime | None, fmt: str) -> str:
 
 
 templates.env.filters["clock"] = clock
-basic = HTTPBasic(realm="PATH: staff")
+basic = HTTPBasic(realm="PATH: staff", auto_error=False)
+OPEN_DEMO_STAFF = "demo-staff"
 # Pages with patient data are never stored by the browser or a shared cache.
 PRIVATE_PATHS = ("/portal", "/p/", "/patients", "/dashboard", "/results", "/doctor")
 
 
-def require_physician(request: Request, credentials: HTTPBasicCredentials = Depends(basic)) -> str:
+def require_physician(request: Request, credentials: HTTPBasicCredentials | None = Depends(basic)) -> str:
     settings: Settings = request.app.state.settings
+    if settings.is_open_demo:
+        return OPEN_DEMO_STAFF
+    if credentials is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not authenticated", headers={"WWW-Authenticate": "Basic"})
     password = settings.physician_password.get_secret_value()
     if not password:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "PHYSICIAN_PASSWORD is not configured")
@@ -53,6 +58,8 @@ def require_physician(request: Request, credentials: HTTPBasicCredentials = Depe
 
 def staff_user(request: Request) -> str | None:
     """The staff username if the request carries valid staff (basic auth) credentials, else None. Never raises."""
+    if request.app.state.settings.is_open_demo:
+        return OPEN_DEMO_STAFF
     header = request.headers.get("authorization", "")
     if not header.lower().startswith("basic "):
         return None
@@ -119,6 +126,10 @@ def create_app(settings: Settings | None = None, llm: LLMClient | None = None) -
     app.include_router(doctor.router)
     app.include_router(uploads.router)
     app.include_router(patient.router)
+    if settings.is_open_demo:
+        from previsit.web import demo_entry
+
+        app.include_router(demo_entry.router)
     return app
 
 

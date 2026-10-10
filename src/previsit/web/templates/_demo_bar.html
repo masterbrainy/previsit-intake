@@ -1,0 +1,8 @@
+{% set p = request.url.path %}
+<nav class="demo-bar" aria-label="Demo views">
+  <span class="demo-label">Demo</span>
+  <form method="post" action="/demo/patient"><button type="submit" class="link" {% if p.startswith('/portal') %}aria-current="page"{% endif %}>Patient</button></form>
+  <form method="post" action="/demo/doctor"><button type="submit" class="link" {% if p.startswith('/doctor') or p.startswith('/patients') %}aria-current="page"{% endif %}>Doctor</button></form>
+  <a href="/dashboard" {% if p == '/dashboard' or p.startswith('/appointments') %}aria-current="page"{% endif %}>Hospital</a>
+  <a href="/" class="demo-home" title="Demo start page">Start</a>
+</nav>

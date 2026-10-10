@@ -4,11 +4,11 @@ import shutil
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 
-from PIL import Image, ImageDraw, ImageFont
-from sqlmodel import select
+from sqlmodel import Session, select
 
 from demo import mid_intake
 from demo.config import DEMO_DIR, PHYSICIAN, demo_settings, ensure_dirs
+from previsit.config import Settings
 from previsit.db import init_db, make_engine, session_scope
 from previsit.models import Appointment, Doctor, SymptomLog, utcnow
 from previsit.web.views import create_appointment
@@ -54,29 +54,35 @@ def reset(red_flag_case: DemoPatient | None = None, with_mid_intake: bool = True
     settings = demo_settings(clinic) if clinic else demo_settings()
     engine = make_engine(settings.database_url)
     init_db(engine)
-    ids: dict[str, int] = {}
     with session_scope(engine) as session:
-        doctors = {}
-        for name, specialty, keywords in DOCTORS:
-            email = name.lower().removeprefix("dr. ").replace(" ", ".") + "@riverside.example.org"
-            doctors[name] = Doctor(name=name, email=email, specialty=specialty, keywords=keywords)
-            session.add(doctors[name])
-        session.flush()
-        for i, p in enumerate((*BACKGROUND, *([red_flag_case] if red_flag_case else []))):
-            doctor = doctors[BOOKED_WITH.get(p.name, PHYSICIAN)]
-            appt = create_appointment(
-                session, settings, "demo-seed", p.name, p.dob, p.sex, p.contact, doctor, tomorrow_at(10 + i), p.reason
-            )
-            ids[p.name] = appt.id
-        if not with_mid_intake:
-            engine.dispose()
-            return ids
-        # A patient whose pre-visit call is nearly finished: a few calm answers complete it (no emergency).
-        appt = create_appointment(session, settings, "demo-seed", mid_intake.NAME, mid_intake.DOB, mid_intake.SEX,
-                                  mid_intake.CONTACT, doctors[mid_intake.DOCTOR], tomorrow_at(15), mid_intake.REASON)
-        mid_intake.seed_mid_intake(session, appt.id)
-        ids[mid_intake.NAME] = appt.id
+        ids = seed(session, settings, red_flag_case, with_mid_intake)
     engine.dispose()
+    return ids
+
+
+def seed(session: Session, settings: Settings, red_flag_case: DemoPatient | None = None,
+         with_mid_intake: bool = True) -> dict[str, int]:
+    """Fictional doctors and appointments in an empty database."""
+    ids: dict[str, int] = {}
+    doctors = {}
+    for name, specialty, keywords in DOCTORS:
+        email = name.lower().removeprefix("dr. ").replace(" ", ".") + "@riverside.example.org"
+        doctors[name] = Doctor(name=name, email=email, specialty=specialty, keywords=keywords)
+        session.add(doctors[name])
+    session.flush()
+    for i, p in enumerate((*BACKGROUND, *([red_flag_case] if red_flag_case else []))):
+        doctor = doctors[BOOKED_WITH.get(p.name, PHYSICIAN)]
+        appt = create_appointment(
+            session, settings, "demo-seed", p.name, p.dob, p.sex, p.contact, doctor, tomorrow_at(10 + i), p.reason
+        )
+        ids[p.name] = appt.id
+    if not with_mid_intake:
+        return ids
+    # A patient whose pre-visit call is nearly finished: a few calm answers complete it (no emergency).
+    appt = create_appointment(session, settings, "demo-seed", mid_intake.NAME, mid_intake.DOB, mid_intake.SEX,
+                              mid_intake.CONTACT, doctors[mid_intake.DOCTOR], tomorrow_at(15), mid_intake.REASON)
+    mid_intake.seed_mid_intake(session, appt.id)
+    ids[mid_intake.NAME] = appt.id
     return ids
 
 
@@ -112,6 +118,7 @@ def backdate_readings(appointment_id: int, readings: list[tuple[float, float]]) 
 
 def lab_report_png(path, patient_name: str, dob: date) -> None:
     """A synthetic CBC report image. Values are made up; the app never reads them."""
+    from PIL import Image, ImageDraw, ImageFont  # demo group only; the hosted site never draws reports
     img = Image.new("RGB", (1100, 820), "white")
     draw = ImageDraw.Draw(img)
     try:

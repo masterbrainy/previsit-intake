@@ -4,6 +4,7 @@
 {% block header %}<header class="top"><span class="brand"><span class="mark" aria-hidden="true"></span>PATH <small>{{ clinic }}</small></span></header>{% endblock %}
 {% block main_class %}narrow{% endblock %}
 {% block content %}
+{% if request.app.state.settings.is_open_demo %}{% include "_demo_landing.html" %}{% else %}
 <section class="hero">
   <span class="eyebrow">Pre-visit</span>
   <h1>Before your visit</h1>
@@ -24,4 +25,5 @@
   </a>
 </div>
 <p class="fine">If you feel very unwell, don't wait for your appointment: call your local emergency number.</p>
+{% endif %}
 {% endblock %}

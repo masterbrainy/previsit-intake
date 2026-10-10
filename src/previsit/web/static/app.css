@@ -394,3 +394,33 @@ header.top .brand { min-width: 0; line-height: 1.25; }
 }
 header.top .brand small { font-family: var(--body); font-weight: 400; font-size: 14px; color: var(--muted); letter-spacing: 0; }
 .wordmark b { letter-spacing: 0.04em; }
+
+/* ---------- open demo (judges): numbered entry steps, a tip card and a view switcher ---------- */
+.demo-steps { list-style: none; padding: 0; display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin: 24px 0; }
+.demo-steps .door { display: flex; flex-direction: column; margin: 0; }
+.demo-steps .door form, .demo-steps .door .button { margin-top: auto; align-self: flex-start; }
+.demo-steps .step { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; margin-bottom: 12px;
+  background: var(--accent-bg); color: var(--accent); font-family: var(--display); font-weight: 750; }
+.demo-tip { border-left: 4px solid var(--signal); }
+.demo-tip p { margin: 0; }
+.persona { border-left: 4px solid var(--accent); }
+.persona dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; margin: 8px 0 12px; }
+.persona dt { color: var(--muted); }
+.persona dd { margin: 0; font-weight: 700; }
+.persona p { margin: 0; }
+body:has(.demo-bar) { padding-bottom: 72px; }
+.demo-bar { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 50; display: flex; align-items: center;
+  gap: 4px; padding: 6px 8px 6px 14px; border-radius: 999px; background: var(--rail); color: var(--rail-ink);
+  box-shadow: var(--shadow-lift); font-size: 14px; max-width: calc(100vw - 32px); }
+.demo-bar form { margin: 0; }
+.demo-bar .demo-label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--signal); margin-right: 6px; }
+.demo-bar a, .demo-bar button.link { color: var(--rail-ink); text-decoration: none; padding: 6px 12px; border-radius: 999px;
+  font: inherit; background: none; border: 0; cursor: pointer; }
+.demo-bar a:hover, .demo-bar button.link:hover { background: var(--rail-hover); color: #fff; }
+.demo-bar [aria-current="page"] { background: var(--accent); color: var(--accent-ink); }
+.demo-bar .demo-home { color: var(--rail-muted); }
+@media (max-width: 420px) { .demo-bar .demo-label, .demo-bar .demo-home { display: none; } }
+.persona-line { margin: 0 0 16px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--accent-bg); font-size: 14.5px; }
+/* the switcher sits under the conversation's composer, never on top of the mic or Send */
+body:has(.demo-bar) .composer { bottom: 76px; }

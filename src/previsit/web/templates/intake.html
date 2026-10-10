@@ -13,6 +13,10 @@
   <label class="toggle"><input type="checkbox" id="speak" checked> Read replies aloud</label>
 </div>
 
+{% if request.app.state.settings.is_open_demo %}
+<p class="persona-line">Demo: you're <b>{{ v.patient.name }}</b>, born <b>{{ v.patient.dob.strftime('%-d %B %Y') }}</b>.
+  Say "yes" to begin, give this name and date of birth when asked, then describe any illness.</p>
+{% endif %}
 <div id="chat" class="chat" aria-live="polite">
   {% for t in v.turns %}<div class="bubble {{ t.speaker.value }}">{{ t.text }}</div>{% endfor %}
 </div>

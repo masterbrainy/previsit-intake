@@ -1,0 +1,36 @@
+<section class="hero">
+  <span class="eyebrow">Live demo · fictional patients</span>
+  <h1>Meet <em>PATH</em></h1>
+  <p class="sub">A voice assistant that takes a patient's history at home before the visit, and hands the doctor a
+    history sheet where every line links back to the patient's own words. Try it from both sides.</p>
+</section>
+<ol class="demo-steps">
+  <li class="card door">
+    <span class="step">1</span>
+    <h2>Be the patient</h2>
+    <p class="muted">You get a fictional patient already booked with Dr. Anika Rao. Open the appointment and talk to
+      PATH by voice, or type. Describe any illness you like.</p>
+    <form method="post" action="/demo/patient"><input type="hidden" name="fresh" value="true">
+      <button type="submit" class="big">Start as a patient</button></form>
+  </li>
+  <li class="card door">
+    <span class="step">2</span>
+    <h2>Be the doctor</h2>
+    <p class="muted">See your patient's history sheet with its sources, the tests PATH suggests, and approve one to
+      send it to the patient.</p>
+    <form method="post" action="/demo/doctor"><button type="submit" class="big ghost">Open Dr. Rao's patients</button></form>
+  </li>
+  <li class="card door">
+    <span class="step">3</span>
+    <h2>See the hospital view</h2>
+    <p class="muted">Every appointment by doctor, and emergency alerts with the patient's contact details.</p>
+    <a class="button big ghost" href="/dashboard">Open the hospital overview</a>
+  </li>
+</ol>
+<div class="card demo-tip">
+  <h2>Try a red flag</h2>
+  <p>During the conversation, say something like <q>I've had a fever and my neck is really stiff</q>. PATH stops the
+    interview, gives fixed emergency instructions, and alerts the hospital straight away.</p>
+</div>
+<p class="fine">Everyone in this demo is fictional, and nothing is sent by text or email. Please don't enter real
+  health information. Use the switcher at the bottom of any page to change views.</p>

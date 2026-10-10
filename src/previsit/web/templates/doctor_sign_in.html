@@ -3,6 +3,13 @@
 {% block main_class %}narrow{% endblock %}
 {% block content %}
 <h1>Doctor sign-in</h1>
+{% if request.app.state.settings.is_open_demo %}
+<form class="card persona" method="post" action="/demo/doctor">
+  <h2>Trying the demo?</h2>
+  <p>Skip sign-in and see the demo doctor's patients, including any you booked as a patient.</p>
+  <p><button type="submit" class="big">Continue as the demo doctor</button></p>
+</form>
+{% endif %}
 <p class="sub">Choose your name. We'll send a 6-digit code to your work email. You'll see only your own patients and patients referred to you.</p>
 {% if error %}<div class="banner danger" role="alert"><strong>{{ error }}</strong></div>{% endif %}
 {% if not code_step %}

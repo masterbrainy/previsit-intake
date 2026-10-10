@@ -1,9 +1,11 @@
 """One command for the demo site: reset to a clean synthetic state, then serve it.
 
     uv run --group demo python -m demo.serve
+    uv run --group demo python -m demo.serve --public https://<tunnel>.trycloudflare.com   # open demo for judges
 """
 
 import logging
+import os
 import sys
 
 import uvicorn
@@ -18,6 +20,7 @@ def main() -> None:
     """`--film` serves the clean state the demo film starts from (demo/record.py)."""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     film = "--film" in sys.argv
+    public_url = _public_url()
     if film:
         red = patient_from_scenario(FILM_RED_SCENARIO, "Fever and headache", RED_FLAG_CONTACT)
         seeded = reset(red, with_mid_intake=False, clinic=FILM_CLINIC)
@@ -25,10 +28,26 @@ def main() -> None:
     else:
         seeded = reset(patient_from_scenario(RED_FLAG_SCENARIO, "Fever and headache", RED_FLAG_CONTACT))
         settings = demo_settings()
+    if public_url:
+        settings = settings.model_copy(update={"open_demo": True, "base_url": public_url.rstrip("/")})
     print(f"Demo site reset with {len(seeded)} synthetic appointments.")
     print(f"Front page: {DEMO_URL}/  (demo mode: patient sign-in codes are shown on screen)")
     print(f"Physician dashboard: {DEMO_URL}/dashboard (login: PHYSICIAN_USERNAME / PHYSICIAN_PASSWORD from .env)")
-    uvicorn.run(create_app(settings=settings), host="127.0.0.1", port=DEMO_PORT, log_level="warning")
+    # Hosted (a public URL): listen on the host's port on every interface, trusting its proxy's forwarded headers.
+    host = "0.0.0.0" if public_url else "127.0.0.1"
+    port = int(os.environ.get("PORT", DEMO_PORT))
+    uvicorn.run(create_app(settings=settings), host=host, port=port, log_level="warning",
+                proxy_headers=True, forwarded_allow_ips="*" if public_url else "127.0.0.1")
+
+
+def _public_url() -> str | None:
+    """The open demo for judges (one-click entry, no codes or passwords) runs when the site has a public address:
+    `--public https://…`, DEMO_PUBLIC_URL, or the address the host gives the service (Render, Hugging Face Spaces)."""
+    if "--public" in sys.argv:
+        return sys.argv[sys.argv.index("--public") + 1]
+    space_host = os.environ.get("SPACE_HOST")
+    return (os.environ.get("DEMO_PUBLIC_URL") or os.environ.get("RENDER_EXTERNAL_URL")
+            or (f"https://{space_host}" if space_host else None))
 
 
 if __name__ == "__main__":

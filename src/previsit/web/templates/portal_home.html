@@ -5,6 +5,15 @@
 {% block main_class %}narrow{% endblock %}
 {% block content %}
 <h1>Hello{% if names|length == 1 %}, {{ names[0] }}{% endif %}</h1>
+{% if request.app.state.settings.is_open_demo and items %}{% set me = items[0].patient %}
+<div class="card persona">
+  <h2>You're playing a fictional patient</h2>
+  <dl><dt>Name</dt><dd>{{ me.name }}</dd><dt>Date of birth</dt><dd>{{ me.dob.strftime('%-d %B %Y') }}</dd></dl>
+  <p>Open the appointment below and start the pre-visit conversation. PATH asks for this name and date of birth to
+    check it's you. Then describe any illness you like, by voice or by typing.</p>
+  <p style="margin-top:14px"><a class="button big" href="/portal/appointments/{{ items[0].appointment.id }}/intake">Start the pre-visit conversation</a></p>
+</div>
+{% endif %}
 {% if has_people %}
 <p class="sub">Your appointments. Open one to answer the pre-visit questions, see advice and tests from your doctor, log readings or send a report.</p>
 <div class="form-actions" style="margin:0 0 28px"><a class="button" href="/portal/book">Book an appointment</a>

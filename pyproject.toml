@@ -12,6 +12,7 @@ dependencies = [
   "python-multipart>=0.0.9",
   "pyyaml>=6.0",
   "openai>=1.60",
+  "psycopg[binary]>=3.2",
 ]
 
 [dependency-groups]

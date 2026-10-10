@@ -1,0 +1,10 @@
+demo/output
+evals/reports
+tests
+docs
+var
+.venv
+.claude
+**/__pycache__
+Dockerfile
+render.yaml

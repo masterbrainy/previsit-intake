@@ -43,6 +43,13 @@ class Settings(BaseSettings):
     portal_session_hours: int = 12
     # Demo mode (synthetic data only): the sign-in code is shown on screen because no SMS/email provider exists yet.
     demo_mode: bool = False
+    # Open demo (judges, no instructions): one-click entry as a fresh fictional patient, a demo doctor or hospital
+    # staff, with no codes or passwords. Only takes effect together with demo_mode; synthetic data only.
+    open_demo: bool = False
+
+    @property
+    def is_open_demo(self) -> bool:
+        return self.demo_mode and self.open_demo
 
 
 def get_settings() -> Settings:

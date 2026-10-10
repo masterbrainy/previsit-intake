@@ -43,6 +43,7 @@
     {% block content %}{% endblock %}
   </main>
   </div>
+  {% if request.app.state.settings.is_open_demo %}{% include "_demo_bar.html" %}{% endif %}
   {% block scripts %}{% endblock %}
 </body>
 </html>

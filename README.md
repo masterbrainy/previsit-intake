@@ -49,7 +49,11 @@ The demo site resets on every start and runs on http://localhost:8010.
 | Doctor | `/doctor/sign-in` | pick a doctor, e.g. Dr. Anika Rao; the code is shown on screen |
 | Staff | `/dashboard` | `PHYSICIAN_USERNAME` / `PHYSICIAN_PASSWORD` from `.env` |
 
-Demo mode must only ever be used with synthetic data and never on a public URL.
+Demo mode must only ever be used with synthetic data.
+
+### Hosted demo for judges
+
+`python -m demo.serve --public <https URL>` (or the Vercel deployment: `api/index.py`, `demo/hosted.py`) runs the **open demo**: the front page offers one-click entry as a fresh fictional patient, the demo doctor, or hospital staff, with no codes or passwords, and a switcher at the bottom of every page. Each visitor gets their own fictional patient booked with Dr. Anika Rao. On Vercel it needs `OPENAI_API_KEY` and a Postgres `DATABASE_URL` (Neon); the database is seeded once and never wiped. New demo patients are capped per visitor and per day to bound AI spend.
 
 ## Run for development
 

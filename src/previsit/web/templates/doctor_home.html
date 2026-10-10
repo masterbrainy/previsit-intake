@@ -4,6 +4,10 @@
 <span class="eyebrow">{{ doctor.specialty }}</span>
 <h1>My patients</h1>
 <p class="sub">Patients booked with you, and patients other doctors referred to you. No one else can open these records unless you refer the patient.</p>
+{% if request.app.state.settings.is_open_demo %}
+<div class="card demo-tip"><p>Demo: every visitor's patient is booked with {{ doctor.name }}. Open a patient whose
+  pre-visit questions are done to see the history sheet, its sources and the suggested tests.</p></div>
+{% endif %}
 <div class="card">
   {% if mine %}{% with rows = mine %}{% include "_doctor_rows.html" %}{% endwith %}
   {% else %}<p class="empty">No patients booked with you yet.</p>{% endif %}

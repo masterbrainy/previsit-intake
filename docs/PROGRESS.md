@@ -33,6 +33,7 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | 1.13 | Eval cases where red-flag features appear only when asked (FEV-023 and siblings for chest pain, abdominal pain); gate on screening asked + escalation within the agreed question limit (P-008) | T | doing: gate built (evals/screening.py, FEV-023–026); live baseline 0/8 screened, awaiting 1.12 |
 | 1.14 | Clinician sign-off of symptom screening lists and proposed RF-16 (thunderclap headache) (P-008) | U | todo |
 | 1.15 | Safety detector sees the whole call, not the last 14 lines, so two-fact red flags said far apart fire as soon as the second fact appears (FEV-025); symptom-log notes are checked against the call and earlier logs | B | done: FEV-025 3/3 in time; red-flag run 45/48 (FEV-005 pre-existing miss, 2 harness issues) |
+| 1.16 | Long-standing symptoms (e.g. breathlessness with COPD): ask "worse than usual?"; until answered, the safety check treats the symptom as unclear, not clear (FEV-005; P-008 scope) | B | todo |
 
 ## Phase 2: General recommendations + symptom logs
 | ID | Task | Owner | Status |
@@ -108,6 +109,7 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | N.1 | README rewritten for PATH (what it is, safety rules, current run instructions, current auth, status/limits) | B | done: README.md rewritten (flows for patient, doctor and staff; safety rules; demo and dev quick start; tests, evals, film; layout; latest eval numbers and limits) |
 | N.2 | Product name "PATH" in the UI (page titles, headers, portal, emails/messages copy), pyproject description, CLAUDE.md heading | B | done: wordmark, page titles, portal header, the assistant's greeting ("I'm PATH…"), FastAPI title, pyproject, CLAUDE.md heading |
 | N.3 | GitHub repo description/topics updated to PATH (repo rename only if the user confirms) | B | done: description and topics (healthcare, voice-ai, fastapi, clinical-safety) set via `gh repo edit`; repo not renamed (user declined) |
+| N.4 | Judge-ready hosted demo: one-click entry as a fresh fictional patient, the demo doctor or hospital staff (no codes or passwords), on Vercel with hosted Postgres | B | doing: built and tested locally; deploying |
 
 ## Build follow-ups (found while building)
 | ID | Task | Owner | Status |
