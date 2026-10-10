@@ -54,8 +54,6 @@ h3 { font-family: var(--mono); font-size: 11.5px; font-weight: 500; margin: 20px
 ::selection { background: var(--signal); color: #0f1e2e; }
 
 /* ---------- shells ---------- */
-.demo-strip { position: relative; z-index: 20; background: var(--signal); color: #0f1e2e; text-align: center;
-  font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; padding: 5px 12px; }
 
 body.clinic .shell { display: grid; grid-template-columns: var(--rail-w) minmax(0, 1fr); min-height: 100vh; }
 body.clinic main { padding: 36px clamp(16px, 4vw, 48px) 80px; max-width: 1280px; width: 100%; }
@@ -375,7 +373,7 @@ svg.chart circle { fill: var(--accent); }
 
 /* ---------- print ---------- */
 @media print {
-  .rail, header.top, .demo-strip, .no-print, form, button { display: none !important; }
+  .rail, header.top, .no-print, form, button { display: none !important; }
   body, body.patient { background: #fff; color: #000; font-size: 12px; }
   body.clinic .shell { display: block; }
   main { padding: 0 !important; }
@@ -385,7 +383,8 @@ svg.chart circle { fill: var(--accent); }
 
 /* ---------- small-screen fixes ---------- */
 body { min-height: 100vh; }
-header.top .brand, header.top nav a, header.top nav button.link { white-space: nowrap; }
+header.top nav a, header.top nav button.link { white-space: nowrap; }
+header.top .brand { min-width: 0; line-height: 1.25; }
 .appt > span:nth-child(2) { min-width: 0; }
 .appt .badge { white-space: normal; line-height: 1.3; text-align: left; }
 @media (max-width: 420px) {

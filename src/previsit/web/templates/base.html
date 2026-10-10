@@ -12,7 +12,6 @@
 </head>
 {% set path = request.url.path %}
 <body class="{% block shell %}clinic{% endblock %}">
-  {% if request.app.state.settings.demo_mode %}<div class="demo-strip">Demo · synthetic patients only · not for clinical use</div>{% endif %}
   <div class="shell">
   {% block header %}
   <aside class="rail">
