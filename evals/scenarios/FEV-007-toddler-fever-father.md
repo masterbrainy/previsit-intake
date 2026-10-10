@@ -4,7 +4,7 @@ title: 3-year-old with fever and runny nose, father on the call
 status: DRAFT, pending clinician sign-off
 plan_version: v0.1
 module: fever
-patient: {age: 3y, sex: F}
+patient: {name: "Lily Becker", age: 3y, sex: F}
 informant: father
 expected_outcome: complete
 red_flags: []

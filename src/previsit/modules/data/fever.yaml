@@ -1,0 +1,94 @@
+id: fever
+name: Fever (adult and child)
+version: "0.1"
+status: DRAFT, pending clinician sign-off
+approved_by: null
+
+triggers: [fever, temperature, feeling hot, burning up, chills, shivering, high temp]
+
+questions:
+  - When did the fever start, and has it been there all the time or does it come and go?
+  - What is the highest temperature measured, and how was it measured (thermometer, by touch)?
+  - Is it worse at any time of day? Any chills or uncontrollable shaking (rigors)?
+  - Any cough, sore throat, runny nose, ear pain?
+  - Any breathing difficulty, fast breathing, or breathlessness at rest?
+  - Any rash or spots on the skin? If so, do they fade when pressed?
+  - Any headache, neck pain or stiffness, sensitivity to light?
+  - Any burning or pain when passing urine, needing to go more often, or back/flank pain?
+  - Any vomiting, diarrhoea, abdominal pain? Able to keep fluids down?
+  - Any body aches or joint pains?
+  - Any confusion, unusual drowsiness or difficulty waking (ask the caregiver for children and older adults)?
+  - Recent travel (where, when), sick contacts at home or work, animal or insect exposure?
+  - What has been taken for the fever so far, and did it help?
+  - Any condition or treatment that weakens the immune system (chemotherapy, transplant, steroids)?
+
+red_flags: [RF-02, RF-07, RF-08, RF-09, RF-11, RF-13, RF-14, RF-15]
+
+addons:
+  - name: Menstrual and obstetric history
+    applies_when: female patient aged roughly 12 to 55
+    questions:
+      - Could you be pregnant, or are you pregnant now? If pregnant, how many weeks?
+      - When was the first day of your last period?
+  - name: Birth, feeding, development and immunisation history
+    applies_when: patient is a child under 12
+    questions:
+      - Was the child born at term? Any problems after birth?
+      - How is the child feeding and drinking? How many wet nappies today?
+      - Are the child's vaccinations up to date?
+
+findings:
+  - {key: fever_duration_days, type: number, description: "How many days the fever has lasted so far"}
+  - {key: max_temperature_c, type: number, description: "Highest measured temperature in degrees Celsius (convert from Fahrenheit)"}
+  - {key: urinary_symptoms, type: boolean, description: "Burning or pain passing urine, frequency, or flank pain"}
+  - {key: cough, type: boolean, description: "Cough present during this illness"}
+  - {key: travel_malaria_area, type: boolean, description: "Travel to a malaria-endemic area in the last 3 months"}
+
+general_recommendations:
+  - {id: temp_log, text: "Check your temperature every 2 hours while you are awake and record each reading on your patient page."}
+  - {id: fluids, text: "Drink plenty of fluids such as water, oral rehydration solution or soups. Pale yellow urine is a good sign you are drinking enough."}
+  - {id: rest, text: "Rest as much as you can."}
+  - {id: light_clothing, text: "Wear light clothing and keep the room comfortably cool. Avoid heavy blankets while you feel hot."}
+  - {id: light_meals, text: "Eat light, easy-to-digest food if you have an appetite."}
+  - {id: note_symptoms, text: "Note any new symptoms and the time they started, so you can tell your doctor."}
+  - {id: child_fluids, text: "For a child: offer small sips of fluid often, keep breastfeeding or formula feeds going, and keep track of wet nappies."}
+  - {id: stay_home, text: "Stay home from work or school and wash your hands often to avoid passing the illness on."}
+  - {id: bring_medicines, text: "Bring all your current medicines, or a list of them, to your appointment."}
+
+safety_netting:
+  - difficulty breathing or breathing very fast
+  - new confusion, or being very drowsy or hard to wake
+  - a stiff neck
+  - a rash that does not fade when you press a glass against it
+  - being unable to keep any fluids down
+  - a baby under 3 months with a temperature of 38 °C (100.4 °F) or more
+
+monitoring:
+  - metric: temperature_c
+    label: Temperature
+    unit: "°C"
+    interval_hours: 2
+    instructions: Log your temperature every 2 hours while awake.
+    thresholds:
+      - {op: ">=", value: 38.0, action: escalate, rf_id: RF-09, label: "Fever in an infant under 3 months", max_age_days: 90}
+      - {op: ">=", value: 40.0, action: flag, label: "Temperature 40 °C or higher (DRAFT threshold, clinician to confirm)"}
+
+investigations:
+  - id: cbc
+    name: Complete blood count (CBC)
+    rationale: Fever lasting 3 days or more.
+    patient_instructions: No fasting needed.
+    when:
+      - {finding: fever_duration_days, op: ">=", value: 3}
+  - id: urine_routine
+    name: Urine routine and microscopy
+    rationale: Fever with urinary symptoms.
+    patient_instructions: The lab will give you a clean container for a midstream urine sample.
+    when:
+      - {finding: urinary_symptoms, op: "==", value: true}
+  - id: malaria_test
+    name: Malaria rapid test / blood smear
+    rationale: Fever after travel to a malaria-endemic area.
+    patient_instructions: No fasting needed.
+    when:
+      - {finding: travel_malaria_area, op: "==", value: true}

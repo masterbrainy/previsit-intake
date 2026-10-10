@@ -4,7 +4,7 @@ title: Elderly woman with fever, cough and new confusion, daughter on the call
 status: DRAFT, pending clinician sign-off
 plan_version: v0.1
 module: fever
-patient: {age: 78y, sex: F}
+patient: {name: "Margaret Green", age: 78y, sex: F}
 informant: daughter
 expected_outcome: escalate
 red_flags: [RF-11]

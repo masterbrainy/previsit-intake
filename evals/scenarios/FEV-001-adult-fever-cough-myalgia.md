@@ -4,7 +4,7 @@ title: Adult fever with cough and body ache (PRD §6 worked example)
 status: DRAFT, pending clinician sign-off
 plan_version: v0.1
 module: fever
-patient: {age: 34y, sex: F}
+patient: {name: "Meera Shah", age: 34y, sex: F}
 informant: self
 expected_outcome: complete
 red_flags: []

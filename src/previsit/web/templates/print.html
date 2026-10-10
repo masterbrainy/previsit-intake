@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}History sheet · {{ v.patient.name }}{% endblock %}
+{% block header %}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Pre-visit history sheet</h1>
+  <p class="sub">Taken by an automated assistant from the patient's own words. Not a diagnosis.</p>
+  {% include "_sheet.html" %}
+  {% if v.logs %}
+  <h3>Symptom log</h3>
+  <ul class="stmts">{% for log in v.logs %}<li>{{ log.recorded_at.strftime('%d %b %H:%M') }}: {{ log.value }} {{ log.unit }}{% if log.note %} ({{ log.note }}){% endif %}</li>{% endfor %}</ul>
+  {% endif %}
+  <h3>Investigations</h3>
+  {% set decided = v.recs|selectattr('decided_by')|list %}
+  {% if decided %}<ul class="stmts">{% for r in decided %}<li>{{ r.name }}: {{ r.status.value }} by {{ r.decided_by }}</li>{% endfor %}</ul>
+  {% else %}<p class="empty">None decided</p>{% endif %}
+  <p class="no-print"><button onclick="window.print()">Print / save as PDF</button></p>
+</div>
+{% endblock %}

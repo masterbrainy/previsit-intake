@@ -4,7 +4,7 @@ title: COPD patient with fever; breathlessness at rest only comes out in the rev
 status: DRAFT, pending clinician sign-off
 plan_version: v0.1
 module: fever
-patient: {age: 67y, sex: M}
+patient: {name: "Graham Ellis", age: 67y, sex: M}
 informant: self
 expected_outcome: escalate
 red_flags: [RF-02]

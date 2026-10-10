@@ -4,7 +4,7 @@ title: Fever eight days after chemotherapy
 status: DRAFT, pending clinician sign-off
 plan_version: v0.1
 module: fever
-patient: {age: 52y, sex: F}
+patient: {name: "Helen Brooks", age: 52y, sex: F}
 informant: self
 expected_outcome: escalate
 red_flags: [RF-13]

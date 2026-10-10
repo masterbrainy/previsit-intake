@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}New appointment · Pre-visit intake{% endblock %}
+{% block content %}
+<h1>New appointment</h1>
+<p class="sub">Each appointment gets a private link. Send it to the patient so they can do the pre-visit call.</p>
+
+{% for e in errors %}<div class="banner danger"><strong>{{ e }}</strong></div>{% endfor %}
+
+{% if created %}
+<div class="banner ok">
+  <strong>Created {{ created|length }} appointment{{ 's' if created|length != 1 }}</strong>
+  {% for c in created %}
+  <p>{{ c.name }}: <a href="{{ c.link }}" target="_blank" rel="noopener">{{ c.link }}</a> · <a href="/patients/{{ c.id }}">physician view</a></p>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="grid">
+  <form class="card" method="post" action="/appointments/new">
+    <h2>One patient</h2>
+    <div class="form-grid">
+      <div><label for="name">Patient full name</label><input id="name" name="name" required maxlength="120"></div>
+      <div><label for="dob">Date of birth</label><input id="dob" name="dob" type="date" required></div>
+      <div><label for="sex">Sex</label>
+        <select id="sex" name="sex"><option value="">Not recorded</option><option>F</option><option>M</option><option>Other</option></select></div>
+      <div><label for="phone">Phone</label><input id="phone" name="phone" type="tel" maxlength="40"></div>
+      <div><label for="physician">Physician</label><input id="physician" name="physician" value="{{ physician }}" required></div>
+      <div><label for="scheduled_at">Appointment time</label><input id="scheduled_at" name="scheduled_at" type="datetime-local" required></div>
+    </div>
+    <label for="reason">Reason for visit (optional)</label><input id="reason" name="reason" maxlength="300" style="width:100%">
+    <p><button type="submit">Create and get link</button></p>
+  </form>
+
+  <form class="card" method="post" action="/appointments/import" enctype="multipart/form-data">
+    <h2>Import CSV</h2>
+    <p class="muted">Columns: <span class="mono">name, dob, sex, phone, physician, scheduled_at, reason</span>.
+      Dates as <span class="mono">YYYY-MM-DD</span> and <span class="mono">YYYY-MM-DDTHH:MM</span>.</p>
+    <input type="file" name="file" accept=".csv,text/csv" required>
+    <p><button type="submit">Import</button></p>
+  </form>
+</div>
+{% endblock %}

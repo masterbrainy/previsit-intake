@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Your appointment{% endblock %}
+{% block header %}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1 style="margin-top:12px">Hello, {{ v.patient.name.split()[0] }}</h1>
+<p class="sub">Your appointment with {{ v.appointment.physician_name }} is on {{ v.appointment.scheduled_at.strftime('%A %d %B at %H:%M') }}.</p>
+
+{% for m in escalations %}
+<div class="banner danger" role="alert"><strong>Please get urgent help now</strong><p class="msg">{{ m.body }}</p></div>
+{% endfor %}
+{% if error %}<div class="banner danger" role="alert"><strong>{{ error }}</strong></div>{% endif %}
+{% if warning %}<div class="banner warn" role="alert"><strong>{{ warning }}</strong></div>{% endif %}
+{% if notice %}<div class="banner ok" role="status"><strong>{{ notice }}</strong></div>{% endif %}
+
+{% if can_start %}
+<div class="card">
+  <h2>Pre-visit questions</h2>
+  <p>Before your appointment, our assistant will ask about your health so your doctor is ready for you. It takes about 10 minutes. You can talk or type.</p>
+  <a class="button big" href="/p/{{ token }}/intake">{{ 'Continue' if v.intake.state.value != 'not_started' else 'Start' }} the conversation</a>
+</div>
+{% endif %}
+
+{% for m in messages %}
+<div class="card">
+  <h2>{% if m.kind.value == 'medical' %}Tests your doctor has asked for{% elif m.kind.value == 'general_recs' %}What to do until your appointment{% else %}Message from your clinic{% endif %}</h2>
+  <p class="msg">{{ m.body }}</p>
+</div>
+{% endfor %}
+
+{% if monitoring and not escalations %}
+<div class="card">
+  {% for spec in monitoring %}
+  <h2>Log your {{ spec.label|lower }}</h2>
+  <p class="muted">{{ spec.instructions }}</p>
+  <form method="post" action="/p/{{ token }}/symptoms">
+    <input type="hidden" name="metric" value="{{ spec.metric }}">
+    <div class="form-grid">
+      <div><label for="value">Reading</label><input id="value" name="value" type="number" step="0.1" inputmode="decimal" required></div>
+      <div><label for="unit">Unit</label><select id="unit" name="unit"><option>°C</option><option>°F</option></select></div>
+    </div>
+    <label for="note">Anything else you've noticed? (optional)</label>
+    <input id="note" name="note" maxlength="500" style="width:100%">
+    <p><button type="submit">Save reading</button></p>
+  </form>
+  {% endfor %}
+  {% if v.logs %}
+  <h3>Your readings</h3>
+  <ul class="stmts">{% for log in v.logs|reverse %}<li>{{ log.recorded_at.strftime('%a %H:%M') }}: {{ log.value }} {{ log.unit }}</li>{% endfor %}</ul>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>Upload a test report</h2>
+  <p class="muted">If the lab gives you a report, upload it here and it goes straight to your doctor. PDF, PNG or JPEG, up to 10 MB.</p>
+  <form method="post" action="/p/{{ token }}/results" enctype="multipart/form-data">
+    <input type="file" name="file" accept="application/pdf,image/png,image/jpeg" required>
+    <p><button type="submit">Send to my doctor</button></p>
+  </form>
+  {% if v.results %}<p class="muted">Sent: {% for r in v.results %}{{ r.filename }}{{ ', ' if not loop.last }}{% endfor %}</p>{% endif %}
+</div>
+
+<p class="muted" style="font-size:13px">If you feel very unwell, don't wait for your appointment: call your local emergency number.</p>
+{% endblock %}

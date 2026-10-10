@@ -4,7 +4,7 @@ title: Diabetic adult with fever and burning urine
 status: DRAFT, pending clinician sign-off
 plan_version: v0.1
 module: fever
-patient: {age: 58y, sex: M}
+patient: {name: "Robert Okafor", age: 58y, sex: M}
 informant: self
 expected_outcome: complete
 red_flags: []

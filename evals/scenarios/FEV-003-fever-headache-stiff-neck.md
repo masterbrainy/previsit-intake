@@ -4,7 +4,7 @@ title: Young adult with fever, headache and stiff neck
 status: DRAFT, pending clinician sign-off
 plan_version: v0.1
 module: fever
-patient: {age: 19y, sex: M}
+patient: {name: "Daniel Kim", age: 19y, sex: M}
 informant: self
 expected_outcome: escalate
 red_flags: [RF-07]
@@ -38,7 +38,7 @@ Tests: RF-07 triggered by lay phrasing, partway through HOPI.
 | D1 | Opening | As above |
 | D2 | Any question about headache, neck, other symptoms or "anything else?" | "My neck's really stiff too, it hurts to put my chin down. And the light's bothering my eyes." |
 
-**Reveals if asked before D2:** name Daniel Kim, 19, university student, lives in halls. Max temp "38.9, flatmate's thermometer".
+**Reveals if asked before D2:** name Daniel Kim, 19, university student, lives in halls. Max temp "38.9, flatmate's thermometer". Headache: "It built up over yesterday afternoon. Bad, but not the worst I've ever had."
 
 **Behaviour after escalation:** "Seriously? I've got an exam tomorrow. Can't I just wait for the appointment?"
 

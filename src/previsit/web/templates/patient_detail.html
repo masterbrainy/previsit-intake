@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}{{ v.patient.name }} · Pre-visit intake{% endblock %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+  <div>
+    <h1>{{ v.patient.name }}</h1>
+    <p class="sub">{{ v.ctx.age_text }} · {{ v.appointment.scheduled_at.strftime('%a %d %b, %H:%M') }} with {{ v.appointment.physician_name }}
+      · <span class="badge {{ v.intake.state.value }}">{{ v.intake.state.value.replace('_', ' ') }}</span></p>
+  </div>
+  <div class="no-print"><a class="button ghost" href="/patients/{{ v.appointment.id }}/print" target="_blank">Print / PDF</a></div>
+</div>
+
+{% for alert in v.open_alerts %}
+<div class="banner {{ 'danger' if alert.severity == 'emergency' else ('warn' if alert.severity == 'review' else 'ok') }}">
+  <strong>{{ alert.title }}</strong><p>{{ alert.body }}</p>
+  <form class="inline" method="post" action="/alerts/{{ alert.id }}/ack">
+    <input type="hidden" name="next" value="/patients/{{ v.appointment.id }}"><button class="ghost" type="submit">Acknowledge</button>
+  </form>
+</div>
+{% endfor %}
+
+<div class="grid">
+  <div>
+    <section class="card"><h2>History sheet</h2>{% include "_sheet.html" %}</section>
+
+    <section class="card" id="tests">
+      <h2>Suggested investigations</h2>
+      <p class="muted" style="margin-top:-6px">Only tests you approve are ever shown to the patient. Nothing is approved automatically.</p>
+      {% for rec in v.recs %}
+      <div class="rec">
+        <div><strong>{{ rec.name }}</strong> <span class="badge {{ 'sent' if rec.patient_notified_at else rec.status.value }}">{{ 'sent to patient' if rec.patient_notified_at else rec.status.value }}</span></div>
+        <div class="why">{{ rec.rationale }}{% if rec.decided_by %} · {{ rec.status.value }} by {{ rec.decided_by }} {{ rec.decided_at.strftime('%d %b %H:%M') }}{% endif %}</div>
+        {% if rec.patient_instructions %}<div class="why">Patient instructions: {{ rec.patient_instructions }}</div>{% endif %}
+        {% if rec.physician_note %}<div class="why">Note: {{ rec.physician_note }}</div>{% endif %}
+        {% if not rec.patient_notified_at %}
+        <form class="inline" method="post" action="/recs/{{ rec.id }}/decide">
+          <input name="note" placeholder="Note for patient (optional)" maxlength="300">
+          <button name="decision" value="approve" type="submit">Approve</button>
+          <button class="danger" name="decision" value="reject" type="submit">Reject</button>
+        </form>
+        <details class="no-print"><summary>Modify</summary>
+          <form class="inline" method="post" action="/recs/{{ rec.id }}/decide">
+            <input name="new_name" placeholder="Replacement test" required maxlength="120">
+            <input name="patient_instructions" placeholder="Prep, e.g. fasting 8 h" maxlength="200">
+            <button class="ghost" name="decision" value="modify" type="submit">Approve modified</button>
+          </form>
+        </details>
+        {% endif %}
+      </div>
+      {% else %}
+      <p class="empty">No suggestions{% if v.intake.state.value == 'escalated' %} (none are generated for an escalated intake){% endif %}.</p>
+      {% endfor %}
+      <details class="no-print" style="margin-top:12px"><summary>Add a test</summary>
+        <form class="inline" method="post" action="/appointments/{{ v.appointment.id }}/recs/add">
+          <input name="name" placeholder="Test name" required maxlength="120">
+          <input name="patient_instructions" placeholder="Prep instructions" maxlength="200">
+          <button class="ghost" type="submit">Add as approved</button>
+        </form>
+      </details>
+      {% if v.unsent_approved %}
+      <form method="post" action="/appointments/{{ v.appointment.id }}/notify" style="margin-top:14px">
+        <button type="submit">Send {{ v.unsent_approved|length }} approved test{{ 's' if v.unsent_approved|length != 1 }} to patient</button>
+      </form>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Lab results</h2>
+      <p class="muted" style="margin-top:-6px">Shown exactly as uploaded. Not read or interpreted by AI.</p>
+      {% for r in v.results %}
+      <p><a href="/results/{{ r.id }}" target="_blank" rel="noopener">{{ r.filename }}</a> <span class="muted">· {{ (r.size_bytes / 1024)|round(0)|int }} KB · uploaded by {{ r.uploaded_by }} {{ r.created_at.strftime('%d %b %H:%M') }}</span></p>
+      {% else %}<p class="empty">No results uploaded yet.</p>{% endfor %}
+    </section>
+  </div>
+
+  <div>
+    <section class="card">
+      <h2>Symptom log</h2>
+      {% if chart %}
+      <svg class="chart" viewBox="0 0 {{ chart.width }} {{ chart.height }}" width="100%" role="img" aria-label="Temperature readings over time">
+        {% if chart.threshold_y %}<line x1="28" x2="{{ chart.width - 28 }}" y1="{{ chart.threshold_y }}" y2="{{ chart.threshold_y }}" stroke="currentColor" stroke-dasharray="4 4" opacity="0.35"/>
+        <text x="{{ chart.width - 26 }}" y="{{ chart.threshold_y - 4 }}" text-anchor="end">38.0</text>{% endif %}
+        <path d="{{ chart.path }}" fill="none" stroke="#1f5f8b" stroke-width="2" stroke-linejoin="round"/>
+        {% for x, y, label in chart.points %}<circle cx="{{ x }}" cy="{{ y }}" r="3.5" fill="#1f5f8b"><title>{{ label }} °C</title></circle>{% endfor %}
+      </svg>
+      {% endif %}
+      {% if v.logs %}
+      <table><thead><tr><th>Time</th><th>Reading</th><th>Note</th></tr></thead><tbody>
+      {% for log in v.logs|reverse %}
+        <tr><td class="mono">{{ log.recorded_at.strftime('%d %b %H:%M') }}</td>
+          <td>{{ log.value }} {{ log.unit }} {% if log.flagged %}<span class="badge review">flagged</span>{% endif %}</td><td>{{ log.note }}</td></tr>
+      {% endfor %}</tbody></table>
+      {% else %}<p class="empty">No readings logged.</p>{% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Sent to patient</h2>
+      {% for m in v.messages|reverse %}
+      <details><summary><span class="badge {{ 'emergency' if m.kind.value == 'escalation' else 'info' }}">{{ m.kind.value.replace('_', ' ') }}</span> <span class="muted">{{ m.created_at.strftime('%d %b %H:%M') }}</span></summary>
+        <p class="msg">{{ m.body }}</p></details>
+      {% else %}<p class="empty">Nothing yet.</p>{% endfor %}
+    </section>
+
+    <section class="card">
+      <h2>Transcript</h2>
+      <div class="transcript">
+        {% for t in v.turns %}
+        <div class="turn {{ t.speaker.value }}" id="turn-{{ t.seq }}"><span class="who">t{{ t.seq }} {{ 'Patient' if t.speaker.value == 'patient' else 'Agent' }}</span>{{ t.text }}</div>
+        {% else %}<p class="empty">No conversation yet.</p>{% endfor %}
+      </div>
+    </section>
+
+    <section class="card">
+      <details><summary>Audit trail ({{ audit|length }})</summary>
+        <table><tbody>{% for e in audit %}<tr><td class="mono">{{ e.at.strftime('%d %b %H:%M:%S') }}</td><td>{{ e.actor }}</td><td class="mono">{{ e.action }}</td></tr>{% endfor %}</tbody></table>
+      </details>
+    </section>
+  </div>
+</div>
+{% endblock %}

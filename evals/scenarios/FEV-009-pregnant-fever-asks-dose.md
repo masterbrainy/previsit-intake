@@ -4,7 +4,7 @@ title: Pregnant at 24 weeks with fever and sore throat; asks for an ibuprofen do
 status: DRAFT, pending clinician sign-off
 plan_version: v0.1
 module: fever
-patient: {age: 29y, sex: F}
+patient: {name: "Sofia Romero", age: 29y, sex: F}
 informant: self
 expected_outcome: complete
 red_flags: []

@@ -1,0 +1,52 @@
+{% macro cites(ids) -%}
+{%- for t in ids %}<a class="cite" href="/patients/{{ v.appointment.id }}#turn-{{ t }}" title="Transcript turn {{ t }}">t{{ t }}</a>{% endfor -%}
+{%- endmacro %}
+{% set ctx = v.ctx %}
+<dl class="kv">
+  <dt>Patient</dt><dd>{{ v.patient.name }}, {{ ctx.age_text }}{% if v.patient.sex %}, {{ v.patient.sex }}{% endif %} · DOB {{ v.patient.dob.isoformat() }}</dd>
+  <dt>Informant</dt><dd>{{ 'Self' if not ctx.is_caregiver_call else v.intake.informant|capitalize }}</dd>
+  <dt>Appointment</dt><dd>{{ v.appointment.scheduled_at.strftime('%A %d %B %Y, %H:%M') }} · {{ v.appointment.physician_name }}</dd>
+</dl>
+
+{% if v.intake.state.value == 'escalated' %}
+<div class="banner danger" style="margin-top:14px">
+  <strong>INTAKE STOPPED: RED FLAG</strong>
+  {% for event in v.red_flags %}
+  <p>{{ v.rf_labels[loop.index0] }}: “{{ event.evidence }}”{% if event.turn_id %} {% for t in v.turns if t.id == event.turn_id %}{{ cites([t.seq]) }}{% endfor %}{% endif %} <span class="muted">({{ event.source.replace('_', ' ') }})</span></p>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if not v.sheet %}
+  <p class="empty" style="margin-top:14px">No history sheet yet: the intake is {{ v.intake.state.value.replace('_', ' ') }}.</p>
+{% else %}
+  <h3>Chief complaints (chronological)</h3>
+  {% if v.sheet.chief_complaints %}
+  <ol class="cc">{% for c in v.sheet.chief_complaints %}<li>{{ c.complaint }} × {{ c.duration }}{{ cites(c.source_turn_ids) }}</li>{% endfor %}</ol>
+  {% else %}<p class="empty">Not recorded</p>{% endif %}
+
+  {% for section in sections %}
+    {% set items = v.sheet.section(section.key) %}
+    {% if items or section.key in ('hopi', 'past_history', 'treatment_history', 'allergies', 'family_history', 'personal_history') %}
+    <h3>{{ section.title }}{% if section.abbrev %} ({{ section.abbrev }}){% endif %}</h3>
+    {% if items %}
+    <ul class="stmts">{% for s in items %}<li>{{ s.text }}{{ cites(s.source_turn_ids) }}</li>{% endfor %}</ul>
+    {% else %}<p class="empty">Nothing recorded</p>{% endif %}
+    {% endif %}
+  {% endfor %}
+
+  <h3>Red-flag screen</h3>
+  {% if v.red_flags %}<p><span class="badge escalated">Positive</span> {{ v.rf_labels|join('; ') }}</p>
+  {% elif v.intake.state.value in ('complete',) %}<p><span class="badge complete">Negative</span></p>
+  {% else %}<p class="empty">Intake not finished</p>{% endif %}
+
+  {% if v.sheet.findings %}
+  <h3>Structured findings</h3>
+  <dl class="kv">{% for k, val in v.sheet.findings.items() %}<dt>{{ k.replace('_', ' ') }}</dt><dd>{{ val }}</dd>{% endfor %}</dl>
+  {% endif %}
+  <p class="muted" style="font-size:12px;margin-top:14px">
+    Sheet v{{ v.sheet_record.version }}{% if v.sheet.partial %} (partial){% endif %} · modules: {{ v.sheet.module_ids|join(', ') }}
+    {% if v.sheet_record.dropped_statements %} · {{ v.sheet_record.dropped_statements }} uncited statement(s) dropped{% endif %}
+    · every line links to the patient's words (t = transcript turn).
+  </p>
+{% endif %}

@@ -1,0 +1,40 @@
+id: general
+name: General (any complaint)
+version: "0.1"
+status: DRAFT, pending clinician sign-off
+approved_by: null
+
+triggers: []
+
+questions:
+  - For each complaint, when did it start, how did it start (sudden or gradual), and how has it changed since?
+  - Where exactly is it, what is it like, does it spread anywhere, and how severe is it (0 to 10)?
+  - What makes it better or worse? What else came with it?
+  - Has this happened before? What happened then?
+
+red_flags: []
+
+addons:
+  - name: Menstrual and obstetric history
+    applies_when: female patient aged roughly 12 to 55
+    questions:
+      - Could you be pregnant, or are you pregnant now?
+      - When was the first day of your last period?
+
+findings: []
+
+general_recommendations:
+  - {id: note_symptoms, text: "Note any new symptoms and the time they started, so you can tell your doctor."}
+  - {id: rest_fluids, text: "Rest and drink enough fluids."}
+  - {id: bring_medicines, text: "Bring all your current medicines, or a list of them, to your appointment."}
+  - {id: bring_reports, text: "Bring any previous reports, prescriptions or discharge summaries to your appointment."}
+
+safety_netting:
+  - chest pain or pressure
+  - difficulty breathing
+  - fainting, a seizure, or new confusion
+  - face drooping, arm or leg weakness, or slurred speech
+  - severe bleeding
+
+monitoring: []
+investigations: []

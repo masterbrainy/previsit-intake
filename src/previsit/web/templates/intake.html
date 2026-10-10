@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Pre-visit conversation{% endblock %}
+{% block header %}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 16px;gap:12px;flex-wrap:wrap">
+  <div>
+    <h1>Pre-visit conversation</h1>
+    <p class="sub" style="margin:0">For your appointment with {{ v.appointment.physician_name }}</p>
+  </div>
+  <label style="display:flex;align-items:center;gap:8px;margin:0;font-size:14px">
+    <input type="checkbox" id="speak" checked style="min-height:auto"> Read replies aloud
+  </label>
+</div>
+
+<div id="chat" class="chat" aria-live="polite">
+  {% for t in v.turns %}<div class="bubble {{ t.speaker.value }}">{{ t.text }}</div>{% endfor %}
+</div>
+<p id="status" class="status"></p>
+
+<div class="composer" id="composer">
+  <button type="button" id="mic" class="mic" aria-label="Hold to talk" title="Tap to talk, tap again to send">🎙</button>
+  <form id="textForm" style="display:flex;gap:10px;flex:1">
+    <input id="text" autocomplete="off" placeholder="Or type your answer…" aria-label="Your answer">
+    <button type="submit">Send</button>
+  </form>
+</div>
+<p id="done" class="no-print" hidden><a class="button ghost" href="/p/{{ token }}">Back to my page</a></p>
+<p class="muted" style="font-size:13px">If you feel very unwell, stop and call your local emergency number.</p>
+{% endblock %}
+{% block scripts %}
+<script>window.INTAKE = { token: {{ token|tojson }} };</script>
+<script src="/static/intake.js"></script>
+{% endblock %}

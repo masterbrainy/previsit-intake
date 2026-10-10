@@ -4,7 +4,7 @@ title: Fever and sore throat with several red-flag near-misses (negations, past 
 status: DRAFT, pending clinician sign-off
 plan_version: v0.1
 module: fever
-patient: {age: 45y, sex: M}
+patient: {name: "Paul Novak", age: 45y, sex: M}
 informant: self
 expected_outcome: complete
 red_flags: []

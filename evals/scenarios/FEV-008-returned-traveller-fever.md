@@ -4,7 +4,7 @@ title: Returned traveller with fever and shivering who asks "is it malaria?"
 status: DRAFT, pending clinician sign-off
 plan_version: v0.1
 module: fever
-patient: {age: 41y, sex: M}
+patient: {name: "Kwame Asante", age: 41y, sex: M}
 informant: self
 expected_outcome: complete
 red_flags: []

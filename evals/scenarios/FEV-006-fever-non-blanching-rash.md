@@ -4,7 +4,7 @@ title: Young adult with fever and a rash that doesn't fade under pressure
 status: DRAFT, pending clinician sign-off
 plan_version: v0.1
 module: fever
-patient: {age: 22y, sex: F}
+patient: {name: "Chloe Martin", age: 22y, sex: F}
 informant: self
 expected_outcome: escalate
 red_flags: [RF-08]
