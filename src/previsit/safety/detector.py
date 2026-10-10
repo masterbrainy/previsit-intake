@@ -11,7 +11,6 @@ from previsit.modules import ComplaintModule
 from previsit.safety.context import PatientContext
 from previsit.safety.red_flags import BASELINE_RED_FLAGS, RED_FLAGS_BY_ID
 
-RECENT_TURNS = 14
 UNSPECIFIED_RF = "RF-UNSPECIFIED"
 
 
@@ -44,7 +43,7 @@ class TranscriptLine:
 
 
 SYSTEM_PROMPT = """You are the safety monitor for a pre-visit medical history call. You never talk to the patient.
-Decide whether the LATEST patient turn, read in the context of the conversation, shows an emergency red flag.
+Decide whether the LATEST patient turn, read in the context of the whole conversation, shows an emergency red flag.
 
 Red flags (go to emergency care now):
 {red_flags}
@@ -53,7 +52,10 @@ Rules:
 - A red flag counts only if it is present now or began during this illness.
 - Clearly negated mentions do not count ("no chest pain", "my neck's fine").
 - Clearly resolved past episodes unrelated to this illness do not count ("a seizure as a child, none since").
-  Family members' conditions do not count.
+  Family members' conditions do not count. The patient's own news counts whatever question it answers
+  ("Any family history?" "I'm pregnant" is about the patient).
+- A red flag can be completed by the latest turn together with anything the patient said earlier in the call
+  (e.g. severe pain early on, pregnancy mentioned much later).
 - Lay, caregiver and mixed-language phrasing count exactly like clinical terms.
 - The rules apply to the patient, not to the person speaking. Use the patient's age for age-based rules.
 - If it is genuinely unclear whether a red flag is present now, answer "ambiguous" and write ONE short, plain
@@ -96,8 +98,8 @@ def assess_turn(
     system = SYSTEM_PROMPT.format(
         red_flags=red_flag_lines(modules), clarification_rule=clarification_rule, patient=ctx.describe()
     )
-    recent = transcript[-RECENT_TURNS:]
-    user = f"Conversation so far (latest turn last):\n{format_transcript(recent)}"
+    # The whole call, every turn: a two-fact red flag can join something said 40 turns earlier (FEV-025).
+    user = f"Conversation so far (latest turn last):\n{format_transcript(transcript)}"
     output = llm.complete_json("safety", system, [{"role": "user", "content": user}], SafetyOutput)
     return _to_assessment(output, pending_clarification)
 

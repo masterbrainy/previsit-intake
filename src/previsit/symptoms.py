@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 from previsit import audit, outbox
 from previsit.config import Settings
 from previsit.llm import LLMClient, LLMError
-from previsit.models import Appointment, Intake, Patient, SymptomLog
+from previsit.models import Appointment, Intake, Patient, SymptomLog, Turn
 from previsit.modules import ComplaintModule, MonitoringSpec, all_modules, modules_for
 from previsit.recs.medical import OPS
 from previsit.safety import escalation
@@ -105,13 +105,27 @@ def log_symptom(
     return LogOutcome(log, False, log.flagged, "Thank you, your reading has been saved for your doctor.")
 
 
+def _safety_history(session: Session, appointment_id: int, current: SymptomLog) -> list[TranscriptLine]:
+    """The whole pre-visit call, then earlier symptom logs: a note can complete a red flag said days before (FEV-025)."""
+    intake = session.exec(select(Intake).where(Intake.appointment_id == appointment_id)).first()
+    turns = session.exec(select(Turn).where(Turn.intake_id == intake.id).order_by(Turn.seq)).all() if intake else []
+    lines = [TranscriptLine(n, t.speaker.value, t.text) for n, t in enumerate(turns, start=1)]
+    logs = session.exec(select(SymptomLog).where(SymptomLog.appointment_id == appointment_id, SymptomLog.id != current.id)
+                        .order_by(SymptomLog.recorded_at, SymptomLog.id)).all()
+    for n, earlier in enumerate(logs, start=len(lines) + 1):
+        text = f"(symptom log) {earlier.metric} {earlier.value:g}{earlier.unit}" + (f". {earlier.note}" if earlier.note else "")
+        lines.append(TranscriptLine(n, "patient", text))
+    return lines
+
+
 def _check_note(
     session: Session, llm: LLMClient, settings: Settings, appointment_id: int, ctx: PatientContext,
     modules: list[ComplaintModule], log: SymptomLog,
 ) -> LogOutcome | None:
-    line = TranscriptLine(seq=1, speaker="patient", text=log.note)
+    history = _safety_history(session, appointment_id, log)
+    line = TranscriptLine(seq=len(history) + 1, speaker="patient", text=log.note)
     try:
-        assessment = assess_turn(llm, ctx, modules, [line])
+        assessment = assess_turn(llm, ctx, modules, [*history, line])
     except LLMError:
         outbox.send_staff_alert(session, appointment_id, "review", "Symptom note not safety-checked",
                                 f'Safety check unavailable for note: "{log.note}"')
