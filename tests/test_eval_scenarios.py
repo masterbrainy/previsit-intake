@@ -71,3 +71,22 @@ def test_dob_for_years_gives_that_age(age, years):
 
     age_now = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
     assert age_now == years
+
+
+def test_demo_scenarios_are_excluded_from_the_eval_set_unless_named():
+    assert not [s for s in load_all() if s.id.startswith("DEMO-")]
+    assert [s.id for s in load_all(ids=["DEMO-001"])] == ["DEMO-001"]
+
+
+def test_demo_full_flow_triggers_the_cbc_rule():
+    """The fever module suggests a CBC at fever >= 3 days; the demo needs that suggestion on screen."""
+    s = load_all(ids=["DEMO-001"])[0]
+
+    assert s.expected_outcome == "complete"
+    assert any("Fever for 4 days" in fact for fact in s.key_facts)
+
+
+def test_demo_red_flag_case_is_a_stiff_neck_stop():
+    s = load_all(ids=["DEMO-002"])[0]
+
+    assert s.expected_outcome == "escalate" and s.red_flags == ("RF-07",)

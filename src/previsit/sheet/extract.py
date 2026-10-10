@@ -62,22 +62,32 @@ Strict rules:
   that complaint started, set duration to an empty string. Never copy another complaint's duration. onset_order 1 = started first.
 - Particulars: occupation, school, who they live with only. Never name, age, sex or informant (those come from the
   clinic record), never symptoms or measurements.
-- Red-flag screen: one statement per danger symptom the patient explicitly denied when asked (e.g. "No chest pain").
+- Red-flag screen: one statement per danger symptom the patient explicitly denied when asked, written exactly as
+  "No <symptom as asked>" (e.g. "No chest pain", "No rash"). Never add qualifiers the patient didn't confirm
+  (a patient who said "no rash" has "No rash", NOT "No rash that fades when pressed").
 - A single "no" to a question listing several symptoms denies exactly the symptoms in that question, nothing more.
 - HOPI: onset, duration, progression, character, severity, timing, aggravating/relieving factors, associated symptoms,
-  relevant negatives, previous similar episodes.
+  relevant negatives, previous similar episodes. Include every detail given in the opening answers too (e.g. highest
+  temperature, "since this morning", "no thermometer"), even if the conversation stopped early.
 - Past history (PH): chronic illnesses, previous episodes, hospitalisations, surgeries. Resolved childhood events go here.
 - Treatment history: current medicines with dose if given, what was taken for this illness and its effect.
-- Allergies: drug and food allergies and reactions, or "no known allergies" if stated.
+- Allergies: drug and food allergies and reactions. Write "No known allergies" ONLY if the patient answered a question
+  about allergies with a denial, citing that answer. If allergies were never asked about, leave the section empty.
 - Family history: relatives' conditions, ages; never attribute a relative's condition to the patient.
 - Personal history: diet, appetite, sleep, bowel/bladder, smoking, alcohol, substances, occupation, travel, contacts, living situation.
 - Review of systems: other symptoms asked about, positives and negatives.
-- Specialty add-ons: menstrual/obstetric, paediatric birth/feeding/immunisation, etc., when discussed.
+- Specialty add-ons: menstrual/obstetric (weeks pregnant, previous pregnancies and deliveries, fetal movements,
+  antenatal care, pregnancy vitamins), paediatric birth/feeding/development/immunisation, when discussed.
+- Travel: record where, when, and any preventive tablets (e.g. malaria prophylaxis) taken or not taken.
 - Could not answer: things the patient said they did not know.
 - Findings: fill only these keys, and only if the patient stated it:
 {findings}
   Values: numbers as plain numbers (convert Fahrenheit to Celsius for temperatures), booleans as "true"/"false".
 - Leave a section empty if nothing was said about it.
+- Be complete. Before answering, go through EVERY patient turn and check each fact in it is on the sheet somewhere:
+  places (nursery, school, work), how a temperature was measured (ear, mouth, armpit) and the highest reading,
+  wet nappies, pregnancy counts and vitamins, preventive tablets, inhaler names or colours, gradual or sudden onset,
+  and plain denials the patient gave to a question (e.g. "No travel in the last 3 months").
 
 {patient}"""
 
@@ -105,7 +115,8 @@ def build_sheet(
     user = f"Conversation:\n{format_transcript(transcript)}"
     output = llm.complete_json("sheet", system, [{"role": "user", "content": user}], SheetOut)
     patient_turns = {line.seq for line in transcript if line.speaker == "patient"}
-    result = _validate(output, patient_turns, specs, tuple(m.id for m in modules), partial)
+    allergy_turns = allergy_answer_turns(transcript)
+    result = _validate(output, patient_turns, allergy_turns, specs, tuple(m.id for m in modules), partial)
     record = {
         "name": ctx.name,
         "age": ctx.age_text,
@@ -113,6 +124,31 @@ def build_sheet(
         "informant": "self" if not ctx.is_caregiver_call else ctx.informant,
     }
     return ExtractionResult(sheet=result.sheet.model_copy(update={"record": record}), dropped=result.dropped)
+
+
+# "Not stated" lines are not history; the sheet leaves unanswered items out (eval FEV-002).
+_NOT_STATED = re.compile(r"\bnot (?:stated|mentioned|reported|specified|discussed|provided|asked|documented)\b", re.I)
+# "No known allergies" and similar. Only kept when the patient actually answered an allergy question (eval FEV-020).
+_NO_ALLERGY = re.compile(r"\b(?:nkda|nka|no (?:known )?(?:drug |food |medication )?allerg|denies (?:any )?allerg)", re.I)
+
+
+def allergy_answer_turns(transcript: list[TranscriptLine]) -> set[int]:
+    """Patient turns that talk about allergies or answer an assistant question that asked about them."""
+    turns, asked = set(), False
+    for line in transcript:
+        if line.speaker == "agent":
+            asked = "allerg" in line.text.lower()
+        elif asked or "allerg" in line.text.lower():
+            turns.add(line.seq)
+    return turns
+
+
+def _keep(section_key: str, text: str, cited: tuple[int, ...], allergy_turns: set[int]) -> bool:
+    if not cited or not text or _NOT_STATED.search(text):
+        return False
+    if section_key == "allergies" and _NO_ALLERGY.search(text):
+        return any(t in allergy_turns for t in cited)
+    return True
 
 
 def _cited(turns: list[int], patient_turns: set[int]) -> tuple[int, ...]:
@@ -123,6 +159,7 @@ def _cited(turns: list[int], patient_turns: set[int]) -> tuple[int, ...]:
 def _validate(
     output: SheetOut,
     patient_turns: set[int],
+    allergy_turns: set[int],
     specs: dict[str, FindingSpec],
     module_ids: tuple[str, ...],
     partial: bool,
@@ -133,8 +170,9 @@ def _validate(
         kept = []
         for item in getattr(output, section.key):
             cited = _cited(item.source_turns, patient_turns)
-            if cited and item.text.strip():
-                kept.append(Statement(text=item.text.strip(), source_turn_ids=cited))
+            text = item.text.strip()
+            if _keep(section.key, text, cited, allergy_turns):
+                kept.append(Statement(text=text, source_turn_ids=cited))
             else:
                 dropped += 1
         sections[section.key] = tuple(kept)

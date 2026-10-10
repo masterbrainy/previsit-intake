@@ -23,7 +23,7 @@ from previsit.recs.medical import suggest_investigations
 from previsit.safety import escalation
 from previsit.safety.context import PatientContext
 from previsit.safety.detector import SafetyStatus, TranscriptLine, assess_turn
-from previsit.safety.scope_guard import check_agent_utterance
+from previsit.safety.scope_guard import check_agent_utterance, redirect_for
 from previsit.sheet.extract import build_sheet
 from previsit.sheet.schema import HistorySheet
 
@@ -263,6 +263,11 @@ class IntakeEngine:
                 select(RedFlagEvent).where(RedFlagEvent.intake_id == intake.id).order_by(RedFlagEvent.id.desc())
             ).first()
             rf_ids = tuple(event.rf_ids) if event else ()
+            if event is not None and event.patient_response is None:
+                event.patient_response = self._last_patient_text(session, intake)
+                session.add(event)
+                audit.record(session, "patient", "red_flag.response", "appointment", intake.appointment_id,
+                             {"event_id": event.id, "response": event.patient_response})
             if self._follow_up_already_given(session, intake, event):
                 # red_flags.md §5.2: say the follow-up once, then close so the line is free.
                 return self._say(
@@ -275,6 +280,12 @@ class IntakeEngine:
             f"{self.settings.emergency_number}.",
             ended=True,
         )
+
+    def _last_patient_text(self, session: Session, intake: Intake) -> str:
+        turn = session.exec(
+            select(Turn).where(Turn.intake_id == intake.id, Turn.speaker == Speaker.PATIENT).order_by(Turn.seq.desc())
+        ).first()
+        return turn.text if turn else ""
 
     def _follow_up_already_given(self, session: Session, intake: Intake, event: RedFlagEvent | None) -> bool:
         trigger = session.get(Turn, event.turn_id) if event and event.turn_id else None
@@ -302,7 +313,9 @@ class IntakeEngine:
         return AgentReply(text, intake.state, ended or intake.state.is_terminal)
 
     def _say_guarded(self, session: Session, intake: Intake, text: str) -> AgentReply:
-        result = check_agent_utterance(self.llm, text)
+        ctx = self._context(session, intake)
+        redirect = redirect_for(ctx.first_name if ctx.is_caregiver_call else None)
+        result = check_agent_utterance(self.llm, text, redirect)
         if not result.allowed:
             audit.record(session, "system", "scope_guard.blocked", "intake", intake.id,
                          {"reason": result.reason, "blocked_text": text})

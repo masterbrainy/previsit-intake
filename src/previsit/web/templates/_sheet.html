@@ -13,6 +13,8 @@
   <strong>INTAKE STOPPED: RED FLAG</strong>
   {% for event in v.red_flags %}
   <p>{{ v.rf_labels[loop.index0] }}: “{{ event.evidence }}”{% if event.turn_id %} {% for t in v.turns if t.id == event.turn_id %}{{ cites([t.seq]) }}{% endfor %}{% endif %} <span class="muted">({{ event.source.replace('_', ' ') }})</span></p>
+  {% if event.patient_response %}<p>Caller's response after being told to seek emergency care: “{{ event.patient_response }}”</p>
+  {% elif event.source == 'intake' %}<p class="muted">No response from the caller after the instruction.</p>{% endif %}
   {% endfor %}
 </div>
 {% endif %}

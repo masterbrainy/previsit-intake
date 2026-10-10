@@ -30,17 +30,22 @@ How to talk:
 
 Cover these sections, in roughly this order, skipping only what the patient has ALREADY clearly answered:
 1. Particulars: occupation (or school/daycare for a child), who they live with.
-2. Chief complaints: every complaint. For EACH complaint, ask when it started unless the patient gave that exact
-   complaint's start themselves. Never assume one complaint started when another did.
-3. History of presenting illness, for each complaint: onset, duration, pattern, severity, what makes it better or worse,
-   associated symptoms, relevant negatives, and whether this has happened before. Use the module questions below.
+2. Chief complaints: keep a running list of EVERY complaint the patient mentions, including those in their very first
+   answer and anything they felt BEFORE the main problem (e.g. tired for weeks before the fever). For EACH complaint,
+   ask when it started unless the patient gave that exact complaint's start themselves. Never assume one complaint
+   started when another did.
+3. History of presenting illness: walk through EACH complaint on the list, one at a time, before moving to section 4:
+   onset (sudden or gradual), duration, pattern, severity, what makes it better or worse, associated symptoms, relevant
+   negatives, and whether this has happened before. Use the module questions below.
 4. Past history: long-term conditions, previous similar illness, hospital stays, operations, and any past fits,
    faints or serious illnesses.
 5. Treatment history: regular medicines and supplements (name, dose), anything taken for this illness, when, and whether
-   it helped. Allergies to medicines or foods, and what happened.
+   it helped. Then ALWAYS ask about allergies as its own question: any allergy to medicines or foods, and what happened.
 6. Family history: health problems in parents, brothers and sisters, children (ages, causes of death if any).
-7. Personal history: diet and appetite, sleep, bowel and bladder, smoking, alcohol, other substances, travel, sick contacts.
-8. Specialty add-ons: MANDATORY whenever they apply (pregnancy, children). Ask every add-on question.
+7. Personal history: diet and appetite, sleep, bowel and bladder, smoking, alcohol, other substances, sick contacts,
+   and travel in the last 3 months (always ask; if they travelled, where, and any preventive tablets or vaccines).
+8. Specialty add-ons: MANDATORY whenever they apply (pregnancy, children). Ask every add-on question listed below,
+   one at a time; before finishing, check none was skipped.
 9. Safety screen, before finishing: ask plainly about each of these that has not already been asked, a few per question:
 {screen}
 10. Brief review of other body systems not yet covered.
@@ -51,8 +56,9 @@ Complaint modules available (put the IDs of every module matching the patient's 
 Active module questions:
 {module_questions}
 
-Set interview_complete=true only when every section above has been covered (or the patient could not answer), and then
-make the utterance a brief thank-you that says you will now read back the main points.
+Set interview_complete=true only when every section above has been covered (or the patient could not answer). Before
+finishing, check you have asked about allergies, travel, every add-on and the safety screen. Then make the utterance a
+brief thank-you that says you will now read back the main points.
 
 {patient}"""
 
@@ -130,7 +136,23 @@ def next_step(
     )
     output = llm.complete_json("interview", system, to_messages(transcript), InterviewOut)
     patient_turns = sum(1 for line in transcript if line.speaker == "patient")
-    complete = output.interview_complete or patient_turns >= MAX_PATIENT_TURNS
     known = all_modules()
     module_ids = tuple(i for i in dict.fromkeys(output.module_ids) if i in known)
-    return InterviewStep(utterance=output.utterance.strip(), interview_complete=complete, module_ids=module_ids)
+    if patient_turns >= MAX_PATIENT_TURNS:
+        return InterviewStep(utterance=output.utterance.strip(), interview_complete=True, module_ids=module_ids)
+    if output.interview_complete and not allergies_asked(transcript):
+        return InterviewStep(utterance=allergy_question(ctx), interview_complete=False, module_ids=module_ids)
+    return InterviewStep(
+        utterance=output.utterance.strip(), interview_complete=output.interview_complete, module_ids=module_ids
+    )
+
+
+def allergies_asked(transcript: list[TranscriptLine]) -> bool:
+    return any(line.speaker == "agent" and "allerg" in line.text.lower() for line in transcript)
+
+
+def allergy_question(ctx: PatientContext) -> str:
+    """Allergies are mandatory: asked by code if the interviewer tries to finish without them (eval FEV-020)."""
+    who = ctx.first_name if ctx.is_caregiver_call else "you"
+    verb = "is" if ctx.is_caregiver_call else "are"
+    return f"Before we finish, {verb} {who} allergic to any medicines or foods? If so, what happened?"

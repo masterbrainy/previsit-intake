@@ -93,6 +93,8 @@ def load_all(ids: list[str] | None = None, max_phase: int | None = None,
     if ids:
         wanted = set(ids)
         scenarios = [s for s in scenarios if s.id in wanted]
+    else:  # demo scripts (D.3) run only when named, so they never skew the eval metrics
+        scenarios = [s for s in scenarios if not s.meta.get("demo")]
     if max_phase is not None:
         scenarios = [s for s in scenarios if s.phase <= max_phase]
     return scenarios

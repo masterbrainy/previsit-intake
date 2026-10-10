@@ -111,6 +111,7 @@ class RedFlagEvent(SQLModel, table=True):
     rf_ids: list[str] = Field(default_factory=list, sa_column=Column(JSON))
     evidence: str = ""
     source: str = "intake"
+    patient_response: str | None = None  # the caller's first reply after being told to seek emergency care
     created_at: datetime = Field(default_factory=utcnow)
 
 

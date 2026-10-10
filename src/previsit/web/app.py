@@ -54,7 +54,9 @@ def create_app(settings: Settings | None = None, llm: LLMClient | None = None) -
                     request, "error.html", {"message": "Cross-site request blocked."}, status_code=403
                 )
         response = await call_next(request)
-        response.headers["X-Frame-Options"] = "DENY"
+        # Only our own origin may frame pages (used by the demo recorder's side-by-side stage).
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        response.headers["Content-Security-Policy"] = "frame-ancestors 'self'"
         # same-origin keeps patient link tokens from leaking to other sites. ("no-referrer" would make browsers send
         # Origin: null on our own form posts, which the CSRF check above rightly rejects.)
         response.headers["Referrer-Policy"] = "same-origin"
