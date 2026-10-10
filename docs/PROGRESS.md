@@ -10,9 +10,9 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | 0.2 | Name the clinical lead who signs off content | U | todo |
 | 0.3 | Choose stack: telephony/voice, LLM, backend, frontend | U+B | todo |
 | 0.4 | Draft history sheet template (PRD §7) as a schema | B | todo |
-| 0.5 | Draft baseline red-flag list + escalation script (pending clinician sign-off) | T | todo |
+| 0.5 | Draft baseline red-flag list + escalation script (pending clinician sign-off) | T | done |
 | 0.6 | Draft Fever (adult) complaint module (pending clinician sign-off) | B | todo |
-| 0.7 | Eval set: 30–50 simulated patient scripts with expected sheets | T | todo |
+| 0.7 | Eval set: 30–50 simulated patient scripts with expected sheets (12 fever drafts so far, see evals/README.md) | T | doing |
 | 0.8 | Regulatory / privacy read for the chosen market | U | todo |
 
 ## Phase 1: Voice intake → history sheet
