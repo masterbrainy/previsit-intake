@@ -82,7 +82,7 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | H.6 | Doctor's own patient list with quick notes (clinician-only, never to patient or AI) | B | done |
 | H.7 | Referrals (patient, from, to, note): receiving doctor gets access; audited; only a doctor with access can refer | B | done |
 | H.8 | Emergency words in booking reason show the full emergency script; acknowledge to continue; audited | B | done |
-| H.9 | Tests: doctor can't reach unassigned/unreferred patients (IDs, URLs); approvals name the doctor; staff see alerts with doctor offline; suggestion text never names a condition; hard-rule tests pass under doctor sign-in | T | todo |
+| H.9 | Tests: doctor can't reach unassigned/unreferred patients (IDs, URLs); approvals name the doctor; staff see alerts with doctor offline; suggestion text never names a condition; hard-rule tests pass under doctor sign-in | T | done: tests/test_doctor_access.py, test_doctor_suggestions.py, booking emergency tests in test_portal_booking.py; hard-rule tests run under doctor sign-in |
 | H.10 | Pilot guard: break-glass access for a covering doctor, with reason and audit | B | todo: before any pilot |
 | H.11 | Pilot guard: demo mode never on a public URL; individual staff accounts for the overview | U+B | todo: before any pilot or public hosting |
 

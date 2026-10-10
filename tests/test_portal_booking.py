@@ -5,7 +5,8 @@ from datetime import date, datetime, timedelta
 
 import pytest
 
-from factories import all_rows, doctor_sign_in, make_appointment, make_patient, portal_client, sign_in_with_code
+from factories import (CRISIS_LINE, EMERGENCY_NUMBER, all_rows, doctor_sign_in, make_appointment, make_patient, make_rec, portal_client,
+                       sign_in_with_code)
 
 NEW_PHONE, CLINIC_PHONE = "+15551230001", "+15551230002"
 DOB = "1988-04-02"
@@ -156,3 +157,85 @@ def test_cross_site_booking_post_is_blocked(new_user, doctor, session):
                              data={"patient_id": patient_id, "scheduled_at": _when(days=2), "doctor_id": doctor.id})
 
     assert response.status_code == 403 and _appointments(session) == []
+
+
+# ---------- hard rules hold on a self-booked visit ----------
+
+def test_unapproved_rec_never_shows_on_a_self_booked_visit(new_user, doctor, session):
+    from previsit import approval
+
+    patient_id = _patient_id(_register(new_user))
+    page_path = _book(new_user, doctor, patient_id).headers["location"]
+    [appointment] = _appointments(session)
+    rec = make_rec(session, appointment, name="ZZ-SELF-BOOKED-REC")
+
+    assert "ZZ-SELF-BOOKED-REC" not in new_user.get(page_path).text
+
+    approval.decide(session, rec.id, doctor.email, approval.Decision.APPROVE)
+    session.commit()
+    assert "ZZ-SELF-BOOKED-REC" not in new_user.get(page_path).text, "approved but not yet sent"
+
+    approval.notify_patient_of_approved(session, appointment.id, doctor.email)
+    session.commit()
+    assert "ZZ-SELF-BOOKED-REC" in new_user.get(page_path).text, "control: once sent, the patient sees it"
+
+
+# ---------- emergency words in the booking reason (P-005 adjustment 2, H.8) ----------
+
+URGENT_REASON = "chest pain since this morning"
+
+
+def _doctors_step(client, patient_id, reason):
+    return client.post("/portal/book/doctors", data={"patient_id": patient_id, "reason": reason})
+
+
+def test_emergency_words_show_the_full_emergency_script(new_user):
+    from previsit.safety.escalation import booking_emergency_message
+
+    patient_id = _patient_id(_register(new_user))
+
+    page = _doctors_step(new_user, patient_id, URGENT_REASON).text
+
+    script = booking_emergency_message(new_user.app.state.settings)
+    assert EMERGENCY_NUMBER in script and script.replace("'", "&#39;") in page
+    assert 'role="alert"' in page and 'name="urgent_ack"' in page
+
+
+def test_ordinary_reason_shows_no_emergency_script(new_user):
+    patient_id = _patient_id(_register(new_user))
+
+    page = _doctors_step(new_user, patient_id, "fever for three days").text
+
+    assert EMERGENCY_NUMBER not in page and 'name="urgent_ack"' not in page
+
+
+def test_suicide_risk_words_at_booking_give_the_crisis_line(new_user):
+    """Same rule as the intake's suicide-risk escalation (evals/red_flags.md): the crisis line is always given."""
+    patient_id = _patient_id(_register(new_user))
+
+    page = _doctors_step(new_user, patient_id, "I want to kill myself").text
+
+    assert EMERGENCY_NUMBER in page and CRISIS_LINE in page
+
+
+def test_urgent_booking_needs_the_acknowledgement(new_user, doctor, session):
+    patient_id = _patient_id(_register(new_user))
+    data = {"patient_id": patient_id, "doctor_id": doctor.id, "scheduled_at": _when(days=2), "reason": URGENT_REASON}
+
+    assert new_user.post("/portal/book", data=data).status_code == 422
+    assert _appointments(session) == []
+
+
+def test_acknowledged_urgent_booking_is_audited_and_raises_no_staff_alert(new_user, doctor, session):
+    from previsit.models import AuditEvent, StaffAlert
+
+    patient_id = _patient_id(_register(new_user))
+    data = {"patient_id": patient_id, "doctor_id": doctor.id, "scheduled_at": _when(days=2), "reason": URGENT_REASON,
+            "urgent_ack": "yes"}
+
+    assert new_user.post("/portal/book", data=data).status_code == 303
+
+    [appointment] = _appointments(session)
+    acks = [e for e in all_rows(session, AuditEvent) if e.action == "booking.emergency_advice_acknowledged"]
+    assert [e.entity_id for e in acks] == [appointment.id]
+    assert all_rows(session, StaffAlert) == []  # a keyword alone never alerts staff

@@ -322,3 +322,18 @@ def test_staff_see_and_acknowledge_emergencies_with_no_doctor_signed_in(client, 
     session.expire_all()
     assert response.status_code in (200, 303)
     assert session.get(StaffAlert, hospital.alert.id).acknowledged_at is not None
+
+
+def test_doctor_sign_in_is_audited_as_the_doctor_not_as_a_patient(client, session, hospital):
+    """The audit trail must tell a doctor's sign-in, wrong code and sign-out apart from a patient's."""
+    from previsit.models import AuditEvent
+
+    page = client.post("/doctor/code", data={"doctor_id": str(hospital.a.id)}).text
+    code = re.search(r'class="mono code">\s*(\d{6})', page).group(1)
+    client.post("/doctor/verify", data={"doctor_id": str(hospital.a.id), "code": "000000" if code != "000000" else "1"})
+    client.post("/doctor/verify", data={"doctor_id": str(hospital.a.id), "code": code})
+    client.post("/doctor/sign-out")
+
+    events = [(e.actor, e.action) for e in all_rows(session, AuditEvent)]
+    assert events, "control: the sign-in flow is audited"
+    assert [e for e in events if e[0] == "patient" or e[1].startswith("portal.")] == [], events

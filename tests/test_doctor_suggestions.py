@@ -10,7 +10,9 @@ import pytest
 
 from factories import make_doctor
 
-FIXED_REASONS = {"sees children", "general practice: sees most problems"}
+# Wording a reason may add around the patient's quoted words. Never a symptom, body part or condition.
+TEMPLATE_WORDS = {"sees", "matches", "in", "your", "visit", "reason", "children", "child", "general", "practice",
+                  "most", "problems", "for", "the", "you", "said", "mentioned", "and", "a", "of"}
 
 
 @pytest.fixture
@@ -32,7 +34,7 @@ def _recommend(session, reason, age=None):
 
 
 def _words(text):
-    return set(re.findall(r"[a-z0-9']+", text.lower()))
+    return set(re.findall(r"[a-z0-9]+(?:'[a-z]+)?", text.lower()))  # it's -> it's; 'cough' -> cough
 
 
 @pytest.mark.parametrize("reason, age", [("cough and fever for 3 days", 40), ("cough, fever, sore ear", 7),
@@ -47,10 +49,11 @@ def test_general_practice_is_always_among_the_suggestions(session, specialists, 
                                     "my ear hurts"])
 def test_reasons_only_quote_the_patients_words_or_say_something_generic(session, specialists, reason):
     said = _words(reason)
-    for rec in _recommend(session, reason, 30):
-        for text in rec.reasons:
-            quoted = text.removeprefix("sees ")
-            assert text in FIXED_REASONS or _words(quoted) <= said, (rec.doctor.name, text)
+    reasons = [(rec.doctor.name, text) for rec in _recommend(session, reason, 30) for text in rec.reasons]
+
+    assert reasons, "control: some suggestion gives a reason"
+    for name, text in reasons:
+        assert _words(text) - said <= TEMPLATE_WORDS, (name, text)
 
 
 def test_a_condition_the_patient_never_said_is_never_shown(session, specialists):
