@@ -149,7 +149,9 @@ def home_context(session: Session, token: str, notice: str = "", error: str = ""
         "v": view,
         "token": token,
         "escalations": [m for m in visible if m.kind is MessageKind.ESCALATION],
-        "messages": [m for m in visible if m.kind is not MessageKind.ESCALATION],
+        # After an escalation, stay-at-home advice no longer applies (FEV-018), so it is withdrawn from the page.
+        "messages": [m for m in visible if m.kind is not MessageKind.ESCALATION
+                     and not (view.red_flags and m.kind is MessageKind.GENERAL_RECS)],
         "monitoring": list(monitoring_specs(view.modules).values()),
         "can_start": view.intake.state in {IntakeState.NOT_STARTED, IntakeState.CONSENT, IntakeState.IDENTITY,
                                           IntakeState.INTERVIEW, IntakeState.READBACK},
