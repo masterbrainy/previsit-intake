@@ -23,7 +23,7 @@ from previsit.llm import LLMClient, OpenAILLM
 logger = logging.getLogger(__name__)
 WEB_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=WEB_DIR / "templates")
-basic = HTTPBasic(realm="Pre-visit intake: physician")
+basic = HTTPBasic(realm="PATH: staff")
 # Pages with patient data are never stored by the browser or a shared cache.
 PRIVATE_PATHS = ("/portal", "/p/", "/patients", "/dashboard", "/results", "/doctor")
 
@@ -58,7 +58,7 @@ def staff_user(request: Request) -> str | None:
 
 def create_app(settings: Settings | None = None, llm: LLMClient | None = None) -> FastAPI:
     settings = settings or get_settings()
-    app = FastAPI(title="Pre-visit intake", docs_url=None, redoc_url=None)
+    app = FastAPI(title="PATH", docs_url=None, redoc_url=None)
     app.state.settings = settings
     app.state.engine = make_engine(settings.database_url)
     init_db(app.state.engine)

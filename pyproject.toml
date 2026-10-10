@@ -1,7 +1,7 @@
 [project]
 name = "previsit"
 version = "0.1.0"
-description = "Pre-visit voice AI history taking with physician-gated recommendations"
+description = "PATH: pre-visit voice AI history taking with physician-gated recommendations"
 requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.115",

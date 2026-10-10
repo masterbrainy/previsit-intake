@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>{% block title %}Pre-visit intake{% endblock %}</title>
+  <title>{% block title %}PATH{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,750&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -17,7 +17,7 @@
   <aside class="rail">
     <a class="wordmark" href="{{ '/doctor' if doctor else '/dashboard' }}">
       <span class="mark" aria-hidden="true"></span>
-      <span><b>{{ request.app.state.settings.clinic_name }}</b><small>Pre-visit</small></span>
+      <span><b>PATH</b><small>{{ request.app.state.settings.clinic_name }}</small></span>
     </a>
     <nav aria-label="Main">
       {% if doctor %}

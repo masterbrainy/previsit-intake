@@ -86,7 +86,7 @@ class IntakeEngine:
         audit.record(session, "patient", "intake.started", "intake", intake.id)
         when = self._appointment(session, intake).scheduled_at.strftime("%A %d %B at %H:%M")
         text = (
-            f"Hello, I'm the pre-visit assistant for {self.settings.clinic_name}. Before the appointment with "
+            f"Hello, I'm PATH, the pre-visit assistant for {self.settings.clinic_name}. Before the appointment with "
             f"{ctx.physician_name} on {when}, I'd like to ask some questions about your health so your doctor is "
             "prepared. This conversation is recorded and shared with your doctor. I'm an automated assistant, not a "
             f"doctor, so I can't tell you what's wrong. If at any point you feel very unwell, please call "

@@ -1,4 +1,4 @@
-/* Pre-visit intake: hospital wayfinding palette. Navy signage, surgical teal for actions, wayfinding yellow for
+/* PATH: hospital wayfinding palette. Navy signage, surgical teal for actions, wayfinding yellow for
    attention. Signature element: status badges drawn as patient wristbands (pill with a punched clasp hole). */
 
 :root {
@@ -392,3 +392,5 @@ header.top .brand { min-width: 0; line-height: 1.25; }
   header.top nav a, header.top nav button.link { padding: 6px 8px; font-size: 13.5px; }
   .appt { gap: 12px; padding: 14px; }
 }
+header.top .brand small { font-family: var(--body); font-weight: 400; font-size: 14px; color: var(--muted); letter-spacing: 0; }
+.wordmark b { letter-spacing: 0.04em; }
