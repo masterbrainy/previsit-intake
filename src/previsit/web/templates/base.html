@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
+  {% if request.app.state.settings.demo_mode %}<div class="demo-strip">Demo · synthetic patients only · not for clinical use</div>{% endif %}
   {% block header %}
   <header class="top">
     <a class="brand" href="/dashboard">Pre-visit intake</a>

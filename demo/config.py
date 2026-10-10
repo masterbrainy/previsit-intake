@@ -13,6 +13,9 @@ PHYSICIAN = "Dr. Anika Rao"
 # Simulated patients (Test & Support owns the scripts, D.3). Override with --full / --red-flag.
 FULL_FLOW_SCENARIO = "FEV-001"
 RED_FLAG_SCENARIO = "FEV-003"
+# Fictional numbers (555-01xx is reserved for fiction) used to sign the demo patients in to the portal.
+FULL_FLOW_CONTACT = "+15555550142"
+RED_FLAG_CONTACT = "+15555550143"
 
 
 def demo_settings() -> Settings:
@@ -23,6 +26,7 @@ def demo_settings() -> Settings:
         "base_url": DEMO_URL,
         "clinic_name": CLINIC,
         "physician_display_name": PHYSICIAN,
+        "demo_mode": True,  # synthetic data only: sign-in codes are shown on screen
     })
 
 

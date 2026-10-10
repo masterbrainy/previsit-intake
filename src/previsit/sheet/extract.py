@@ -66,6 +66,8 @@ Strict rules:
   "No <symptom as asked>" (e.g. "No chest pain", "No rash"). Never add qualifiers the patient didn't confirm
   (a patient who said "no rash" has "No rash", NOT "No rash that fades when pressed").
 - A single "no" to a question listing several symptoms denies exactly the symptoms in that question, nothing more.
+- An answer to only part of a question denies nothing else: asked "any regular medicines, or anything for this fever?",
+  a patient who says "I took ibuprofen yesterday" has NOT said they take no regular medicines.
 - HOPI: onset, duration, progression, character, severity, timing, aggravating/relieving factors, associated symptoms,
   relevant negatives, previous similar episodes. Include every detail given in the opening answers too (e.g. highest
   temperature, "since this morning", "no thermometer"), even if the conversation stopped early.

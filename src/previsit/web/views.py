@@ -14,6 +14,8 @@ from previsit.models import (
     PatientMessage, RedFlagEvent, StaffAlert, SymptomLog, Turn,
 )
 from previsit.modules import ComplaintModule, modules_for
+from previsit.portal.auth import patients_for
+from previsit.portal.contact import is_email
 from previsit.safety.context import PatientContext
 from previsit.safety.red_flags import describe
 from previsit.sheet.schema import HistorySheet
@@ -95,11 +97,9 @@ def ensure_intake(session: Session, appointment: Appointment) -> Intake:
     return intake
 
 
-def appointment_by_token(session: Session, token: str) -> Appointment:
-    appointment = session.exec(select(Appointment).where(Appointment.token == token)).first() if token else None
-    if appointment is None:
-        raise HTTPException(404, "This link is not valid. Please contact your clinic.")
-    return appointment
+def appointment_by_token(session: Session, token: str) -> Appointment | None:
+    """The text-message link only pre-fills portal sign-in; it never opens records by itself."""
+    return session.exec(select(Appointment).where(Appointment.token == token)).first() if token else None
 
 
 def appointment_by_id(session: Session, appointment_id: int) -> Appointment:
@@ -117,13 +117,24 @@ def audit_trail(session: Session, appointment: Appointment, intake: Intake) -> l
     return list(session.exec(query.order_by(AuditEvent.at)).all())
 
 
-def create_appointment(
-    session: Session, settings: Settings, actor: str, name: str, dob: date, sex: str, phone: str,
-    physician_name: str, scheduled_at: datetime, reason: str,
-) -> Appointment:
-    patient = Patient(name=name.strip(), dob=dob, sex=sex.strip(), phone=phone.strip())
+def find_or_create_patient(session: Session, name: str, dob: date, sex: str, contact: str) -> Patient:
+    """Same name, date of birth and contact = same patient, so their portal lists every appointment together."""
+    for patient in patients_for(session, contact):
+        if patient.dob == dob and patient.name.strip().casefold() == name.strip().casefold():
+            return patient
+    patient = Patient(name=name.strip(), dob=dob, sex=sex.strip(),
+                      email=contact if is_email(contact) else "", phone="" if is_email(contact) else contact)
     session.add(patient)
     session.flush()
+    return patient
+
+
+def create_appointment(
+    session: Session, settings: Settings, actor: str, name: str, dob: date, sex: str, contact: str,
+    physician_name: str, scheduled_at: datetime, reason: str,
+) -> Appointment:
+    """`contact` must already be normalised (previsit.portal.contact.normalize_contact)."""
+    patient = find_or_create_patient(session, name, dob, sex, contact)
     appointment = Appointment(
         patient_id=patient.id, physician_name=physician_name.strip(), scheduled_at=scheduled_at,
         reason=reason.strip(), token=secrets.token_urlsafe(32),
@@ -136,18 +147,28 @@ def create_appointment(
     outbox.send_patient_message(
         session, appointment.id, MessageKind.INVITE,
         f"Hello from {settings.clinic_name}. Before your appointment with {appointment.physician_name} on "
-        f"{scheduled_at:%A %d %B at %H:%M}, please answer a few questions about your health: {link}",
+        f"{scheduled_at:%A %d %B at %H:%M}, please sign in to your patient portal and answer a few questions "
+        f"about your health: {link}",
         actor=actor, meta={"link": link},
     )
     return appointment
 
 
-def home_context(session: Session, token: str, notice: str = "", error: str = "", warning: str = "") -> dict:
-    view = load_view(session, appointment_by_token(session, token))
+def portal_base(appointment: Appointment) -> str:
+    return f"/portal/appointments/{appointment.id}"
+
+
+def home_context(
+    session: Session, appointment: Appointment, notice: str = "", error: str = "", warning: str = "",
+    readonly: bool = False,
+) -> dict:
+    """Everything the patient's appointment page shows. `readonly` is the physician's preview: no actions."""
+    view = load_view(session, appointment)
     visible = [m for m in reversed(view.messages) if m.kind in PATIENT_VISIBLE]
     return {
         "v": view,
-        "token": token,
+        "base": portal_base(appointment),
+        "readonly": readonly,
         "escalations": [m for m in visible if m.kind is MessageKind.ESCALATION],
         # After an escalation, stay-at-home advice no longer applies (FEV-018), so it is withdrawn from the page.
         "messages": [m for m in visible if m.kind is not MessageKind.ESCALATION

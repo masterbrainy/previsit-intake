@@ -33,6 +33,12 @@ class Settings(BaseSettings):
 
     max_upload_bytes: int = 10 * 1024 * 1024
 
+    # Patient portal sign-in (PRD §8.10). Codes are HMAC'd with this key; if empty, a random key is made at startup.
+    portal_secret: SecretStr = SecretStr("")
+    portal_session_hours: int = 12
+    # Demo mode (synthetic data only): the sign-in code is shown on screen because no SMS/email provider exists yet.
+    demo_mode: bool = False
+
 
 def get_settings() -> Settings:
     return Settings()

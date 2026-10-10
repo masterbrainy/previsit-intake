@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 
 import source_scan
-from factories import TEST_PHYSICIAN, all_rows, make_appointment, make_rec
+from factories import TEST_PHYSICIAN, all_rows, make_appointment, make_rec, portal_sign_in
 
 UNAPPROVED_NAME = "ZZ-UNAPPROVED-TEST-INVESTIGATION"
 
@@ -128,7 +128,7 @@ def test_patient_page_never_shows_a_suggested_rec(settings, session, appointment
     client = TestClient(create_app(settings=settings, llm=llm))
 
     physician_page = client.get(f"/patients/{appointment.id}", auth=physician_auth)
-    patient_page = client.get(f"/p/{appointment.token}")
+    patient_page = client.get(portal_sign_in(client, session, settings, appointment))
 
     assert physician_page.status_code == 200
     assert UNAPPROVED_NAME in physician_page.text, "control: the physician must see the suggestion"

@@ -60,10 +60,22 @@ previsit/
   voice.py         transcribe(settings, audio_bytes, mime) -> str ; synthesize(settings, text) -> bytes
   web/app.py       create_app(settings=None, llm=None) -> FastAPI ; lazy_app() for uvicorn --factory
   web/uploads.py   result upload route, kept apart from LLM-using routers
-                   Physician (basic auth): /dashboard, /appointments/new, /appointments/import (CSV), /patients/{appt_id},
-                   /patients/{appt_id}/print, /recs/{id}/decide, /appointments/{id}/recs/add
-                   Patient (token link /p/{token}): intake page + /p/{token}/turn, recommendations + messages,
-                   symptom log, result upload
+  portal/contact.py normalize_contact(raw) -> str (lower-case email or phone digits, raises ContactError) ; mask_contact
+  portal/auth.py   request_code(session, key, contact, ip) -> CodeRequest ; verify_code(session, key, contact, code)
+                   (raises SignInError) ; start_session / session_contact / end_session ; patients_for(session, contact)
+                   6 digits, 10 min, 5 wrong tries, 3 requests per contact and 10 per IP per 15 min; codes stored as
+                   HMAC (key = PORTAL_SECRET or random per process), session tokens as SHA-256. No AI.
+  web/portal.py    Public: / (clinician + patient doors, no patient data), /portal/sign-in, /p/{token} (text-message
+                   link: sign-in with contact pre-filled, opens no records), POST /portal/code, /portal/verify,
+                   /portal/sign-out. Signed in: /portal (own appointments).
+                   Dependencies: portal_user (cookie previsit_portal, HttpOnly, SameSite=Lax) and owned_appointment
+                   (404 unless the appointment's patient matches the signed-in contact).
+                   Physician (basic auth): /dashboard, /appointments/new, /appointments/import (CSV, column contact),
+                   /patients/{appt_id}, /patients/{appt_id}/patient-view (read-only preview), /patients/{appt_id}/print,
+                   /recs/{id}/decide, /appointments/{id}/recs/add
+                   Patient portal (signed in, owned_appointment): /portal/appointments/{id} (+ /intake, /intake/start,
+                   /intake/turn, /symptoms, /results)
+  Settings         DEMO_MODE=true shows the sign-in code on screen (synthetic data only; never in a real deployment).
 ```
 
 Tests should build the app with `create_app(settings=test_settings, llm=FakeLLM(...))` and a temp SQLite URL.

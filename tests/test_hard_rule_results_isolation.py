@@ -6,7 +6,7 @@ import inspect
 import pytest
 
 import source_scan
-from factories import interview, make_fake_llm, make_intake
+from factories import interview, make_fake_llm, make_intake, portal_sign_in
 
 RESULT_FILENAME = "SENTINEL_RESULT_cbc_report.pdf"
 RESULT_CONTENT = b"%PDF-1.4\n% HAEMOGLOBIN SENTINEL-7f3a 9.1 g/dL (L) WBC SENTINEL-7f3a 14.2 (H)\n%%EOF\n"
@@ -63,7 +63,7 @@ def test_stored_result_never_appears_in_any_llm_payload(settings, session, appoi
 
     client = TestClient(create_app(settings=settings, llm=llm))
     physician_page = client.get(f"/patients/{appointment.id}", auth=physician_auth)
-    client.get(f"/p/{appointment.token}")
+    assert client.get(portal_sign_in(client, session, settings, appointment)).status_code == 200
 
     assert RESULT_FILENAME in physician_page.text, "control: the result must be attached for the physician"
     assert llm.calls, "control: the flow must have used the LLM"

@@ -58,7 +58,8 @@ class Patient(SQLModel, table=True):
     name: str
     dob: date
     sex: str = ""
-    phone: str = ""
+    phone: str = Field(default="", index=True)  # normalised by previsit.portal.contact
+    email: str = Field(default="", index=True)  # normalised (lower case)
     created_at: datetime = Field(default_factory=utcnow)
 
 
@@ -183,3 +184,27 @@ class AuditEvent(SQLModel, table=True):
     entity: str
     entity_id: int | None = None
     details: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
+
+
+class SignInCode(SQLModel, table=True):
+    """A one-time portal sign-in code. Only its HMAC is stored. Times are naive UTC."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    contact: str = Field(index=True)
+    code_hash: str = ""  # empty for requests about an unknown contact (kept only for rate limiting)
+    ip: str = Field(default="", index=True)
+    created_at: NaiveDatetime = Field(index=True)
+    expires_at: NaiveDatetime
+    attempts: int = 0
+    used_at: NaiveDatetime | None = None
+
+
+class PortalSession(SQLModel, table=True):
+    """A signed-in patient portal session. Only the SHA-256 of the cookie token is stored. Times are naive UTC."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    token_hash: str = Field(unique=True, index=True)
+    contact: str = Field(index=True)
+    created_at: NaiveDatetime
+    expires_at: NaiveDatetime
+    ended_at: NaiveDatetime | None = None

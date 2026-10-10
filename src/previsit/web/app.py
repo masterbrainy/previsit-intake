@@ -1,4 +1,4 @@
-"""FastAPI app factory: physician dashboard (basic auth) and patient pages (secret token link)."""
+"""FastAPI app factory: front page, physician dashboard (basic auth) and patient portal (one-time-code sign-in)."""
 
 import logging
 import secrets
@@ -7,11 +7,12 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
-from fastapi.responses import RedirectResponse
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from previsit.config import Settings, get_settings
 from previsit.db import init_db, make_engine, session_scope
@@ -21,6 +22,8 @@ logger = logging.getLogger(__name__)
 WEB_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=WEB_DIR / "templates")
 basic = HTTPBasic(realm="Pre-visit intake: physician")
+# Pages with patient data are never stored by the browser or a shared cache.
+PRIVATE_PATHS = ("/portal", "/p/", "/patients", "/dashboard", "/results")
 
 
 def require_physician(request: Request, credentials: HTTPBasicCredentials = Depends(basic)) -> str:
@@ -42,6 +45,8 @@ def create_app(settings: Settings | None = None, llm: LLMClient | None = None) -
     app.state.engine = make_engine(settings.database_url)
     init_db(app.state.engine)
     app.state.llm = llm
+    secret = settings.portal_secret.get_secret_value()
+    app.state.portal_key = secret.encode() if secret else secrets.token_bytes(32)
     app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
 
     @app.middleware("http")
@@ -61,18 +66,26 @@ def create_app(settings: Settings | None = None, llm: LLMClient | None = None) -
         # Origin: null on our own form posts, which the CSRF check above rightly rejects.)
         response.headers["Referrer-Policy"] = "same-origin"
         response.headers["X-Content-Type-Options"] = "nosniff"
+        if request.url.path.startswith(PRIVATE_PATHS):
+            response.headers["Cache-Control"] = "no-store"
         return response
 
-    from previsit.web import patient, physician, uploads
+    @app.exception_handler(StarletteHTTPException)
+    async def friendly_errors(request: Request, exc: StarletteHTTPException):
+        # Redirects (e.g. to portal sign-in) and API-style intake calls keep their plain form; pages get a readable error.
+        if exc.status_code < 400 or "/intake/" in request.url.path or exc.status_code == 401:
+            return await http_exception_handler(request, exc)
+        message = "We couldn't find that page." if exc.status_code == 404 else str(exc.detail)
+        return templates.TemplateResponse(
+            request, "error.html", {"message": message}, status_code=exc.status_code, headers=exc.headers
+        )
 
+    from previsit.web import patient, physician, portal, uploads
+
+    app.include_router(portal.router)
     app.include_router(physician.router)
     app.include_router(uploads.router)
     app.include_router(patient.router)
-
-    @app.get("/", include_in_schema=False)
-    def root() -> RedirectResponse:
-        return RedirectResponse("/dashboard")
-
     return app
 
 

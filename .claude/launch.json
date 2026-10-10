@@ -4,8 +4,28 @@
     {
       "name": "previsit",
       "runtimeExecutable": "uv",
-      "runtimeArgs": ["run", "uvicorn", "previsit.web.app:lazy_app", "--factory", "--port", "8000"],
+      "runtimeArgs": [
+        "run",
+        "uvicorn",
+        "previsit.web.app:lazy_app",
+        "--factory",
+        "--port",
+        "8000"
+      ],
       "port": 8000
+    },
+    {
+      "name": "demo",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": [
+        "run",
+        "--group",
+        "demo",
+        "python",
+        "-m",
+        "demo.serve"
+      ],
+      "port": 8010
     }
   ]
 }

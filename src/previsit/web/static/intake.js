@@ -1,5 +1,5 @@
 (() => {
-  const base = `/p/${encodeURIComponent(window.INTAKE.token)}/intake`;
+  const base = window.INTAKE.base;
   const chat = document.getElementById("chat");
   const status = document.getElementById("status");
   const mic = document.getElementById("mic");
@@ -38,7 +38,7 @@
   const handle = async (response) => {
     const data = await response.json().catch(() => ({ error: "Something went wrong. Please try again." }));
     if (!response.ok || data.error) {
-      setBusy(false, data.error || "Something went wrong. Please try again.");
+      setBusy(false, data.error || data.detail || "Something went wrong. Please try again.");
       return;
     }
     if (data.patient_text) addBubble("patient", data.patient_text);

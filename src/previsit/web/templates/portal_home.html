@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}My appointments · Patient portal{% endblock %}
+{% block header %}{% with signed_in = true %}{% include "_portal_header.html" %}{% endwith %}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1 style="margin-top:12px">Hello{% if names|length == 1 %}, {{ names[0] }}{% endif %}</h1>
+<p class="sub">Your appointments. Open one to answer the pre-visit questions, see advice and tests from your doctor, log readings or send a report.</p>
+{% for item in items %}
+<a class="card door" href="/portal/appointments/{{ item.appointment.id }}">
+  <h2>{% if names|length > 1 %}{{ item.patient.name }} · {% endif %}{{ item.appointment.scheduled_at.strftime('%A %d %B at %H:%M') }}</h2>
+  <p class="muted" style="margin:0">With {{ item.appointment.physician_name }}{% if item.appointment.reason %} · {{ item.appointment.reason }}{% endif %}</p>
+  <p style="margin:6px 0 0"><strong>{{ item.status }}</strong></p>
+</a>
+{% else %}
+<div class="card"><p>There are no appointments for this contact. If you think this is wrong, please contact your clinic.</p></div>
+{% endfor %}
+{% endblock %}

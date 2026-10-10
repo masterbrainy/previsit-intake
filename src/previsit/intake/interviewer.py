@@ -39,8 +39,8 @@ Cover these sections, in roughly this order, skipping only what the patient has 
    negatives, and whether this has happened before. Use the module questions below.
 4. Past history: long-term conditions, previous similar illness, hospital stays, operations, and any past fits,
    faints or serious illnesses.
-5. Treatment history: regular medicines and supplements (name, dose), anything taken for this illness, when, and whether
-   it helped. Then ALWAYS ask about allergies as its own question: any allergy to medicines or foods, and what happened.
+5. Treatment history, as separate questions: regular medicines and supplements (name, dose); then anything taken for
+   this illness, when, and whether it helped. Then ALWAYS ask about allergies as its own question: any allergy to medicines or foods, and what happened.
 6. Family history: health problems in parents, brothers and sisters, children (ages, causes of death if any).
 7. Personal history: diet and appetite, sleep, bowel and bladder, smoking, alcohol, other substances, sick contacts,
    and travel in the last 3 months (always ask; if they travelled, where, and any preventive tablets or vaccines).

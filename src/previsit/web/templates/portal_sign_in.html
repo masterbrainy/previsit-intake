@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Sign in · Patient portal{% endblock %}
+{% block header %}{% include "_portal_header.html" %}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1 style="margin-top:12px">Sign in</h1>
+<p class="sub">Enter the mobile number or email your clinic has for your appointment. We'll send you a 6-digit code. No password needed.</p>
+{% if error %}<div class="banner danger" role="alert"><strong>{{ error }}</strong></div>{% endif %}
+<form class="card" method="post" action="/portal/code">
+  <label for="contact">Mobile number or email</label>
+  <input id="contact" name="contact" value="{{ contact }}" required maxlength="120" autocomplete="username"
+         inputmode="email" style="width:100%">
+  <p><button type="submit" class="big">Send me a code</button></p>
+</form>
+<p class="muted" style="font-size:13px">If you feel very unwell, don't wait for your appointment: call your local emergency number.</p>
+{% endblock %}

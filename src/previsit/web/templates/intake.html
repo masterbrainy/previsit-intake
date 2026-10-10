@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Pre-visit conversation{% endblock %}
-{% block header %}{% endblock %}
+{% block header %}{% with signed_in = true %}{% include "_portal_header.html" %}{% endwith %}{% endblock %}
 {% block main_class %}narrow{% endblock %}
 {% block content %}
 <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 16px;gap:12px;flex-wrap:wrap">
@@ -25,10 +25,10 @@
     <button type="submit">Send</button>
   </form>
 </div>
-<p id="done" class="no-print" hidden><a class="button ghost" href="/p/{{ token }}">Back to my page</a></p>
+<p id="done" class="no-print" hidden><a class="button ghost" href="{{ base }}">Back to my appointment</a></p>
 <p class="muted" style="font-size:13px">If you feel very unwell, stop and call your local emergency number.</p>
 {% endblock %}
 {% block scripts %}
-<script>window.INTAKE = { token: {{ token|tojson }} };</script>
+<script>window.INTAKE = { base: {{ (base ~ "/intake")|tojson }} };</script>
 <script src="/static/intake.js"></script>
 {% endblock %}

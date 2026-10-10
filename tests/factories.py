@@ -46,6 +46,23 @@ def make_appointment(session: Session, patient=None, physician: str = TEST_PHYSI
     )
 
 
+def portal_sign_in(client, session: Session, settings, appointment) -> str:
+    """Signs the client in to the patient portal as this appointment's patient (skipping the code step, which has its
+    own tests) and returns the appointment's portal page path."""
+    from previsit.models import Patient
+    from previsit.portal import auth
+    from previsit.web.portal import COOKIE
+
+    patient = session.get(Patient, appointment.patient_id)
+    if not (patient.phone or patient.email):
+        patient.phone = f"+1555555{patient.id:04d}"
+        _save(session, patient)
+    token = auth.start_session(session, patient.phone or patient.email, settings.portal_session_hours)
+    session.commit()
+    client.cookies.set(COOKIE, token)
+    return f"/portal/appointments/{appointment.id}"
+
+
 def make_intake(session: Session, appointment, state_name: str = "INTERVIEW"):
     """The appointment's intake in the given state (reusing one the web layer may already have created)."""
     from previsit.models import Intake, IntakeState

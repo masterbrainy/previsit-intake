@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from factories import (CRISIS_LINE, EMERGENCY_NUMBER, all_rows, interview, make_appointment,
+from factories import (CRISIS_LINE, EMERGENCY_NUMBER, all_rows, interview, make_appointment, portal_sign_in,
                        make_fake_llm, make_intake, safety, tasks_called)
 
 RED_FLAGS_DOC = Path(__file__).resolve().parents[1] / "evals" / "red_flags.md"
@@ -210,12 +210,13 @@ def test_self_care_advice_is_withdrawn_from_the_patient_page_after_escalation(se
     outbox.send_patient_message(session, appointment.id, MessageKind.GENERAL_RECS, advice, actor="system")
     session.commit()
     client = TestClient(create_app(settings=settings, llm=make_fake_llm()))
-    assert advice in client.get(f"/p/{appointment.token}").text, "control: advice shows before any red flag"
+    page_path = portal_sign_in(client, session, settings, appointment)
+    assert advice in client.get(page_path).text, "control: advice shows before any red flag"
 
     intake = make_intake(session, appointment, "COMPLETE")
     _turn(make_fake_llm(safety=_red_flag("RF-02")), settings, session, intake, "She's breathing really fast now")
     session.commit()
-    page = client.get(f"/p/{appointment.token}").text
+    page = client.get(page_path).text
 
     assert advice not in page
     assert EMERGENCY_NUMBER in page

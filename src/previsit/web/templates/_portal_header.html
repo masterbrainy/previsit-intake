@@ -1,0 +1,9 @@
+<header class="top">
+  <a class="brand" href="{{ '/portal' if signed_in else '/' }}">Patient portal</a>
+  {% if signed_in %}
+  <nav>
+    <a href="/portal">My appointments</a>
+    <form method="post" action="/portal/sign-out" class="inline"><button type="submit" class="ghost link">Sign out</button></form>
+  </nav>
+  {% endif %}
+</header>

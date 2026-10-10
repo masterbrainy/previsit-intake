@@ -1,8 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Your appointment{% endblock %}
-{% block header %}{% endblock %}
+{% block header %}{% if readonly %}{{ super() }}{% else %}{% with signed_in = true %}{% include "_portal_header.html" %}{% endwith %}{% endif %}{% endblock %}
 {% block main_class %}narrow{% endblock %}
 {% block content %}
+{% if readonly %}
+<div class="banner warn" role="status">
+  <strong>Read-only: this is exactly what {{ v.patient.name }} sees in their portal.</strong>
+  <p>You can't act as the patient here. Buttons and forms are switched off. <a href="/patients/{{ v.appointment.id }}">Back to the history sheet</a></p>
+</div>
+{% endif %}
 <h1 style="margin-top:12px">Hello, {{ v.patient.name.split()[0] }}</h1>
 <p class="sub">Your appointment with {{ v.appointment.physician_name }} is on {{ v.appointment.scheduled_at.strftime('%A %d %B at %H:%M') }}.</p>
 
@@ -17,7 +23,7 @@
 <div class="card">
   <h2>Pre-visit questions</h2>
   <p>Before your appointment, our assistant will ask about your health so your doctor is ready for you. It takes about 10 minutes. You can talk or type.</p>
-  <a class="button big" href="/p/{{ token }}/intake">{{ 'Continue' if v.intake.state.value != 'not_started' else 'Start' }} the conversation</a>
+  <a class="button big" {% if readonly %}aria-disabled="true"{% else %}href="{{ base }}/intake"{% endif %}>{{ 'Continue' if v.intake.state.value != 'not_started' else 'Start' }} the conversation</a>
 </div>
 {% endif %}
 
@@ -33,7 +39,8 @@
   {% for spec in monitoring %}
   <h2>Log your {{ spec.label|lower }}</h2>
   <p class="muted">{{ spec.instructions }}</p>
-  <form method="post" action="/p/{{ token }}/symptoms">
+  <form method="post" {% if not readonly %}action="{{ base }}/symptoms"{% endif %}>
+    <fieldset {{ 'disabled' if readonly }}>
     <input type="hidden" name="metric" value="{{ spec.metric }}">
     <div class="form-grid">
       <div><label for="value">Reading</label><input id="value" name="value" type="number" step="0.1" inputmode="decimal" required></div>
@@ -42,6 +49,7 @@
     <label for="note">Anything else you've noticed? (optional)</label>
     <input id="note" name="note" maxlength="500" style="width:100%">
     <p><button type="submit">Save reading</button></p>
+    </fieldset>
   </form>
   {% endfor %}
   {% if v.logs %}
@@ -54,9 +62,11 @@
 <div class="card">
   <h2>Upload a test report</h2>
   <p class="muted">If the lab gives you a report, upload it here and it goes straight to your doctor. PDF, PNG or JPEG, up to 10 MB.</p>
-  <form method="post" action="/p/{{ token }}/results" enctype="multipart/form-data">
+  <form method="post" {% if not readonly %}action="{{ base }}/results"{% endif %} enctype="multipart/form-data">
+    <fieldset {{ 'disabled' if readonly }}>
     <input type="file" name="file" accept="application/pdf,image/png,image/jpeg" required>
     <p><button type="submit">Send to my doctor</button></p>
+    </fieldset>
   </form>
   {% if v.results %}<p class="muted">Sent: {% for r in v.results %}{{ r.filename }}{{ ', ' if not loop.last }}{% endfor %}</p>{% endif %}
 </div>

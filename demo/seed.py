@@ -19,12 +19,13 @@ class DemoPatient:
     dob: date
     sex: str
     reason: str
+    contact: str  # fictional: 555-01xx numbers are reserved for fiction
 
 
 # The fever patient is booked live in the video; these fill the dashboard and run the red-flag case.
 BACKGROUND = (
-    DemoPatient("Samuel Okafor", date(1979, 6, 2), "M", "Follow-up: blood pressure"),
-    DemoPatient("Grace Lindqvist", date(1958, 11, 20), "F", "Knee pain"),
+    DemoPatient("Samuel Okafor", date(1979, 6, 2), "M", "Follow-up: blood pressure", "+15555550101"),
+    DemoPatient("Grace Lindqvist", date(1958, 11, 20), "F", "Knee pain", "+15555550102"),
 )
 
 
@@ -44,7 +45,7 @@ def reset(red_flag_case: DemoPatient | None = None) -> dict[str, int]:
     with session_scope(engine) as session:
         for i, p in enumerate((*BACKGROUND, *([red_flag_case] if red_flag_case else []))):
             appt = create_appointment(
-                session, settings, "demo-seed", p.name, p.dob, p.sex, "", PHYSICIAN, tomorrow_at(10 + i), p.reason
+                session, settings, "demo-seed", p.name, p.dob, p.sex, p.contact, PHYSICIAN, tomorrow_at(10 + i), p.reason
             )
             ids[p.name] = appt.id
     engine.dispose()
@@ -116,12 +117,12 @@ def lab_report_png(path, patient_name: str, dob: date) -> None:
     img.save(path)
 
 
-def patient_from_scenario(scenario_id: str, reason: str) -> DemoPatient:
+def patient_from_scenario(scenario_id: str, reason: str, contact: str) -> DemoPatient:
     """Books the simulated patient with exactly the name and age its scenario uses, so identity checks match."""
     from evals.scenario import dob_for, load_all
 
     scenario = load_all([scenario_id])[0]
-    return DemoPatient(scenario.patient_name, dob_for(scenario.age, date.today()), scenario.sex, reason)
+    return DemoPatient(scenario.patient_name, dob_for(scenario.age, date.today()), scenario.sex, reason, contact)
 
 
 if __name__ == "__main__":

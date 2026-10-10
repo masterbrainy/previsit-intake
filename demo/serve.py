@@ -7,16 +7,17 @@ import logging
 
 import uvicorn
 
-from demo.config import DEMO_PORT, DEMO_URL, RED_FLAG_SCENARIO, demo_settings
+from demo.config import DEMO_PORT, DEMO_URL, RED_FLAG_CONTACT, RED_FLAG_SCENARIO, demo_settings
 from demo.seed import patient_from_scenario, reset
 from previsit.web.app import create_app
 
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    seeded = reset(patient_from_scenario(RED_FLAG_SCENARIO, "Fever and headache"))
+    seeded = reset(patient_from_scenario(RED_FLAG_SCENARIO, "Fever and headache", RED_FLAG_CONTACT))
     settings = demo_settings()
     print(f"Demo site reset with {len(seeded)} synthetic appointments.")
+    print(f"Front page: {DEMO_URL}/  (demo mode: patient sign-in codes are shown on screen)")
     print(f"Physician dashboard: {DEMO_URL}/dashboard (login: PHYSICIAN_USERNAME / PHYSICIAN_PASSWORD from .env)")
     uvicorn.run(create_app(settings=settings), host="127.0.0.1", port=DEMO_PORT, log_level="warning")
 

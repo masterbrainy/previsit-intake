@@ -20,8 +20,19 @@ uv sync
 uv run uvicorn previsit.web.app:lazy_app --factory --reload
 ```
 
+- Front page: http://localhost:8000/ with doors for clinicians and patients.
 - Physician dashboard: http://localhost:8000/dashboard (basic auth, using `PHYSICIAN_USERNAME` / `PHYSICIAN_PASSWORD`)
-- Create an appointment there to get the patient's private link (`/p/<token>`). The patient can talk (browser microphone) or type.
+- Create an appointment there with the patient's mobile number or email. The patient signs in to the portal with that
+  contact and a 6-digit code; the text-message link (`/p/<token>`) only pre-fills sign-in. The patient can talk
+  (tap the microphone) or type.
+- No SMS/email provider is connected yet, so codes are only delivered in demo mode (`DEMO_MODE=true`, synthetic data
+  only), where the code is shown on screen. The demo site does this for you:
+
+```bash
+uv run --group demo python -m demo.serve   # resets a synthetic demo site on http://localhost:8010
+```
+
+- Database tables are created on start but not migrated: after pulling schema changes, delete `var/previsit.db`.
 
 ## Test
 

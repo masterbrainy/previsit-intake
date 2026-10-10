@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ clinic }} · Pre-visit{% endblock %}
+{% block header %}<header class="top"><span class="brand">{{ clinic }}</span></header>{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1 style="margin-top:12px">Before your visit</h1>
+<p class="sub">Answer a few questions before your appointment so your doctor is ready for you.</p>
+<div class="doors">
+  <a class="card door" href="/portal/sign-in">
+    <h2>I'm a patient</h2>
+    <p class="muted">Sign in with the mobile number or email on your appointment. We'll send you a 6-digit code.</p>
+    <span class="button big">Patient sign-in</span>
+  </a>
+  <a class="card door" href="/dashboard">
+    <h2>I'm a clinician</h2>
+    <p class="muted">Clinic staff: open the dashboard to see today's patients, history sheets and test approvals.</p>
+    <span class="button big ghost">Clinician sign-in</span>
+  </a>
+</div>
+<p class="muted" style="font-size:13px">If you feel very unwell, don't wait for your appointment: call your local emergency number.</p>
+{% endblock %}

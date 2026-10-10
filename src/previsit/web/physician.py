@@ -16,10 +16,12 @@ from previsit.models import Appointment, Intake, LabResult, MedicalRecommendatio
 from previsit.sheet.schema import SECTIONS
 from previsit.web.app import get_session, get_settings_dep, require_physician, templates
 from previsit.web.charts import sparkline
-from previsit.web.views import appointment_by_id, audit_trail, create_appointment, load_view
+from previsit.portal.contact import ContactError, normalize_contact
+from previsit.web.views import appointment_by_id, audit_trail, create_appointment, home_context, load_view
 
 router = APIRouter(dependencies=[Depends(require_physician)])
-CSV_COLUMNS = ("name", "dob", "sex", "phone", "physician", "scheduled_at", "reason")
+CSV_COLUMNS = ("name", "dob", "sex", "contact", "physician", "scheduled_at", "reason")
+REQUIRED_COLUMNS = {"name", "dob", "physician", "scheduled_at"}
 MAX_CSV_BYTES = 1024 * 1024
 
 
@@ -67,9 +69,16 @@ def new_appointment_form(request: Request, settings: Settings = Depends(get_sett
 
 
 def _parse_row(row: dict[str, str]) -> dict:
+    # "phone" is the column name used before P-002; either works.
+    raw_contact = (row.get("contact") or row.get("phone") or "").strip()
     missing = [c for c in ("name", "dob", "physician", "scheduled_at") if not (row.get(c) or "").strip()]
+    missing += [] if raw_contact else ["contact (mobile number or email)"]
     if missing:
         raise ValueError(f"missing {', '.join(missing)}")
+    try:
+        contact = normalize_contact(raw_contact[:120])
+    except ContactError as exc:
+        raise ValueError(f"contact: {exc}") from exc
     try:
         dob = date.fromisoformat(row["dob"].strip())
         scheduled = datetime.fromisoformat(row["scheduled_at"].strip()).replace(tzinfo=None)
@@ -78,7 +87,7 @@ def _parse_row(row: dict[str, str]) -> dict:
     if dob > date.today():
         raise ValueError("date of birth is in the future")
     return {
-        "name": row["name"][:120], "dob": dob, "sex": (row.get("sex") or "")[:20], "phone": (row.get("phone") or "")[:40],
+        "name": row["name"][:120], "dob": dob, "sex": (row.get("sex") or "")[:20], "contact": contact,
         "physician_name": row["physician"][:120], "scheduled_at": scheduled, "reason": (row.get("reason") or "")[:300],
     }
 
@@ -86,12 +95,12 @@ def _parse_row(row: dict[str, str]) -> dict:
 @router.post("/appointments/new", response_class=HTMLResponse)
 def create_appointment_route(
     request: Request,
-    name: str = Form(...), dob: str = Form(...), sex: str = Form(""), phone: str = Form(""),
+    name: str = Form(...), dob: str = Form(...), sex: str = Form(""), contact: str = Form(""),
     physician: str = Form(...), scheduled_at: str = Form(...), reason: str = Form(""),
     session: Session = Depends(get_session), settings: Settings = Depends(get_settings_dep),
     user: str = Depends(require_physician),
 ):
-    raw = {"name": name, "dob": dob, "sex": sex, "phone": phone, "physician": physician,
+    raw = {"name": name, "dob": dob, "sex": sex, "contact": contact, "physician": physician,
            "scheduled_at": scheduled_at, "reason": reason}
     try:
         fields = _parse_row(raw)
@@ -119,7 +128,8 @@ async def import_csv(
         errors.append("CSV is larger than 1 MB.")
     else:
         reader = csv.DictReader(io.StringIO(content.decode("utf-8-sig", errors="replace")))
-        if not reader.fieldnames or not {"name", "dob", "physician", "scheduled_at"} <= set(reader.fieldnames):
+        columns = set(reader.fieldnames or ())
+        if not REQUIRED_COLUMNS <= columns or not columns & {"contact", "phone"}:
             errors.append(f"CSV header must include: {', '.join(CSV_COLUMNS)}")
         else:
             for line, row in enumerate(reader, start=2):
@@ -153,6 +163,20 @@ def _patient_page_context(session: Session, appointment_id: int) -> dict:
 @router.get("/patients/{appointment_id}", response_class=HTMLResponse)
 def patient_detail(request: Request, appointment_id: int, session: Session = Depends(get_session)):
     return templates.TemplateResponse(request, "patient_detail.html", _patient_page_context(session, appointment_id))
+
+
+@router.get("/patients/{appointment_id}/patient-view", response_class=HTMLResponse)
+def patient_view(
+    request: Request, appointment_id: int, session: Session = Depends(get_session),
+    user: str = Depends(require_physician),
+):
+    """Read-only preview of the patient's portal page. The physician cannot act as the patient: every form is
+    disabled here, and the portal's action routes need the patient's own sign-in."""
+    appointment = appointment_by_id(session, appointment_id)
+    audit.record(session, user, "patient_view.opened", "appointment", appointment.id)
+    context = home_context(session, appointment, readonly=True)
+    session.commit()
+    return templates.TemplateResponse(request, "patient_home.html", context)
 
 
 @router.get("/patients/{appointment_id}/print", response_class=HTMLResponse)

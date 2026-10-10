@@ -93,3 +93,15 @@ svg.chart text { fill: var(--faint); font-size: 10px; }
   .card { border: 0; padding: 0; }
   .cite { color: #777; }
 }
+
+/* Patient portal */
+.doors { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin: 20px 0; }
+a.card.door { display: block; text-decoration: none; color: inherit; }
+a.card.door:hover { border-color: var(--accent); }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+fieldset:disabled { opacity: 0.6; }
+.button[aria-disabled="true"] { opacity: 0.6; pointer-events: none; }
+button.link { border: 0; background: none; color: var(--accent); padding: 0; min-height: auto; font: inherit; cursor: pointer; }
+header.top nav form.inline { display: inline; margin-left: 16px; }
+.code { font-size: 22px; letter-spacing: 0.2em; font-weight: 700; }
+.demo-strip { background: var(--warn-bg); color: var(--warn); text-align: center; font-size: 13px; padding: 4px 12px; }
