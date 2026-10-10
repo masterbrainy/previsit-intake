@@ -7,7 +7,7 @@ schema changes, fix it here, not in each test.
 from __future__ import annotations
 
 import secrets
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from sqlmodel import Session, select
 
@@ -40,7 +40,7 @@ def make_appointment(session: Session, patient=None, physician: str = TEST_PHYSI
         Appointment(
             patient_id=patient.id,
             physician_name=physician,
-            scheduled_at=datetime.now(UTC) + timedelta(days=1),
+            scheduled_at=datetime.now() + timedelta(days=1),  # clinic-local wall-clock time (naive)
             token=secrets.token_urlsafe(16),
         ),
     )

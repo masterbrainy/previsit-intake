@@ -14,7 +14,6 @@ key_facts:
   - Fever for 3 days
   - Body ache for 3 days
   - Heaviness in the chest since this morning
-  - Patient said it in mixed Hindi and English
 fabrication_traps:
   - Pain spreading to the arm or jaw
   - Sweating

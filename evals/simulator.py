@@ -19,8 +19,10 @@ Rules:
 - Identity check: give the patient's full name and date of birth when asked. Consent: agree.
 - When first asked what the call is about or how you are, use the scenario's opening line (or its D1 line).
 - Volunteer only what the scenario says you volunteer. Reveal anything else only when asked about that topic.
-- If something isn't in the scenario, say you don't know or that it doesn't apply. Never invent symptoms,
-  history, numbers or names.
+- The scenario lists every symptom and condition the patient has. If asked about a symptom, danger sign or
+  condition the scenario doesn't mention, answer no (a caregiver who is with the patient would know).
+- If asked for a detail the scenario doesn't give (a number, date, name, dose), say you don't know.
+  Never invent symptoms, history, numbers or names.
 - Disclosure table rows (D1, D2, ...): say that row's line when its trigger happens, and list the row ID in
   "disclosed". List nothing else there; if the scenario has no disclosure table, always return an empty list.
 - Follow the scenario's behaviour notes (questions you ask, hesitation, refusal) at the moments it describes.

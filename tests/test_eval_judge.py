@@ -66,3 +66,34 @@ def test_support_judge_sees_the_patient_record():
                   record="Patient: Meera Shah, 34 years old, sex F")
 
     assert "Meera Shah, 34 years old" in llm.calls[0]["messages"][0]["content"]
+
+
+def test_judge_sees_the_record_header_the_physician_sees():
+    from datetime import date
+
+    from evals.run import record_header
+
+    header = record_header("Ada Okoye", date(2026, 7, 21), "F", "father", today=date(2026, 10, 9))
+
+    assert "Ada Okoye" in header and "11 weeks" in header and "father" in header.lower()
+
+
+def test_simulator_denies_unscripted_symptoms_but_not_unscripted_details():
+    from evals.simulator import SYSTEM_PROMPT
+
+    assert "answer no" in SYSTEM_PROMPT.lower()
+    assert "don't know" in SYSTEM_PROMPT
+
+
+def test_judge_header_comes_from_the_sheet_record_when_present():
+    from datetime import date
+
+    from evals.run import judge_header
+    from previsit.sheet.schema import HistorySheet
+
+    sheet = HistorySheet(record={"name": "Ada Okoye", "age": "11 weeks", "sex": "F", "informant": "father"})
+
+    header = judge_header(sheet, fallback="FALLBACK")
+
+    assert "11 weeks" in header and "father" in header and "FALLBACK" not in header
+    assert judge_header(HistorySheet(), fallback="FALLBACK") == "FALLBACK"

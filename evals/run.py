@@ -62,7 +62,7 @@ def _run(scenario, system_llm, sim_llm, judge_llm, settings, db_url, today, run,
         patient = _save(session, Patient(name=scenario.patient_name, dob=dob, sex=scenario.sex))
         appointment = _save(session, Appointment(
             patient_id=patient.id, physician_name="Dr. Eval", token=f"eval-{scenario.id}-{run}",
-            scheduled_at=datetime.now(UTC) + timedelta(days=1), reason="fever"))
+            scheduled_at=datetime.now() + timedelta(days=1), reason="fever"))  # clinic-local, naive
         intake = _save(session, Intake(appointment_id=appointment.id))
 
         reply = engine.start(session, intake)
@@ -72,17 +72,17 @@ def _run(scenario, system_llm, sim_llm, judge_llm, settings, db_url, today, run,
         fired = tuple(sorted({rf for e in session.exec(select(RedFlagEvent)).all() for rf in e.rf_ids}))
         sheet, transcript_text = _sheet_and_transcript(session, intake)
         final_state = str(intake.state)
+        informant = intake.informant
 
+    header = judge_header(sheet, fallback=record_header(scenario.patient_name, dob, scenario.sex, informant, today))
     rf = red_flag_outcome(scenario.expected_outcome, scenario.red_flags, scenario.escalate_after, events, fired)
     if sheet is None:
         facts, traps_hit, unsupported = judge.FactScore(len(scenario.key_facts), 0, scenario.key_facts), (), ()
     else:
-        facts, traps_hit = judge.judge_sheet(judge_llm, render_sheet(sheet), transcript_text, scenario.key_facts,
+        facts, traps_hit = judge.judge_sheet(judge_llm, f"{header}\n{render_sheet(sheet)}", transcript_text, scenario.key_facts,
                                              scenario.fabrication_traps,
                                              only_mentioned=scenario.expected_outcome == "escalate")
-        record = (f"Patient: {scenario.patient_name}, date of birth {dob.isoformat()}, age {scenario.age}, "
-                  f"sex {scenario.sex}. Speaking: {scenario.informant}.")
-        unsupported = judge.judge_support(judge_llm, transcript_text, statement_lines(sheet), record=record)
+        unsupported = judge.judge_support(judge_llm, transcript_text, statement_lines(sheet), record=header)
     result = ScenarioResult(scenario_id=scenario.id, run=run, expected_outcome=scenario.expected_outcome,
                             final_state=final_state, red_flag=rf, facts=facts,
                             fabrication=judge.fabrication(traps_hit, unsupported),
@@ -128,6 +128,23 @@ def _sheet_and_transcript(session, intake):
 
 
 # ---------- sheet rendering for the judges ----------
+
+def judge_header(sheet, fallback: str) -> str:
+    """Demographics as the physician sees them: the sheet's record block (clinic record + identity step)."""
+    record = getattr(sheet, "record", None) or {}
+    if not record:
+        return fallback
+    return "Record: " + ", ".join(f"{key}: {value}" for key, value in record.items())
+
+
+def record_header(name: str, dob: date, sex: str, informant: str, today: date) -> str:
+    """The patient line the physician page renders from the record (web/templates/_sheet.html)."""
+    from previsit.safety.context import PatientContext
+
+    ctx = PatientContext(name=name, dob=dob, sex=sex, on_date=today, informant=informant)
+    speaker = "Self" if not ctx.is_caregiver_call else informant.capitalize()
+    return f"Patient: {name}, {ctx.age_text}, {sex}, DOB {dob.isoformat()}\nInformant: {speaker}"
+
 
 def render_sheet(sheet) -> str:
     from previsit.sheet.schema import SECTIONS
