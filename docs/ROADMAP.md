@@ -150,11 +150,11 @@ Phase 5  Scale: modules, specialties, integrations            ███→ wk 24
 
 **Deliverable 1: a working site.** One command starts the app from a clean state with synthetic demo patients. The full flow runs without errors: booking → intake → history sheet → suggested test → physician approval → patient notification → symptom log → result upload, plus a red-flag stop. Hosting (local only, or a URL clinicians can open) is an open decision for the user.
 
-**Deliverable 2: a demo video of that real site.**
+**Deliverable 2: a demo video of that real site.** *(P-007: the user chose a best-vision cut. The delivered film is `demo/output/PATH-demo.mp4`, 2:56.)*
 - Recorded automatically from the running app (Playwright drives the physician and patient windows, ffmpeg assembles them side by side). It shows the **actual working flow**: no diagrams, mock-ups or abstract concept graphics.
 - **Clear on-screen captions** on every step say what is happening and which safety rule it shows. Short scene labels are fine; explanation lives in the captions over real screens.
-- Synthetic patient only. The patient types and the AI speaks (the AI's real text-to-speech audio is laid into the video); spoken patient input is an optional second pass.
-- Waiting time may be cut, with a visible "pauses shortened" note. Nothing else is staged.
+- Synthetic patient only. The AI's turns are the real app and its real text-to-speech.
+- **Staged elements accepted by the user in P-007 (best-vision cut):** (1) the sign-in code arrives as a **simulated text-message notification** overlaid on the phone, although SMS delivery is not built yet (PP.8, F.3); (2) the simulated patient's answers are entered as text and **voiced with a synthetic voice** shown as a live transcript, rather than going through the app's real speech-to-text; (3) AI waiting time is cut and fast-forwards are badged on screen. Everything else on screen is the real running app.
 
 **Scenes the video must show** (clinician/researcher cut, ~5–8 min):
 1. Front page with clinician and patient doors. Patient books in the portal and picks from suggested doctors (caption: rule-based, no AI, never names a condition); hospital overview shows the new booking with its assigned doctor
@@ -164,12 +164,12 @@ Phase 5  Scale: modules, specialties, integrations            ███→ wk 24
 5. Patient logs temperatures in the portal; the physician sees them on the sheet
 6. Lab report upload appears for the physician exactly as issued; caption states that results are never sent to the AI
 7. Separate case: a red-flag symptom (stiff neck) stops the intake, sends the patient to emergency care, alerts staff, and generates no advice or tests
-8. Closing card with honest limits: draft clinical content pending clinician sign-off, current eval results, demo-mode sign-in codes shown on screen, browser channel only (no phone/SMS yet), not for clinical use
+8. ~~Closing card with honest limits~~ *Dropped in P-007 (best-vision cut, user decision).* The closing card names the fictional people. Limits are stated in the README and the write-up instead.
 
 **Exit gate:**
 - The demo runs end to end from a clean start, twice in a row, without manual fixes
 - Every scene above is in the video, recorded from the real site, with captions
-- Every claim in the captions is true at the time of recording (checked by Test against the code and eval results)
+- Every claim in the captions is true at the time of recording (checked by Test against the code and eval results). Captions must not claim that SMS delivery works or that PATH triages or assesses
 - The user has watched and accepted the video
 
 ---

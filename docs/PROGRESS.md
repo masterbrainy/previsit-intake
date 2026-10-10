@@ -1,6 +1,6 @@
 # Progress
 
-Plan version: v0.7 · Status values: `todo` · `doing` · `done` · `blocked: <reason>`
+Plan version: v0.8 · Status values: `todo` · `doing` · `done` · `blocked: <reason>`
 Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / clinician / decision)
 
 ## Phase 0: Foundations

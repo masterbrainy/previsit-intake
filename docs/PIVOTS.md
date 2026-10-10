@@ -88,3 +88,11 @@ Why: user decision for the hackathon pitch and write-up.
 Note: Plan & Pivot flagged that "Triage" and "Assessment" in the expansion describe things PATH deliberately does not do; the user kept the name. The PRD states that PATH takes the history and does not triage or assess, and the non-goals are unchanged.
 Impact on in-flight work: copy changes only; no behaviour change. Demo captions should use "PATH".
 Tasks added / removed / changed (PROGRESS.md IDs): added N.1–N.3.
+
+## P-007 · 2026-10-09 · Demo film is a best-vision cut
+Plan version: v0.7 → v0.8
+What changed: the user asked Build for an "ideal vision" film, and Build delivered `demo/output/PATH-demo.mp4` (2:56, captions, both sides). It departs from the P-001 spec in three ways, all confirmed by the user in this session: no closing limits card ("prototype / simulated patients / not for clinical use" is not on screen); the sign-in code arrives as a simulated text-message overlay although SMS is not built; the simulated patient's voice is synthetic and dubbed over typed answers rather than passing through the app's speech-to-text. The AI's replies, the doctor side and all other screens are the real running app.
+Why: user decision; the film is for the hackathon pitch as a best-vision piece.
+Plan & Pivot advised adding a "simulated" tag on the text message and a one-line "prototype, not for clinical use" closing line (~2 s), because clinician judges may read the SMS as a working feature and medical-AI demos without a disclaimer can look like overclaiming. The user chose to keep the film as is. Limits remain stated in the README and the written submission.
+Impact on in-flight work: D.4/D.5 done as delivered. D.6 (caption review) can run now; captions must still be true and must not claim SMS works or that PATH triages/assesses. D.7 is the user's review. N.3 (GitHub description) approved by the user; repo rename not approved.
+Tasks added / removed / changed (PROGRESS.md IDs): ROADMAP demo spec updated (staged elements listed, limits card dropped). No task IDs added.
