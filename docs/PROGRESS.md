@@ -82,5 +82,7 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 |---|---|---|---|
 | F.1 | Turn latency ~3–4 s (safety → interview → scope guard run in sequence). Options: faster models per task, streaming TTS | B | done (partial): speech prepared while the scope guard runs, turn route off the event loop. Measured 3.5–4.5 s per spoken turn (was ~4.6–5 s). The 3 checks in sequence (~2.9 s) are the floor while every reply is checked first |
 | F.2 | Completion step ~10 s (final sheet + recommendations). Say a holding line first, or generate in background | B | done: escalation and completion reply without waiting for the sheet (rebuilt in the background); read-back says a holding line, then the summary (~17 s sheet build still behind it) |
+| F.5 | Coverage checklist in code for every PRD §7 section (past history, medicines, family, smoking/alcohol, travel), like the allergy check (DEMO-001 run 2 skipped them) | B | todo |
+| F.6 | After an escalation, a patient who accepts gets a fixed acknowledgement and close, not the refusal script | B | todo |
 | F.3 | Twilio adapter for real SMS invites and phone calls (needs account) | U+B | blocked: no Twilio account |
 | F.4 | Physician auth is a single shared basic-auth login; needs per-physician accounts before any pilot | B | todo |
