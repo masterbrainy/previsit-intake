@@ -20,15 +20,17 @@ TEMPO = 1.2
 MAX_GAP_S = 0.18  # longest pause kept between words
 PAD_S = 0.06
 PUNCH_IN = 1.07
+# Segments kept whole: five people saying their names overlap too much for the word timings to cut between them.
+UNSPLIT_SEGMENTS = {0}
 FPS = 30
 
 # (clip, start, end) in source seconds, at word boundaries from the whisper word timings.
 # Clip "b" is IMG_1843 2.mov (the first take), clip "a" is IMG_1843.mov (the redo).
 SEGMENTS = (
-    ("b", 0.00, 3.62),    # I'm …. I'm Nikhil. I'm Brian. I'm John. I'm …
+    ("b", 0.00, 3.86),    # I'm Dr. Megh. I'm Nikhil. I'm Brian. I'm John. I'm Om.
     ("b", 3.94, 11.62),   # And did you know that doctors lose consulting time … delay diagnosis.
     ("b", 11.98, 20.32),  # Pre-visit Assessment and Triage Helper, or PATH for short, … already knows their story.
-    ("b", 20.58, 22.84),  # Approved tests come with their prep instructions, like fasting.
+    ("b", 20.58, 23.32),  # Approved tests come with their prep instructions, like fasting. ("fasting" ends 23.18)
     ("a", 0.90, 4.52),    # So no visit slips because the patient did not maintain NPO.
     ("a", 4.84, 10.06),   # The doctor goes straight to the follow-up questions that matter, …
     ("a", 10.24, 16.90),  # And for patients who take a while to tell their story, … already on the page.
@@ -39,14 +41,14 @@ SEGMENTS = (
 # Captions: (clip, first word start, last word end, text). Whisper's mishearings are corrected here
 # ("wizard slips" → "visit slips", "FASFA" → "fasting", "he created" → "we created").
 CAPTIONS = (
-    ("b", 0.00, 3.54, "TEAM_NAMES"),
+    ("b", 0.00, 3.84, "TEAM_NAMES"),
     ("b", 3.94, 7.52, "Did you know doctors lose consulting time taking histories,"),
     ("b", 8.32, 11.60, "and tests ordered on the visit day delay diagnosis?"),
     ("b", 12.00, 14.86, "Pre-visit Assessment & Triage Helper, or PATH for short,"),
     ("b", 14.86, 17.32, "takes the full history by voice before the visit."),
     ("b", 17.48, 20.28, "By the time the patient walks in, the doctor already knows their story."),
-    ("b", 20.62, 22.82, "Approved tests come with their prep instructions, like fasting,"),
-    ("a", 0.94, 4.50, "so no visit slips because a patient didn't stay nil by mouth."),
+    ("b", 20.62, 23.12, "Approved tests come with their prep instructions, like fasting,"),
+    ("a", 0.94, 4.50, "no visit slips because a patient did not maintain NPO."),
     ("a", 4.86, 7.68, "The doctor goes straight to the follow-up questions that matter,"),
     ("a", 7.92, 10.04, "instead of spending the consult working out what they are."),
     ("a", 10.26, 14.18, "And for patients who take a while to tell their story, like many older patients,"),
@@ -54,7 +56,7 @@ CAPTIONS = (
     ("a", 17.12, 18.14, "That's what we created."),
     ("a", 18.62, 18.94, "PATH."),
 )
-TEAM_NAMES = "I'm Meg. I'm Nikhil. I'm Brian. I'm John. I'm Ong."  # as heard; check spellings with the team
+TEAM_NAMES = "I'm Dr. Megh. I'm Nikhil. I'm Brian. I'm John. I'm Om."
 
 CAPTION_HTML = """<!doctype html><html><head><meta charset="utf-8">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@700&family=Bricolage+Grotesque:opsz,wght@12..96,750&display=swap">
@@ -83,7 +85,8 @@ def keep_ranges(segments, word_times: dict) -> list[tuple[str, float, float, int
     """Splits each segment at pauses longer than MAX_GAP_S, so pauses inside sentences go too."""
     pieces = []
     for n, (clip, start, end) in enumerate(segments):
-        inside = [(a, b) for a, b in word_times[clip] if a >= start - 0.01 and b <= end + 0.01]
+        inside = [] if n in UNSPLIT_SEGMENTS else [
+            (a, b) for a, b in word_times[clip] if a >= start - 0.01 and b <= end + 0.01]
         run_start, last_end = start, None
         for a, b in inside:
             if last_end is not None and a - last_end > MAX_GAP_S:
