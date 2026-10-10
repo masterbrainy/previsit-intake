@@ -1,0 +1,47 @@
+<div class="splash" id="splash" aria-hidden="true">
+  <div class="splash-grid"></div>
+  <div class="splash-glow one"></div>
+  <div class="splash-glow two"></div>
+  <svg class="splash-path" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+    <path class="trail" d="M-40 770 C 200 770, 300 700, 470 725 S 760 850, 980 775 S 1240 530, 1460 470 S 1640 410, 1700 390"/>
+    <path class="trail ghost" d="M-40 815 C 240 815, 330 750, 500 770 S 780 890, 1000 815 S 1260 575, 1480 520 S 1660 455, 1700 440"/>
+    <circle class="stop s1" cx="470" cy="725" r="9"/>
+    <circle class="stop s2" cx="980" cy="775" r="9"/>
+    <circle class="stop s3" cx="1460" cy="470" r="11"/>
+  </svg>
+  <span class="splash-plus p1">+</span><span class="splash-plus p2">+</span><span class="splash-plus p3">+</span>
+  <div class="splash-center">
+    <span class="splash-mark"></span>
+    <h1 class="splash-word"><span>P</span><span>A</span><span>T</span><span>H</span></h1>
+    <p class="splash-full">
+      <span><b>P</b>re-visit</span> <span><b>A</b>ssessment</span> <span class="amp">&amp;</span>
+      <span><b>T</b>riage</span> <span><b>H</b>elper</span>
+    </p>
+    <p class="splash-tag">Your history, taken before your visit.</p>
+  </div>
+  <span class="splash-skip"><span class="pointer">Click or press any key to skip</span><span class="touch">Tap to skip</span></span>
+</div>
+<noscript><style>.splash { display: none !important; }</style></noscript>
+<script>
+  // The opening plays on every visit to the front page; a click or key skips it. Reduced motion gets a short fade.
+  (() => {
+    const splash = document.getElementById("splash");
+    const body = document.body;
+    const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    body.classList.add("splashing");
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      splash.classList.add("out");
+      body.classList.add("entered");
+      setTimeout(() => { splash.remove(); body.classList.remove("splashing"); }, 1100);
+    };
+    const timer = setTimeout(finish, calm ? 900 : 2700);
+    const skip = () => { clearTimeout(timer); finish(); };
+    splash.addEventListener("click", skip);
+    addEventListener("keydown", skip, { once: true });
+    // Back/forward restores the page from cache with the opening already gone: play it again.
+    addEventListener("pageshow", (event) => { if (event.persisted) location.reload(); });
+  })();
+</script>

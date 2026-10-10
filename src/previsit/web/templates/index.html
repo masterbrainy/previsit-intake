@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block shell %}patient{% endblock %}
 {% block title %}PATH · {{ clinic }}{% endblock %}
-{% block header %}<header class="top"><span class="brand"><span class="mark" aria-hidden="true"></span>PATH <small>{{ clinic }}</small></span></header>{% endblock %}
+{% block header %}{% include "_splash.html" %}<header class="top"><span class="brand"><span class="mark" aria-hidden="true"></span>PATH <small>{{ clinic }}</small></span></header>{% endblock %}
 {% block main_class %}{{ 'landing' if request.app.state.settings.is_open_demo else 'narrow' }}{% endblock %}
 {% block content %}
 {% if request.app.state.settings.is_open_demo %}{% include "_demo_landing.html" %}{% else %}
