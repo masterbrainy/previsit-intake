@@ -1,5 +1,6 @@
 """FastAPI app factory: front page, physician dashboard (basic auth) and patient portal (one-time-code sign-in)."""
 
+import base64
 import logging
 import secrets
 from collections.abc import Iterator
@@ -16,6 +17,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from previsit.config import Settings, get_settings
 from previsit.db import init_db, make_engine, session_scope
+from previsit.doctors import ensure_a_doctor
 from previsit.llm import LLMClient, OpenAILLM
 
 logger = logging.getLogger(__name__)
@@ -23,7 +25,7 @@ WEB_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=WEB_DIR / "templates")
 basic = HTTPBasic(realm="Pre-visit intake: physician")
 # Pages with patient data are never stored by the browser or a shared cache.
-PRIVATE_PATHS = ("/portal", "/p/", "/patients", "/dashboard", "/results")
+PRIVATE_PATHS = ("/portal", "/p/", "/patients", "/dashboard", "/results", "/doctor")
 
 
 def require_physician(request: Request, credentials: HTTPBasicCredentials = Depends(basic)) -> str:
@@ -38,12 +40,30 @@ def require_physician(request: Request, credentials: HTTPBasicCredentials = Depe
     return credentials.username
 
 
+def staff_user(request: Request) -> str | None:
+    """The staff username if the request carries valid staff (basic auth) credentials, else None. Never raises."""
+    header = request.headers.get("authorization", "")
+    if not header.lower().startswith("basic "):
+        return None
+    try:
+        username, _, password = base64.b64decode(header[6:]).decode().partition(":")
+    except ValueError:
+        return None
+    settings: Settings = request.app.state.settings
+    expected = settings.physician_password.get_secret_value()
+    ok = bool(expected) and secrets.compare_digest(username.encode(), settings.physician_username.encode()) \
+        and secrets.compare_digest(password.encode(), expected.encode())
+    return username if ok else None
+
+
 def create_app(settings: Settings | None = None, llm: LLMClient | None = None) -> FastAPI:
     settings = settings or get_settings()
     app = FastAPI(title="Pre-visit intake", docs_url=None, redoc_url=None)
     app.state.settings = settings
     app.state.engine = make_engine(settings.database_url)
     init_db(app.state.engine)
+    with session_scope(app.state.engine) as session:
+        ensure_a_doctor(session, settings.physician_display_name, settings.physician_email)
     app.state.llm = llm
     secret = settings.portal_secret.get_secret_value()
     app.state.portal_key = secret.encode() if secret else secrets.token_bytes(32)
@@ -80,11 +100,12 @@ def create_app(settings: Settings | None = None, llm: LLMClient | None = None) -
             request, "error.html", {"message": message}, status_code=exc.status_code, headers=exc.headers
         )
 
-    from previsit.web import patient, physician, portal, portal_booking, uploads
+    from previsit.web import doctor, patient, physician, portal, portal_booking, uploads
 
     app.include_router(portal.router)
     app.include_router(portal_booking.router)
     app.include_router(physician.router)
+    app.include_router(doctor.router)
     app.include_router(uploads.router)
     app.include_router(patient.router)
     return app

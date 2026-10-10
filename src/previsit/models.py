@@ -64,10 +64,21 @@ class Patient(SQLModel, table=True):
     created_at: datetime = Field(default_factory=utcnow)
 
 
+class Doctor(SQLModel, table=True):
+    """A doctor account. Signs in with email + one-time code; sees only their own and referred patients."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    email: str = Field(unique=True, index=True)  # normalised (lower case)
+    specialty: str = "General practice"
+    keywords: list[str] = Field(default_factory=list, sa_column=Column(JSON))  # what they see, for recommendations
+
+
 class Appointment(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     patient_id: int = Field(foreign_key="patient.id", index=True)
-    physician_name: str
+    doctor_id: int | None = Field(default=None, foreign_key="doctor.id", index=True)
+    physician_name: str  # display copy of the doctor's name
     scheduled_at: NaiveDatetime = Field(index=True)  # clinic-local wall-clock time
     reason: str = ""
     booked_by: str = "clinic"  # "clinic" or "patient" (booked in the portal, live immediately)
@@ -190,9 +201,10 @@ class AuditEvent(SQLModel, table=True):
 
 
 class SignInCode(SQLModel, table=True):
-    """A one-time portal sign-in code. Only its HMAC is stored. Times are naive UTC."""
+    """A one-time sign-in code (patient portal or doctor). Only its HMAC is stored. Times are naive UTC."""
 
     id: int | None = Field(default=None, primary_key=True)
+    role: str = Field(default="patient", index=True)  # "patient" or "doctor"
     contact: str = Field(index=True)
     code_hash: str = ""  # empty for requests about an unknown contact (kept only for rate limiting)
     ip: str = Field(default="", index=True)
@@ -203,11 +215,23 @@ class SignInCode(SQLModel, table=True):
 
 
 class PortalSession(SQLModel, table=True):
-    """A signed-in patient portal session. Only the SHA-256 of the cookie token is stored. Times are naive UTC."""
+    """A signed-in session (patient portal or doctor). Only the SHA-256 of the cookie token is stored. Naive UTC."""
 
     id: int | None = Field(default=None, primary_key=True)
+    role: str = Field(default="patient", index=True)  # "patient" (contact = phone/email) or "doctor" (contact = email)
     token_hash: str = Field(unique=True, index=True)
     contact: str = Field(index=True)
     created_at: NaiveDatetime
     expires_at: NaiveDatetime
     ended_at: NaiveDatetime | None = None
+
+
+class Referral(SQLModel, table=True):
+    """Doctor-to-doctor referral. Gives the receiving doctor access to the patient's records."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    patient_id: int = Field(foreign_key="patient.id", index=True)
+    from_doctor_id: int = Field(foreign_key="doctor.id")
+    to_doctor_id: int = Field(foreign_key="doctor.id", index=True)
+    note: str = ""
+    created_at: datetime = Field(default_factory=utcnow)

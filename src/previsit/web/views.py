@@ -10,7 +10,7 @@ from sqlmodel import Session, select
 from previsit import audit, outbox
 from previsit.config import Settings
 from previsit.models import (
-    IntakeState, Appointment, AuditEvent, HistorySheetRecord, Intake, LabResult, MedicalRecommendation, MessageKind, Patient,
+    IntakeState, Appointment, AuditEvent, Doctor, HistorySheetRecord, Intake, LabResult, MedicalRecommendation, MessageKind, Patient,
     PatientMessage, RedFlagEvent, StaffAlert, SymptomLog, Turn,
 )
 from previsit.modules import ComplaintModule, modules_for
@@ -131,19 +131,19 @@ def find_or_create_patient(session: Session, name: str, dob: date, sex: str, con
 
 def create_appointment(
     session: Session, settings: Settings, actor: str, name: str, dob: date, sex: str, contact: str,
-    physician_name: str, scheduled_at: datetime, reason: str,
+    doctor: Doctor, scheduled_at: datetime, reason: str,
 ) -> Appointment:
     """`contact` must already be normalised (previsit.portal.contact.normalize_contact)."""
     patient = find_or_create_patient(session, name, dob, sex, contact)
-    return book_appointment(session, settings, actor, patient, physician_name, scheduled_at, reason)
+    return book_appointment(session, settings, actor, patient, doctor, scheduled_at, reason)
 
 
 def book_appointment(
-    session: Session, settings: Settings, actor: str, patient: Patient, physician_name: str, scheduled_at: datetime,
+    session: Session, settings: Settings, actor: str, patient: Patient, doctor: Doctor, scheduled_at: datetime,
     reason: str, booked_by: str = "clinic",
 ) -> Appointment:
     appointment = Appointment(
-        patient_id=patient.id, physician_name=physician_name.strip(), scheduled_at=scheduled_at,
+        patient_id=patient.id, doctor_id=doctor.id, physician_name=doctor.name, scheduled_at=scheduled_at,
         reason=reason.strip(), token=secrets.token_urlsafe(32), booked_by=booked_by,
     )
     session.add(appointment)

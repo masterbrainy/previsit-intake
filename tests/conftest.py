@@ -9,7 +9,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:  # lets tests import the evals package
     sys.path.insert(0, str(REPO_ROOT))
 
-from factories import CRISIS_LINE, EMERGENCY_NUMBER, TEST_PHYSICIAN, make_appointment, make_fake_llm
+from factories import CRISIS_LINE, EMERGENCY_NUMBER, TEST_PHYSICIAN, make_appointment, make_doctor, make_fake_llm
 
 TEST_PASSWORD = "pw-test-only"
 
@@ -56,8 +56,13 @@ def session(db_engine):
 
 
 @pytest.fixture
-def appointment(session):
-    return make_appointment(session)
+def doctor(session):
+    return make_doctor(session)
+
+
+@pytest.fixture
+def appointment(session, doctor):
+    return make_appointment(session, doctor=doctor)
 
 
 @pytest.fixture

@@ -1,41 +1,40 @@
 {% extends "base.html" %}
-{% block title %}Patients · Pre-visit intake{% endblock %}
+{% block title %}Hospital overview · Pre-visit intake{% endblock %}
 {% block content %}
-<h1>Patients</h1>
-<p class="sub">Upcoming appointments and where each pre-visit intake stands.</p>
+<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+  <div><h1>Hospital overview</h1>
+    <p class="sub">Every patient and the doctor they are booked with. Records open only for the patient's own or referred doctor.</p></div>
+  <a class="button" href="/doctor/sign-in">Sign in as a doctor</a>
+</div>
 
-{% for alert in alerts %}
-<div class="banner {{ 'danger' if alert.severity == 'emergency' else ('warn' if alert.severity == 'review' else 'ok') }}">
+{% for row, alert in emergencies %}
+<div class="banner danger" role="alert">
   <strong>{{ alert.title }}</strong>
-  <p>{{ alert.body }}</p>
-  <form class="inline" method="post" action="/alerts/{{ alert.id }}/ack">
-    <input type="hidden" name="next" value="/dashboard">
-    <a href="/patients/{{ alert.appointment_id }}">Open patient</a>
-    <button class="ghost" type="submit">Acknowledge</button>
-  </form>
+  <p>{{ row.patient.name }} · booked with {{ row.doctor.name if row.doctor else row.appointment.physician_name }}. {{ alert.body }}</p>
+  <form class="inline" method="post" action="/alerts/{{ alert.id }}/ack"><input type="hidden" name="next" value="/dashboard"><button class="ghost" type="submit">Acknowledge</button></form>
 </div>
 {% endfor %}
+
+<div class="doors">
+  {% for d in doctors %}
+  <div class="card"><h3 style="margin:0">{{ d.name }}</h3><p class="muted" style="margin:2px 0 0">{{ d.specialty }} ·
+    {{ items|selectattr('doctor')|selectattr('doctor.id', 'equalto', d.id)|list|length }} appointments</p></div>
+  {% endfor %}
+</div>
 
 <div class="card">
   {% if items %}
   <table>
-    <thead><tr><th>Appointment</th><th>Patient</th><th>Intake</th><th>Tests</th><th>Results</th></tr></thead>
+    <thead><tr><th>Appointment</th><th>Patient</th><th>Doctor</th><th>Pre-visit intake</th></tr></thead>
     <tbody>
     {% for row in items %}
-      {% set state = row.intake.state.value if row.intake else 'not_started' %}
       <tr class="{{ 'emergency' if row.emergency }}">
-        <td>{{ row.appointment.scheduled_at.strftime('%a %d %b, %H:%M') }}<br><span class="muted">{{ row.appointment.physician_name }}</span></td>
-        <td><a href="/patients/{{ row.appointment.id }}">{{ row.patient.name }}</a>
-          {% if row.appointment.booked_by == 'patient' %}<span class="badge info">booked by patient</span>{% endif %}<br>
-          <span class="muted">{{ row.appointment.reason }}</span></td>
-        <td><span class="badge {{ state }}">{{ state.replace('_', ' ') }}</span></td>
-        <td>
-          {% if row.recs.suggested %}<span class="badge suggested">{{ row.recs.suggested }} to review</span>{% endif %}
-          {% if row.recs.approved %}<span class="badge approved">{{ row.recs.approved }} approved, not sent</span>{% endif %}
-          {% if row.recs.sent %}<span class="badge sent">{{ row.recs.sent }} sent</span>{% endif %}
-          {% if not row.recs %}<span class="muted">—</span>{% endif %}
-        </td>
-        <td>{% if row.results %}<span class="badge info">{{ row.results }} uploaded</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+        <td>{{ row.appointment.scheduled_at.strftime('%a %d %b, %H:%M') }}</td>
+        <td>{{ row.patient.name }}{% if row.appointment.booked_by == 'patient' %} <span class="badge info">booked by patient</span>{% endif %}</td>
+        <td>{{ row.doctor.name if row.doctor else row.appointment.physician_name }}<br>
+          <span class="muted">{{ row.doctor.specialty if row.doctor else 'not assigned' }}</span></td>
+        <td><span class="badge {{ row.state }}">{{ row.state.replace('_', ' ') }}</span>
+          {% if row.emergency %}<span class="badge emergency">urgent: doctor alerted</span>{% endif %}</td>
       </tr>
     {% endfor %}
     </tbody>

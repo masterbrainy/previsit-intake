@@ -1,7 +1,9 @@
-"""Patient self-service in the portal (P-004): set up a person's details and book a visit. Plain pages, no AI.
+"""Patient self-service in the portal (P-004, P-005): set up a person's details and book a visit. Plain pages, no AI.
 
 The contact is already verified by the sign-in code. Name, date of birth and sex are self-declared, so such patients
-are marked self_registered and the physician sees that. Bookings are live immediately (booked_by="patient").
+are marked self_registered and the doctor sees that. Booking is two steps: the patient says what the visit is about,
+the system recommends doctors (previsit.doctors.recommend_doctors, rule-based), and the patient picks one and a time.
+Bookings are live immediately (booked_by="patient").
 """
 
 from datetime import date, datetime, timedelta
@@ -12,7 +14,8 @@ from sqlmodel import Session, func, select
 
 from previsit import audit
 from previsit.config import Settings
-from previsit.models import Appointment, Patient
+from previsit.doctors import recommend_doctors, urgent_words_in
+from previsit.models import Appointment, Doctor, Patient
 from previsit.portal import auth
 from previsit.web.app import get_session, get_settings_dep, templates
 from previsit.web.portal import PortalUser, portal_user
@@ -24,9 +27,8 @@ BOOKING_HORIZON = timedelta(days=365)
 MAX_UPCOMING_PER_PATIENT = 5
 
 
-def physicians(session: Session, settings: Settings) -> list[str]:
-    booked = session.exec(select(Appointment.physician_name).distinct()).all()
-    return sorted({settings.physician_display_name, *[name for name in booked if name]})
+def _age(dob: date, today: date) -> int:
+    return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
 
 
 def _person_form(request: Request, error: str = "", values: dict | None = None, status_code: int = 200):
@@ -73,30 +75,67 @@ def create_person(
     return RedirectResponse(f"/portal/book?patient_id={patient.id}", status_code=303)
 
 
-def _book_form(request: Request, session: Session, settings: Settings, user: PortalUser, error: str = "",
-               values: dict | None = None, status_code: int = 200):
-    people = sorted(auth.patients_for(session, user.contact), key=lambda p: p.name)
+def _people(session: Session, user: PortalUser) -> list[Patient]:
+    return sorted(auth.patients_for(session, user.contact), key=lambda p: p.name)
+
+
+def _step_one(request: Request, session: Session, user: PortalUser, error: str = "", values: dict | None = None,
+              status_code: int = 200):
     return templates.TemplateResponse(request, "portal_book.html", {
-        "people": people, "physicians": physicians(session, settings), "error": error, "values": values or {},
+        "people": _people(session, user), "error": error, "values": values or {},
+    }, status_code=status_code)
+
+
+def _owned_patient(session: Session, user: PortalUser, patient_id: int) -> Patient:
+    patient = session.get(Patient, patient_id) if patient_id in user.patient_ids else None
+    if patient is None:
+        raise ValueError("Please choose who the appointment is for.")
+    return patient
+
+
+def _step_two(request: Request, session: Session, patient: Patient, reason: str, error: str = "",
+              values: dict | None = None, status_code: int = 200):
+    recommended = recommend_doctors(session, reason, _age(patient.dob, date.today()))
+    picked = {r.doctor.id for r in recommended}
+    others = [d for d in session.exec(select(Doctor).order_by(Doctor.name)).all() if d.id not in picked]
+    return templates.TemplateResponse(request, "portal_book_doctor.html", {
+        "patient": patient, "reason": reason, "recommended": recommended, "others": others,
+        "urgent": urgent_words_in(reason), "emergency_number": request.app.state.settings.emergency_number,
+        "error": error, "values": values or {},
     }, status_code=status_code)
 
 
 @router.get("/book", response_class=HTMLResponse)
 def book_form(
     request: Request, patient_id: int | None = None, user: PortalUser = Depends(portal_user),
-    session: Session = Depends(get_session), settings: Settings = Depends(get_settings_dep),
+    session: Session = Depends(get_session),
 ):
     if not user.patient_ids:
         return RedirectResponse("/portal/people/new", status_code=303)
-    return _book_form(request, session, settings, user, values={"patient_id": patient_id})
+    return _step_one(request, session, user, values={"patient_id": patient_id})
 
 
-def _check_booking(session: Session, settings: Settings, user: PortalUser, patient_id: int, physician: str,
-                   when: str, now: datetime) -> tuple[Patient, datetime]:
-    patient = session.get(Patient, patient_id) if patient_id in user.patient_ids else None
-    if patient is None:
-        raise ValueError("Please choose who the appointment is for.")
-    if physician not in physicians(session, settings):
+@router.post("/book/doctors", response_class=HTMLResponse)
+def choose_doctor(
+    request: Request, patient_id: int = Form(...), reason: str = Form(""), user: PortalUser = Depends(portal_user),
+    session: Session = Depends(get_session),
+):
+    reason = " ".join(reason.split())[:300]
+    values = {"patient_id": patient_id, "reason": reason}
+    try:
+        patient = _owned_patient(session, user, patient_id)
+    except ValueError as exc:
+        return _step_one(request, session, user, str(exc), values, status_code=422)
+    if len(reason) < 3:
+        return _step_one(request, session, user, "Please say briefly what the visit is about.", values, 422)
+    return _step_two(request, session, patient, reason)
+
+
+def _check_booking(session: Session, user: PortalUser, patient_id: int, doctor_id: int, when: str,
+                   now: datetime) -> tuple[Patient, Doctor, datetime]:
+    patient = _owned_patient(session, user, patient_id)
+    doctor = session.get(Doctor, doctor_id)
+    if doctor is None:
         raise ValueError("Please choose a doctor from the list.")
     try:
         scheduled = datetime.fromisoformat(when).replace(tzinfo=None, second=0, microsecond=0)
@@ -108,21 +147,29 @@ def _check_booking(session: Session, settings: Settings, user: PortalUser, patie
         Appointment.patient_id == patient.id, Appointment.scheduled_at > now)).one()
     if upcoming >= MAX_UPCOMING_PER_PATIENT:
         raise ValueError(f"{patient.name} already has {upcoming} upcoming appointments. Please contact the clinic.")
-    return patient, scheduled
+    return patient, doctor, scheduled
 
 
 @router.post("/book", response_class=HTMLResponse)
 def book(
-    request: Request, patient_id: int = Form(...), physician: str = Form(...), scheduled_at: str = Form(...),
-    reason: str = Form(""), user: PortalUser = Depends(portal_user), session: Session = Depends(get_session),
-    settings: Settings = Depends(get_settings_dep),
+    request: Request, patient_id: int = Form(...), doctor_id: int = Form(0), scheduled_at: str = Form(""),
+    reason: str = Form(""), urgent_ack: str = Form(""), user: PortalUser = Depends(portal_user),
+    session: Session = Depends(get_session), settings: Settings = Depends(get_settings_dep),
 ):
-    values = {"patient_id": patient_id, "physician": physician, "scheduled_at": scheduled_at, "reason": reason[:300]}
+    reason = " ".join(reason.split())[:300]
+    values = {"doctor_id": doctor_id, "scheduled_at": scheduled_at}
+    urgent = urgent_words_in(reason)
     try:
-        patient, when = _check_booking(session, settings, user, patient_id, physician, scheduled_at, datetime.now())
+        if urgent and urgent_ack != "yes":
+            raise ValueError("Please confirm you have read the emergency advice before booking.")
+        patient, doctor, when = _check_booking(session, user, patient_id, doctor_id, scheduled_at, datetime.now())
     except ValueError as exc:
-        return _book_form(request, session, settings, user, str(exc), values, status_code=422)
-    appointment = book_appointment(session, settings, "patient", patient, physician, when, reason[:300],
-                                   booked_by="patient")
+        if patient_id not in user.patient_ids:
+            return _step_one(request, session, user, str(exc), {"reason": reason}, status_code=422)
+        return _step_two(request, session, session.get(Patient, patient_id), reason, str(exc), values, 422)
+    appointment = book_appointment(session, settings, "patient", patient, doctor, when, reason, booked_by="patient")
+    if urgent:
+        audit.record(session, "patient", "booking.emergency_advice_acknowledged", "appointment", appointment.id,
+                     {"words": urgent})
     session.commit()
     return RedirectResponse(portal_base(appointment), status_code=303)

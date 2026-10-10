@@ -4,24 +4,18 @@
 {% block main_class %}narrow{% endblock %}
 {% block content %}
 <h1 style="margin-top:12px">Book an appointment</h1>
-<p class="sub">Your appointment is booked straight away. You can then answer the pre-visit questions so your doctor is ready for you.</p>
+<p class="sub">Tell us briefly what the visit is about and we'll suggest the right doctor.</p>
 {% if error %}<div class="banner danger" role="alert"><strong>{{ error }}</strong></div>{% endif %}
-<form class="card" method="post" action="/portal/book">
+<form class="card" method="post" action="/portal/book/doctors">
   <label for="patient_id">Who is it for?</label>
   <select id="patient_id" name="patient_id" required style="width:100%">
     {% for p in people %}<option value="{{ p.id }}" {{ 'selected' if values.patient_id == p.id }}>{{ p.name }} (born {{ p.dob.strftime('%d %b %Y') }})</option>{% endfor %}
   </select>
   <p style="margin:6px 0 0"><a href="/portal/people/new">Someone else?</a></p>
-  <div class="form-grid">
-    <div><label for="physician">Doctor</label>
-      <select id="physician" name="physician" required>
-        {% for d in physicians %}<option {{ 'selected' if values.physician == d }}>{{ d }}</option>{% endfor %}</select></div>
-    <div><label for="scheduled_at">Date and time</label>
-      <input id="scheduled_at" name="scheduled_at" type="datetime-local" value="{{ values.scheduled_at or '' }}" required></div>
-  </div>
-  <label for="reason">What is the visit about? (optional)</label>
-  <input id="reason" name="reason" value="{{ values.reason or '' }}" maxlength="300" style="width:100%">
-  <p><button type="submit" class="big">Book appointment</button></p>
+  <label for="reason">What is the visit about?</label>
+  <input id="reason" name="reason" value="{{ values.reason or '' }}" required maxlength="300" style="width:100%"
+         placeholder="e.g. fever and cough for 3 days, knee pain, check-up">
+  <p><button type="submit" class="big">Find a doctor</button></p>
 </form>
 <p class="muted" style="font-size:13px">If you feel very unwell, don't book: call your local emergency number now.</p>
 {% endblock %}

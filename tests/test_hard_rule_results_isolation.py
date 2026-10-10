@@ -6,7 +6,7 @@ import inspect
 import pytest
 
 import source_scan
-from factories import interview, make_fake_llm, make_intake, portal_sign_in
+from factories import doctor_sign_in, interview, make_fake_llm, make_intake, portal_sign_in
 
 RESULT_FILENAME = "SENTINEL_RESULT_cbc_report.pdf"
 RESULT_CONTENT = b"%PDF-1.4\n% HAEMOGLOBIN SENTINEL-7f3a 9.1 g/dL (L) WBC SENTINEL-7f3a 14.2 (H)\n%%EOF\n"
@@ -43,7 +43,7 @@ def test_llm_client_accepts_no_attachment_channel():
     assert params == ["self", "task", "system", "messages", "schema"]
 
 
-def test_stored_result_never_appears_in_any_llm_payload(settings, session, appointment, physician_auth, tmp_path):
+def test_stored_result_never_appears_in_any_llm_payload(settings, session, appointment, doctor, tmp_path):
     from fastapi.testclient import TestClient
 
     from previsit import results, symptoms
@@ -61,8 +61,10 @@ def test_stored_result_never_appears_in_any_llm_payload(settings, session, appoi
         engine.handle_patient_turn(session, intake, text)
     symptoms.log_symptom(session, llm, appointment, "temperature", 38.1, "a bit better today", settings)
 
-    client = TestClient(create_app(settings=settings, llm=llm))
-    physician_page = client.get(f"/patients/{appointment.id}", auth=physician_auth)
+    app = create_app(settings=settings, llm=llm)
+    doctor_client, client = TestClient(app), TestClient(app)
+    doctor_sign_in(doctor_client, session, doctor)
+    physician_page = doctor_client.get(f"/patients/{appointment.id}")
     assert client.get(portal_sign_in(client, session, settings, appointment)).status_code == 200
 
     assert RESULT_FILENAME in physician_page.text, "control: the result must be attached for the physician"

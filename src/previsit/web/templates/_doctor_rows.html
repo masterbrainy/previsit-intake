@@ -1,0 +1,24 @@
+<table>
+  <thead><tr><th>Appointment</th><th>Patient</th><th>Quick notes</th><th>Tests</th><th>Results</th></tr></thead>
+  <tbody>
+  {% for row in rows %}
+    <tr class="{{ 'emergency' if row.emergency }}">
+      <td>{{ row.appointment.scheduled_at.strftime('%a %d %b, %H:%M') }}<br>
+        <span class="muted">with {{ row.doctor.name if row.doctor else row.appointment.physician_name }}</span></td>
+      <td><a href="/patients/{{ row.appointment.id }}">{{ row.patient.name }}</a><br>
+        <span class="badge {{ row.state }}">{{ row.state.replace('_', ' ') }}</span>
+        {% if row.appointment.booked_by == 'patient' %}<span class="badge info">booked by patient</span>{% endif %}
+        {% set ref = referrals.get(row.patient.id) if referrals else None %}
+        {% if ref and row in referred %}<br><span class="muted">Referred by {{ names[ref.from_doctor_id] }}{% if ref.note %}: “{{ ref.note }}”{% endif %}</span>{% endif %}</td>
+      <td>{% if row.complaints %}{{ row.complaints|join('; ') }}{% elif row.appointment.reason %}<span class="muted">Reason: {{ row.appointment.reason }}</span>{% else %}<span class="muted">—</span>{% endif %}
+        {% for alert in row.alerts %}<br><strong class="{{ 'danger-text' if alert.severity == 'emergency' }}">{{ alert.title }}</strong>{% endfor %}</td>
+      <td>
+        {% if row.recs.suggested %}<span class="badge suggested">{{ row.recs.suggested }} to review</span>{% endif %}
+        {% if row.recs.approved %}<span class="badge approved">{{ row.recs.approved }} approved, not sent</span>{% endif %}
+        {% if row.recs.sent %}<span class="badge sent">{{ row.recs.sent }} sent</span>{% endif %}
+        {% if not row.recs %}<span class="muted">—</span>{% endif %}</td>
+      <td>{% if row.results %}<span class="badge info">{{ row.results }} uploaded</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>

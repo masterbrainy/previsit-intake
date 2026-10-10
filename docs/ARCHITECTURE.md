@@ -69,14 +69,24 @@ previsit/
                    link: sign-in with contact pre-filled, opens no records), POST /portal/code, /portal/verify,
                    /portal/sign-out. Signed in: /portal (own appointments).
                    Every contact gets a code (new patients verify their contact first, P-004).
-  web/portal_booking.py  Signed in: /portal/people/new (set up a person; marked Patient.self_registered) and
-                   /portal/book (book for one of the contact's own people, a listed doctor, a future time within a year,
-                   max 5 upcoming per patient; live immediately, Appointment.booked_by="patient"). No AI.
+  web/portal_booking.py  Signed in: /portal/people/new (set up a person; marked Patient.self_registered);
+                   /portal/book (who + what the visit is about) -> POST /portal/book/doctors (recommended doctors,
+                   urgent-words warning) -> POST /portal/book (doctor_id, time). Own people only, future time within a
+                   year, max 5 upcoming per patient; live immediately, Appointment.booked_by="patient". No AI.
                    Dependencies: portal_user (cookie previsit_portal, HttpOnly, SameSite=Lax) and owned_appointment
                    (404 unless the appointment's patient matches the signed-in contact).
-                   Physician (basic auth): /dashboard, /appointments/new, /appointments/import (CSV, column contact),
-                   /patients/{appt_id}, /patients/{appt_id}/patient-view (read-only preview), /patients/{appt_id}/print,
-                   /recs/{id}/decide, /appointments/{id}/recs/add
+                   Hospital staff (shared basic auth, web/physician.py): /dashboard = hospital overview (patient
+                   name, doctor, time, intake state, emergency flag; nothing clinical, no record links),
+                   /appointments/new and /appointments/import (CSV: contact, physician = doctor name or email).
+  doctors.py       recommend_doctors(session, reason, age_years) (keywords, children -> paediatrics, GP fallback,
+                   least busy) ; urgent_words_in(reason) ; can_access(session, doctor_id, patient_id) ;
+                   patient_ids_for ; refer(session, from_doctor, to_doctor_id, patient_id, note). No AI.
+  web/doctor.py    Doctor sign-in: /doctor/sign-in -> POST /doctor/code -> POST /doctor/verify (email code, role
+                   "doctor", cookie previsit_doctor) ; /doctor = my patients + referred to me, with quick notes.
+                   Clinical routes, all requiring a doctor session AND can_access (404 otherwise):
+                   /patients/{appt_id} (+ /print, /patient-view read-only preview, POST /refer),
+                   /recs/{id}/decide, /appointments/{id}/recs/add, /appointments/{id}/notify, /alerts/{id}/ack,
+                   /results/{id}. Decisions are recorded under the doctor's email.
                    Patient portal (signed in, owned_appointment): /portal/appointments/{id} (+ /intake, /intake/start,
                    /intake/turn, /symptoms, /results)
   intake/engine.py IntakeEngine(llm, settings, *, defer=None, on_candidate=None). Web passes defer (FastAPI background

@@ -10,7 +10,7 @@
 <div class="banner ok">
   <strong>Created {{ created|length }} appointment{{ 's' if created|length != 1 }}</strong>
   {% for c in created %}
-  <p>{{ c.name }}: <a href="{{ c.link }}" target="_blank" rel="noopener">{{ c.link }}</a> · <a href="/patients/{{ c.id }}">physician view</a></p>
+  <p>{{ c.name }}: <a href="{{ c.link }}" target="_blank" rel="noopener">{{ c.link }}</a></p>
   {% endfor %}
 </div>
 {% endif %}
@@ -25,7 +25,8 @@
         <select id="sex" name="sex"><option value="">Not recorded</option><option>F</option><option>M</option><option>Other</option></select></div>
       <div><label for="contact">Mobile number or email</label><input id="contact" name="contact" required maxlength="120"
         placeholder="+15550100 or name@example.com"></div>
-      <div><label for="physician">Physician</label><input id="physician" name="physician" value="{{ physician }}" required></div>
+      <div><label for="physician">Doctor</label><select id="physician" name="physician" required>
+        {% for d in doctors %}<option value="{{ d.id }}">{{ d.name }} · {{ d.specialty }}</option>{% endfor %}</select></div>
       <div><label for="scheduled_at">Appointment time</label><input id="scheduled_at" name="scheduled_at" type="datetime-local" required></div>
     </div>
     <label for="reason">Reason for visit (optional)</label><input id="reason" name="reason" maxlength="300" style="width:100%">
@@ -34,7 +35,7 @@
 
   <form class="card" method="post" action="/appointments/import" enctype="multipart/form-data">
     <h2>Import CSV</h2>
-    <p class="muted">Columns: <span class="mono">name, dob, sex, contact, physician, scheduled_at, reason</span>.
+    <p class="muted">Columns: <span class="mono">name, dob, sex, contact, physician, scheduled_at, reason</span> (physician = the doctor's name or email).
       Dates as <span class="mono">YYYY-MM-DD</span> and <span class="mono">YYYY-MM-DDTHH:MM</span>.</p>
     <input type="file" name="file" accept=".csv,text/csv" required>
     <p><button type="submit">Import</button></p>

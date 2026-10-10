@@ -13,6 +13,27 @@
     <a class="button ghost" href="/patients/{{ v.appointment.id }}/print" target="_blank">Print / PDF</a></div>
 </div>
 
+<section class="card" id="referrals">
+  <h2>Care team</h2>
+  <p style="margin:0">Booked with {{ v.appointment.physician_name }}.
+    {% for r in referrals %}Referred to {{ names[r.to_doctor_id] }} by {{ names[r.from_doctor_id] }} on {{ r.created_at.strftime('%d %b') }}{% if r.note %} (“{{ r.note }}”){% endif %}. {% endfor %}</p>
+  {% if other_appointments %}<p class="muted" style="margin:6px 0 0">Other appointments:
+    {% for a in other_appointments %}<a href="/patients/{{ a.id }}">{{ a.scheduled_at.strftime('%d %b') }} with {{ a.physician_name }}</a>{{ ', ' if not loop.last }}{% endfor %}</p>{% endif %}
+  {% if refer_to %}
+  <details class="no-print" style="margin-top:10px"><summary>Refer to another doctor</summary>
+    <form method="post" action="/patients/{{ v.appointment.id }}/refer">
+      <div class="form-grid">
+        <div><label for="to_doctor_id">Doctor</label><select id="to_doctor_id" name="to_doctor_id">
+          {% for d in refer_to %}<option value="{{ d.id }}">{{ d.name }} · {{ d.specialty }}</option>{% endfor %}</select></div>
+        <div><label for="ref_note">Note (optional)</label><input id="ref_note" name="note" maxlength="500"></div>
+      </div>
+      <p class="muted" style="font-size:13px">They will be able to see this patient's records.</p>
+      <p><button type="submit">Refer</button></p>
+    </form>
+  </details>
+  {% endif %}
+</section>
+
 {% for alert in v.open_alerts %}
 <div class="banner {{ 'danger' if alert.severity == 'emergency' else ('warn' if alert.severity == 'review' else 'ok') }}">
   <strong>{{ alert.title }}</strong><p>{{ alert.body }}</p>

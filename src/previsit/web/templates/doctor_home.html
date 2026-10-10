@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}My patients · {{ doctor.name }}{% endblock %}
+{% block content %}
+<h1>My patients</h1>
+<p class="sub">Patients booked with you, and patients other doctors referred to you. No one else can open these records unless you refer the patient.</p>
+<div class="card">
+  {% if mine %}{% with rows = mine %}{% include "_doctor_rows.html" %}{% endwith %}
+  {% else %}<p class="empty">No patients booked with you yet.</p>{% endif %}
+</div>
+<h2>Referred to me</h2>
+<div class="card">
+  {% if referred %}
+  {% with rows = referred %}{% include "_doctor_rows.html" %}{% endwith %}
+  {% else %}<p class="empty">No referrals yet.</p>{% endif %}
+</div>
+{% endblock %}

@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     physician_username: str = "doctor"
     physician_password: SecretStr = SecretStr("")
     physician_display_name: str = "Dr. Demo"
+    physician_email: str = "doctor@clinic.example"  # the first doctor account, created if none exist
 
     max_upload_bytes: int = 10 * 1024 * 1024
 

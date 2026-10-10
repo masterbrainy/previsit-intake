@@ -1,6 +1,6 @@
 # Progress
 
-Plan version: v0.5 · Status values: `todo` · `doing` · `done` · `blocked: <reason>`
+Plan version: v0.6 · Status values: `todo` · `doing` · `done` · `blocked: <reason>`
 Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / clinician / decision)
 
 ## Phase 0: Foundations
@@ -69,6 +69,22 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | PB.2 | Pilot guard: self-bookings come from / sync with the clinic scheduling system, or need clinic confirmation before the intake runs (P-004) | U+B | todo: before any pilot |
 | PB.3 | Pilot guard: cap self-registrations and AI-call spend on any publicly hosted site (P-004, ties to D.2) | B | todo: before public hosting |
 | PB.4 | Availability/calendar check to prevent double-booking (P-004 known gap) | B | todo |
+| PB.5 | Test: self-registration and booking limits, identity reuse and isolation (tests/test_portal_booking.py, 15 tests, 7/7 mutants killed) | T | done |
+
+## Hospital overview + doctor accounts (P-005, before the demo release)
+| ID | Task | Owner | Status |
+|---|---|---|---|
+| H.1 | Doctors list (specialty, keywords); staff booking form + CSV pick a doctor | B | done |
+| H.2 | Portal booking suggests doctors (rule-based; reasons quote patient's words, never a condition; GP always offered); patient picks | B | done |
+| H.3 | Individual doctor sign-in (email + one-time code, role "doctor"); replaces shared login on clinical pages | B | done |
+| H.4 | Per-patient access check on every clinical route (404 otherwise); approval.decide records the signed-in doctor | B | done |
+| H.5 | Hospital overview: all patients, assigned doctor, time, status, emergency flag; no clinical details; staff see and acknowledge emergency alerts for every patient | B | done |
+| H.6 | Doctor's own patient list with quick notes (clinician-only, never to patient or AI) | B | done |
+| H.7 | Referrals (patient, from, to, note): receiving doctor gets access; audited; only a doctor with access can refer | B | done |
+| H.8 | Emergency words in booking reason show the full emergency script; acknowledge to continue; audited | B | done |
+| H.9 | Tests: doctor can't reach unassigned/unreferred patients (IDs, URLs); approvals name the doctor; staff see alerts with doctor offline; suggestion text never names a condition; hard-rule tests pass under doctor sign-in | T | todo |
+| H.10 | Pilot guard: break-glass access for a covering doctor, with reason and audit | B | todo: before any pilot |
+| H.11 | Pilot guard: demo mode never on a public URL; individual staff accounts for the overview | U+B | todo: before any pilot or public hosting |
 
 ## Demo release: working site + captioned video (final step, P-001)
 | ID | Task | Owner | Status |
@@ -89,6 +105,6 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | F.5 | Coverage checklist in code for every PRD §7 section (past history, medicines, family, smoking/alcohol, travel), like the allergy check (DEMO-001 run 2 skipped them) | B | todo |
 | F.6 | After an escalation, a patient who accepts gets a fixed acknowledgement and close, not the refusal script | B | todo |
 | F.3 | Twilio adapter for real SMS invites and phone calls (needs account) | U+B | blocked: no Twilio account |
-| F.4 | Physician auth is a single shared basic-auth login; needs per-physician accounts before any pilot | B | todo |
+| F.4 | Physician auth is a single shared basic-auth login; needs per-physician accounts before any pilot | B | superseded by H.3/H.4 (P-005) |
 | A.1 | Read-only admin panel (/admin): links to every page + browse every table; secrets masked, no edits, no LLM, views audited (spec in P-003) | B | todo: deferred by user (P-003); use Datasette locally meanwhile |
 | A.2 | Booking form warns when a contact is already used by another patient (shared-contact risk, P-003) | B | todo |

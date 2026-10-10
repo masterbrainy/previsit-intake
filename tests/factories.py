@@ -14,6 +14,7 @@ from sqlmodel import Session, select
 TEST_PHYSICIAN = "dr_test"
 EMERGENCY_NUMBER = "999-TEST"
 CRISIS_LINE = "CRISIS-TEST-LINE"
+DOCTOR_COOKIE = "previsit_doctor"
 
 
 # ---------- DB rows ----------
@@ -33,7 +34,16 @@ def make_patient(session: Session, name: str = "Test Patient", dob: date = date(
     return _save(session, Patient(name=name, dob=dob, phone=phone, email=email))
 
 
-def make_appointment(session: Session, patient=None, physician: str = TEST_PHYSICIAN):
+def make_doctor(session: Session, name: str = "Dr. Ada Test", email: str = "", specialty: str = "General practice",
+                keywords: tuple[str, ...] = ()):
+    from previsit.models import Doctor
+
+    email = email or name.lower().removeprefix("dr. ").replace(" ", ".") + "@hospital.test"
+    return _save(session, Doctor(name=name, email=email.lower(), specialty=specialty, keywords=list(keywords)))
+
+
+def make_appointment(session: Session, patient=None, physician: str = TEST_PHYSICIAN, doctor=None):
+    """With a doctor, the appointment is theirs (doctor_id) and physician_name is the doctor's name."""
     from previsit.models import Appointment
 
     patient = patient or make_patient(session)
@@ -41,7 +51,8 @@ def make_appointment(session: Session, patient=None, physician: str = TEST_PHYSI
         session,
         Appointment(
             patient_id=patient.id,
-            physician_name=physician,
+            doctor_id=doctor.id if doctor else None,
+            physician_name=doctor.name if doctor else physician,
             scheduled_at=datetime.now() + timedelta(days=1),  # clinic-local wall-clock time (naive)
             token=secrets.token_urlsafe(16),
         ),
@@ -63,6 +74,16 @@ def portal_sign_in(client, session: Session, settings, appointment) -> str:
     session.commit()
     client.cookies.set(COOKIE, token)
     return f"/portal/appointments/{appointment.id}"
+
+
+def doctor_sign_in(client, session: Session, doctor, hours: int = 8) -> str:
+    """Signs the client in as this doctor (skipping the code step, which has its own tests); returns the token."""
+    from previsit.portal import auth
+
+    token = auth.start_session(session, doctor.email, hours, role="doctor")
+    session.commit()
+    client.cookies.set(DOCTOR_COOKIE, token)
+    return token
 
 
 def portal_client(settings, llm, demo: bool = True):

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Choose a doctor · Patient portal{% endblock %}
+{% block header %}{% with signed_in = true %}{% include "_portal_header.html" %}{% endwith %}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1 style="margin-top:12px">Choose a doctor</h1>
+<p class="sub">For {{ patient.name }}: “{{ reason }}”. <a href="/portal/book?patient_id={{ patient.id }}">Change</a></p>
+{% if urgent %}
+<div class="banner danger" role="alert"><strong>Please don't wait for an appointment if this is happening now.</strong>
+  <p>You mentioned {{ urgent|join(', ') }}. These can be signs of an emergency. Call {{ emergency_number }} now or go to
+  the nearest emergency department. An appointment is not the right place for an emergency.</p></div>
+{% endif %}
+{% if error %}<div class="banner danger" role="alert"><strong>{{ error }}</strong></div>{% endif %}
+<form method="post" action="/portal/book">
+  <input type="hidden" name="patient_id" value="{{ patient.id }}">
+  <input type="hidden" name="reason" value="{{ reason }}">
+  <div class="card">
+    <h2>Recommended</h2>
+    {% for r in recommended %}
+    <label class="choice"><input type="radio" name="doctor_id" value="{{ r.doctor.id }}" required
+      {{ 'checked' if (values.doctor_id == r.doctor.id) or (not values.doctor_id and loop.first) }}>
+      <span><strong>{{ r.doctor.name }}</strong> · {{ r.doctor.specialty }}{% if loop.first %} <span class="badge approved">best match</span>{% endif %}
+        {% if r.reasons %}<br><span class="muted">{{ r.reasons|join('; ')|capitalize }}</span>{% endif %}</span></label>
+    {% endfor %}
+    {% if others %}
+    <details style="margin-top:8px"><summary>Other doctors</summary>
+      {% for d in others %}
+      <label class="choice"><input type="radio" name="doctor_id" value="{{ d.id }}" {{ 'checked' if values.doctor_id == d.id }}>
+        <span><strong>{{ d.name }}</strong> · {{ d.specialty }}</span></label>
+      {% endfor %}
+    </details>
+    {% endif %}
+  </div>
+  <div class="card">
+    <label for="scheduled_at">Date and time</label>
+    <input id="scheduled_at" name="scheduled_at" type="datetime-local" value="{{ values.scheduled_at or '' }}" required>
+    {% if urgent %}
+    <label class="choice"><input type="checkbox" name="urgent_ack" value="yes" required>
+      <span>I've read the emergency advice. This is not happening right now, and I want to book an appointment.</span></label>
+    {% endif %}
+    <p><button type="submit" class="big">Book appointment</button></p>
+  </div>
+</form>
+{% endblock %}

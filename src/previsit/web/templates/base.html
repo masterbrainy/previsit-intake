@@ -9,10 +9,18 @@
 <body>
   {% if request.app.state.settings.demo_mode %}<div class="demo-strip">Demo · synthetic patients only · not for clinical use</div>{% endif %}
   {% block header %}
+  {% if doctor %}
   <header class="top">
-    <a class="brand" href="/dashboard">Pre-visit intake</a>
-    <nav><a href="/dashboard">Patients</a><a href="/appointments/new">New appointment</a></nav>
+    <a class="brand" href="/doctor">{{ doctor.name }} <span class="muted" style="font-weight:400">· {{ doctor.specialty }}</span></a>
+    <nav><a href="/doctor">My patients</a>
+      <form method="post" action="/doctor/sign-out" class="inline"><button type="submit" class="ghost link">Sign out</button></form></nav>
   </header>
+  {% else %}
+  <header class="top">
+    <a class="brand" href="/dashboard">Hospital overview</a>
+    <nav><a href="/dashboard">All patients</a><a href="/appointments/new">New appointment</a><a href="/doctor/sign-in">Doctor sign-in</a></nav>
+  </header>
+  {% endif %}
   {% endblock %}
   <main class="{% block main_class %}{% endblock %}">
     {% block content %}{% endblock %}

@@ -9,7 +9,7 @@ from sqlmodel import select
 
 from demo.config import DEMO_DIR, PHYSICIAN, demo_settings, ensure_dirs
 from previsit.db import init_db, make_engine, session_scope
-from previsit.models import Appointment, SymptomLog, utcnow
+from previsit.models import Appointment, Doctor, SymptomLog, utcnow
 from previsit.web.views import create_appointment
 
 
@@ -21,6 +21,18 @@ class DemoPatient:
     reason: str
     contact: str  # fictional: 555-01xx numbers are reserved for fiction
 
+
+# Fictional doctors (example.org addresses never receive mail). Keywords drive the booking recommendations.
+DOCTORS = (
+    ("Dr. Anika Rao", "General practice", ["fever", "cough", "cold", "flu", "sore throat", "tired", "check-up",
+                                           "headache", "blood pressure"]),
+    ("Dr. Mei Tanaka", "Paediatrics", ["child", "baby", "infant", "toddler", "vaccination", "rash"]),
+    ("Dr. Omar Haddad", "Cardiology", ["chest pain", "palpitations", "heart", "blood pressure", "breathless"]),
+    ("Dr. Lucia Ferreira", "Obstetrics and gynaecology", ["pregnant", "pregnancy", "period", "periods", "antenatal"]),
+    ("Dr. James Whitfield", "Orthopaedics", ["knee", "back pain", "joint", "fracture", "sprain", "hip", "shoulder"]),
+)
+# Which doctor each seeded patient is booked with.
+BOOKED_WITH = {"Samuel Okafor": "Dr. Omar Haddad", "Grace Lindqvist": "Dr. James Whitfield"}
 
 # The fever patient is booked live in the video; these fill the dashboard and run the red-flag case.
 BACKGROUND = (
@@ -43,9 +55,16 @@ def reset(red_flag_case: DemoPatient | None = None) -> dict[str, int]:
     init_db(engine)
     ids: dict[str, int] = {}
     with session_scope(engine) as session:
+        doctors = {}
+        for name, specialty, keywords in DOCTORS:
+            email = name.lower().removeprefix("dr. ").replace(" ", ".") + "@riverside.example.org"
+            doctors[name] = Doctor(name=name, email=email, specialty=specialty, keywords=keywords)
+            session.add(doctors[name])
+        session.flush()
         for i, p in enumerate((*BACKGROUND, *([red_flag_case] if red_flag_case else []))):
+            doctor = doctors[BOOKED_WITH.get(p.name, PHYSICIAN)]
             appt = create_appointment(
-                session, settings, "demo-seed", p.name, p.dob, p.sex, p.contact, PHYSICIAN, tomorrow_at(10 + i), p.reason
+                session, settings, "demo-seed", p.name, p.dob, p.sex, p.contact, doctor, tomorrow_at(10 + i), p.reason
             )
             ids[p.name] = appt.id
     engine.dispose()

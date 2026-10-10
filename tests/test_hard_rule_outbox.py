@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 
 import source_scan
-from factories import TEST_PHYSICIAN, all_rows, make_appointment, make_rec, portal_sign_in
+from factories import TEST_PHYSICIAN, all_rows, doctor_sign_in, make_appointment, make_rec, portal_sign_in
 
 UNAPPROVED_NAME = "ZZ-UNAPPROVED-TEST-INVESTIGATION"
 
@@ -119,15 +119,17 @@ def test_only_outbox_creates_patient_messages():
     assert offenders == {}, f"PatientMessage constructed outside outbox.py: {offenders}"
 
 
-def test_patient_page_never_shows_a_suggested_rec(settings, session, appointment, llm, physician_auth):
+def test_patient_page_never_shows_a_suggested_rec(settings, session, appointment, llm, doctor):
     from fastapi.testclient import TestClient
 
     from previsit.web.app import create_app
 
     make_rec(session, appointment, name=UNAPPROVED_NAME)
-    client = TestClient(create_app(settings=settings, llm=llm))
+    app = create_app(settings=settings, llm=llm)
+    doctor_client, client = TestClient(app), TestClient(app)
+    doctor_sign_in(doctor_client, session, doctor)
 
-    physician_page = client.get(f"/patients/{appointment.id}", auth=physician_auth)
+    physician_page = doctor_client.get(f"/patients/{appointment.id}")
     patient_page = client.get(portal_sign_in(client, session, settings, appointment))
 
     assert physician_page.status_code == 200

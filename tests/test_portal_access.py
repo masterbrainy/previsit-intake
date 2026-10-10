@@ -6,8 +6,8 @@ import re
 
 import pytest
 
-from factories import (TEST_PHYSICIAN, all_rows, guard, interview, make_appointment, make_fake_llm, make_intake,
-                       make_patient, make_rec, portal_client, sign_in_with_code)
+from factories import (TEST_PHYSICIAN, all_rows, doctor_sign_in, guard, interview, make_appointment, make_fake_llm,
+                       make_intake, make_patient, make_rec, portal_client, sign_in_with_code)
 
 PHONE_A, PHONE_B = "+15550000001", "+15550000002"
 GUESSED_ID = 987654
@@ -20,11 +20,19 @@ FILES = {"/results": {"file": ("report.pdf", b"%PDF-1.4\n%%EOF\n", "application/
 
 
 @pytest.fixture
-def people(session):
+def people(session, doctor):
     a = make_patient(session, name="Ana Silva", phone=PHONE_A)
     b = make_patient(session, name="Bruno Costa", phone=PHONE_B)
-    return {"a1": make_appointment(session, patient=a), "a2": make_appointment(session, patient=a),
+    return {"a1": make_appointment(session, patient=a, doctor=doctor), "a2": make_appointment(session, patient=a),
             "b": make_appointment(session, patient=b)}
+
+
+@pytest.fixture
+def doctor_client(settings, llm, session, doctor):
+    """Signed in as the doctor of people["a1"] (a separate browser from the patient's)."""
+    client = portal_client(settings, llm)
+    doctor_sign_in(client, session, doctor)
+    return client
 
 
 @pytest.fixture
@@ -131,25 +139,27 @@ def test_portal_pages_are_not_cached(client_a, people):
 
 # ---------- unapproved recommendations never appear ----------
 
-def _every_patient_facing_page(client, appointment, physician_auth) -> dict[str, str]:
+def _every_patient_facing_page(client, appointment, doctor_client) -> dict[str, str]:
     pages = {"home": client.get("/portal").text, "link": client.get(f"/p/{appointment.token}").text}
     for method, suffix in _portal_routes(client):
         if method == "GET":
             pages[suffix or "appointment"] = _call(client, "GET", appointment.id, suffix).text
-    pages["doctor preview"] = client.get(f"/patients/{appointment.id}/patient-view", auth=physician_auth).text
+    preview = doctor_client.get(f"/patients/{appointment.id}/patient-view")
+    assert preview.status_code == 200, "control: the doctor's preview must render"
+    pages["doctor preview"] = preview.text
     return pages
 
 
-def test_unapproved_rec_appears_on_no_portal_page(client_a, session, people, physician_auth):
+def test_unapproved_rec_appears_on_no_portal_page(client_a, doctor_client, session, people):
     make_rec(session, people["a1"], name=UNAPPROVED)
     session.commit()
 
-    pages = _every_patient_facing_page(client_a, people["a1"], physician_auth)
+    pages = _every_patient_facing_page(client_a, people["a1"], doctor_client)
 
     assert [name for name, html in pages.items() if UNAPPROVED in html] == []
 
 
-def test_approved_rec_stays_hidden_until_the_physician_sends_it(client_a, session, people, physician_auth):
+def test_approved_rec_stays_hidden_until_the_physician_sends_it(client_a, session, people):
     from previsit import approval
 
     rec = make_rec(session, people["a1"], name=UNAPPROVED)
@@ -166,19 +176,19 @@ def test_approved_rec_stays_hidden_until_the_physician_sends_it(client_a, sessio
 
 # ---------- the doctor's preview is read-only ----------
 
-def test_doctor_preview_has_no_working_forms(settings, llm, people, physician_auth):
-    client = portal_client(settings, llm)
+def test_doctor_preview_has_no_working_forms(settings, llm, people, doctor_client):
     url = f"/patients/{people['a1'].id}/patient-view"
 
-    page = client.get(url, auth=physician_auth)
-    forms = re.findall(r"<form\b[^>]*>.*?</form>", page.text, re.S)
+    page = doctor_client.get(url)
+    forms = [f for f in re.findall(r"<form\b[^>]*>.*?</form>", page.text, re.S)
+             if 'action="/doctor/sign-out"' not in f.split(">", 1)[0]]  # the doctor's own header
 
     assert page.status_code == 200 and forms, "control: the preview shows the patient's forms"
     for form in forms:
         assert "action=" not in form.split(">", 1)[0]
         assert re.search(r"<fieldset[^>]*\bdisabled\b", form), form[:120]
-    assert client.post(url, auth=physician_auth).status_code == 405
-    assert client.get(url).status_code == 401
+    assert doctor_client.post(url).status_code == 405
+    assert portal_client(settings, llm).get(url).status_code == 303  # signed out: to the doctor sign-in
 
 
 # ---------- AI replies are checked before they are shown or spoken ----------
@@ -226,14 +236,14 @@ def test_shared_contact_sees_every_patient_booked_with_it_labelled_by_name(setti
     assert "Bruno Costa" not in home and client.get(f"/portal/appointments/{people['b'].id}").status_code == 404
 
 
-def test_same_name_dob_and_contact_is_the_same_patient(settings, session):
+def test_same_name_dob_and_contact_is_the_same_patient(settings, session, doctor):
     """Rule 2: a second booking with identical name + DOB + contact reuses the patient; any difference makes a new one."""
     from datetime import date, datetime, timedelta
 
     from previsit.web.views import create_appointment
 
     def book(name="Ana Silva", dob=date(1990, 5, 1), contact=PHONE_A):
-        return create_appointment(session, settings, TEST_PHYSICIAN, name, dob, "F", contact, "Dr. Test",
+        return create_appointment(session, settings, TEST_PHYSICIAN, name, dob, "F", contact, doctor,
                                   datetime.now() + timedelta(days=1), "fever")
 
     first, again = book(), book()
