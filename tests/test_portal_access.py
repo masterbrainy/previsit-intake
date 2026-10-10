@@ -205,3 +205,40 @@ def test_blocked_ai_reply_is_never_shown_or_spoken(settings, session, people, mo
     for fragment in BLOCKED_FRAGMENTS:
         assert fragment not in data["agent_text"]
         assert fragment not in sent_audio
+
+
+# ---------- PRD §8.10 identity rules (P-003) ----------
+
+def test_shared_contact_sees_every_patient_booked_with_it_labelled_by_name(settings, llm, session, people):
+    """Rule 1: e.g. a parent's phone on two children's bookings shows both, each with the patient's name."""
+    from datetime import date
+
+    sibling = make_patient(session, name="Clara Silva", dob=date(2019, 6, 1), phone=PHONE_A)
+    sibling_appt = make_appointment(session, patient=sibling)
+    client = portal_client(settings, llm)
+    sign_in_with_code(client, PHONE_A)
+
+    home = client.get("/portal").text
+
+    assert "Ana Silva" in home and "Clara Silva" in home
+    assert f"/portal/appointments/{sibling_appt.id}" in home
+    assert client.get(f"/portal/appointments/{sibling_appt.id}").status_code == 200
+    assert "Bruno Costa" not in home and client.get(f"/portal/appointments/{people['b'].id}").status_code == 404
+
+
+def test_same_name_dob_and_contact_is_the_same_patient(settings, session):
+    """Rule 2: a second booking with identical name + DOB + contact reuses the patient; any difference makes a new one."""
+    from datetime import date, datetime, timedelta
+
+    from previsit.web.views import create_appointment
+
+    def book(name="Ana Silva", dob=date(1990, 5, 1), contact=PHONE_A):
+        return create_appointment(session, settings, TEST_PHYSICIAN, name, dob, "F", contact, "Dr. Test",
+                                  datetime.now() + timedelta(days=1), "fever")
+
+    first, again = book(), book()
+    other_dob, other_contact = book(dob=date(1990, 5, 2)), book(contact=PHONE_B)
+
+    assert first.patient_id == again.patient_id
+    assert other_dob.patient_id != first.patient_id
+    assert other_contact.patient_id != first.patient_id

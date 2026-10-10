@@ -74,7 +74,7 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | D.3 | Demo patient scripts (portal sign-in → fever full flow, + stiff-neck escalation); run each ≥3× through the simulator to confirm they reliably hit every scene | T | done |
 | D.4 | Automated recorder in `demo/`: Playwright drives physician + patient windows, records each | B | todo |
 | D.5 | Assemble video with ffmpeg: side by side, captions on every step, AI voice audio, pauses-shortened note, closing limits card; check extracted frames | B | todo |
-| D.6 | Caption review: every claim true vs code and latest eval results; wording right for clinicians | T | doing |
+| D.6 | Caption review: every claim true vs code and latest eval results; wording right for clinicians | T | blocked: paused until the video is recorded (P-003); first pass in evals/caption_review.md |
 | D.7 | Final review: user watches and accepts the video | U | todo |
 
 ## Build follow-ups (found while building)
