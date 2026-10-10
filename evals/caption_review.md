@@ -1,4 +1,41 @@
-# Caption review (PROGRESS D.6), first pass
+# Caption review (PROGRESS D.6)
+
+## Final pass: film `demo/output/20261009T214843` (PATH-demo.mp4), code `9856f48`, plan v0.8
+
+P-007: the user accepted the simulated text-message overlay, the synthetic patient voice and having no limits card. Those aren't flagged. Captions must still be true, must not claim SMS works, and must not claim PATH triages or assesses.
+
+Checked every caption in `demo/captions.py` against the code, the take's database (`var/demo/demo.db`: transcripts, sheet, alert, recs, messages) and the 29 check frames.
+
+| Caption | Verdict | Evidence / replacement |
+|---|---|---|
+| TITLE kicker, title | OK | |
+| TITLE lede, END line 03 | **CHANGE** | Ch. 2 shows self-care advice sent with no doctor approval, which contradicts "Nothing medical reaches the patient…". **Replace with:** "No test or medical recommendation reaches the patient without the doctor's approval." |
+| Chapter 1 lede | **CHANGE** | "PATH suggests the right doctor" overclaims: suggestions match the words typed (rule-based). **Replace with:** "Online, in a minute. PATH suggests doctors from what the patient types." The booking page's own text ("we'll suggest the right doctor") needs the same fix (Build). |
+| Chapter 2–4 ledes | OK | |
+| SIGN_IN | **CHANGE** | "A one-time code arrives by text" claims SMS delivery works, and it isn't built (PP.8). The overlay is accepted (P-007); only the caption text changes. **Replace with:** "The patient signs in with just a phone number and a one-time code." |
+| DETAILS, REASON, BOOKED | OK | The frame shows the "booked by patient" badge on the overview |
+| RECOMMEND | **CHANGE** | **Replace with:** "PATH suggests doctors from the words the patient typed, using simple rules rather than AI, and shows why. The patient chooses a doctor and a time." |
+| CONSENT | OK | Turn 1: recorded, shared with the doctor, automated, not a doctor, emergency number |
+| IDENTITY, INTERVIEW | OK | Safety runs before the interviewer on every turn |
+| FAST_FORWARD | OK | True for this take: turns 21–42 cover past illnesses, medicines, allergies, family, social and travel history. F.5 (a coverage check in code) is still open, so this is not guaranteed for every call. |
+| READBACK | OK | Turn 52. Minor (Build): the read-back says "his thermometer" to the patient |
+| ADVICE + "No diagnosis. No prescribing. No dosing." | OK | Turn 54: library text used verbatim; no drug or dose |
+| DOCTOR_SIGN_IN, MY_PATIENTS | OK | H.9 tests |
+| SHEET | OK | Complaints are in onset order |
+| CITATION + "Statements without a source are dropped" | OK | All 63 statements cite the patient's own turns; 0 dropped. |
+| SUGGESTED, PATIENT_WAITS, APPROVE, SENT | OK | CBC suggested, then approved by anika.rao@…; the MEDICAL message is sent only after approval |
+| RED_START, RED_FAST_FORWARD ("Fast-forward: consent and identity check.") | OK | |
+| RED_INTERVIEW | OK as worded; **user decision** (D.7) | On screen, PATH asks "Is the headache on one side or all over?" three times. Cause: the DEMO-002 script gave a pre-D2 headache answer with no location. Fixed in DEMO-002; 6/6 live runs now give D2 at the first headache question (`demo-20261010T050800Z`, `demo-20261010T051104Z`). |
+| RED_STOP | **CHANGE** (minor) | RF-07 is fever with a stiff neck; light sensitivity isn't required. **Replace with:** "Fever with a stiff neck is a red flag. PATH stops and gives fixed emergency instructions." |
+| RED_ALERT | **CHANGE** | It is a banner on the overview; nobody is paged. **Replace with:** "An emergency alert appears on the hospital overview at once, with the patient's contact details. (No paging or texting in this prototype.)" The alert time on screen (04:54) is UTC, a bug (`tests/test_time_display.py`). |
+| END foot | Not flagged (P-007) | True as worded. The user chose no limits line; limits are stated in the README and the submission. |
+| P-006 name | OK | "PATH" only; the acronym isn't spelled out on screen, and no caption claims triage or assessment |
+
+**Build:** apply the caption changes and fix the UTC times on the overview and doctor page (also "Sent to patient 10 Oct 04:52" and "approved … 04:53" in ch. 3). **User (D.7):** whether to re-record the red-flag take with the fixed DEMO-002 to remove the repeated question and the UTC alert time. F.6 is also visible in every run: after the patient accepts ("My flatmate can drive me now") PATH replies with the refusal script. The film cuts before this.
+
+---
+
+## First pass (plan v0.2)
 
 Plan v0.2 · Reviewed `demo/captions.py` against the code at `dba1c99` and eval report `20261010T025227Z`. A final pass is due at recording time, against the code and eval run actually used.
 

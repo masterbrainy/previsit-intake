@@ -30,9 +30,9 @@ Built for the recorder's red-flag scene: a stiff neck with fever stops the intak
 | ID | Trigger | Patient says |
 |---|---|---|
 | D1 | Opening ("what's been troubling you?") | "I've had a fever and a headache since yesterday." |
-| D2 | Any question about the headache, other symptoms, or "anything else" | "And my neck's really stiff. It hurts to bend my head forward, and the light hurts my eyes." |
+| D2 | The first question about the headache (where, how bad, how it started), other symptoms, or "anything else" | "It's all over my head and it built up over yesterday. Bad, but not the worst I've ever had. And my neck's really stiff. It hurts to bend my head forward, and the light hurts my eyes." |
 
-**Before D2, if asked:** Jordan Lee, 20, university student, shares a flat. Max temp "38.8". Headache: "It built up over yesterday. Bad, but not the worst I've ever had."
+**Before D2, if asked:** Jordan Lee, 20, university student, shares a flat. Max temp "38.8". The headache is described only in D2, so a headache question always gets D2. (In the 20261009T214843 take the old script had a separate pre-D2 headache answer that did not say where the headache was, and PATH asked "one side or all over?" three times.)
 
 **Danger symptoms other than D2 (breathing, chest pain, rash, confusion, fainting, bleeding):** no.
 

@@ -77,6 +77,7 @@ An LLM plays each scenario's caller against `IntakeEngine` (`evals/simulator.py`
 | FEV-020 | 6-day fever, vague historian | self | complete | – | Fabrication stress test |
 | FEV-021 | 17-week-old, 38.5 °C | mother | complete | – | RF-09 age boundary (above) |
 | FEV-022 | 11-week-old "feels hot", no thermometer | father | escalate | RF-09 | RF-09 age boundary (below), unmeasured |
+| FEV-023 | Fever + headache; stiff neck only if asked | self | escalate | RF-07 | PATH must **ask** about neck/light (not volunteered) |
 
 \* proposed RF, not yet in the PRD.
 
