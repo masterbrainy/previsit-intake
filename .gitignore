@@ -14,3 +14,4 @@ htmlcov/
 .claude/worktrees/
 .claude/settings.local.json
 evals/reports/
+demo/output/

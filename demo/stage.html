@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Demo stage</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #e9e7e1;
+    font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; color: #1d1d1b; }
+  .labels { position: absolute; top: 0; left: 0; right: 0; height: 56px; display: flex; align-items: center; padding: 0 24px; }
+  .label { font-size: 17px; font-weight: 600; color: #3f3e3a; letter-spacing: 0.01em; }
+  .label small { font-weight: 400; color: #6d6c66; margin-left: 8px; }
+  #docLabel { position: absolute; left: 24px; }
+  #ptLabel { position: absolute; left: 1332px; }
+  #note { position: absolute; right: 24px; font-size: 14px; color: #6d6c66; background: #fff; border: 1px solid #d6d4cc;
+    border-radius: 999px; padding: 6px 14px; }
+  iframe { position: absolute; top: 56px; height: 800px; border: 1px solid #cfcdc4; border-radius: 12px; background: #f6f5f1; }
+  #doc { left: 24px; width: 1284px; }
+  #pt { left: 1332px; width: 564px; border-radius: 28px; }
+  #captionBar { position: absolute; left: 0; right: 0; top: 868px; bottom: 0; background: #1d1d1b; color: #fff;
+    padding: 22px 40px; display: flex; flex-direction: column; gap: 10px; }
+  #scene { font-size: 16px; text-transform: uppercase; letter-spacing: 0.12em; color: #9fc6e2; font-weight: 600; }
+  #caption { font-size: 30px; line-height: 1.3; font-weight: 500; }
+  #rule { align-self: flex-start; font-size: 18px; color: #1d1d1b; background: #f2c14e; border-radius: 6px; padding: 5px 12px;
+    font-weight: 600; }
+  #rule:empty { display: none; }
+  #card { position: absolute; inset: 0; background: #1d1d1b; color: #fff; display: none; flex-direction: column;
+    justify-content: center; padding: 0 180px; z-index: 50; }
+  #card h1 { font-size: 52px; font-weight: 600; margin: 0 0 36px; letter-spacing: -0.01em; }
+  #card ul { margin: 0; padding-left: 28px; }
+  #card li { font-size: 30px; line-height: 1.45; margin: 14px 0; color: #ecebe6; }
+  #card .foot { margin-top: 48px; font-size: 22px; color: #9a9890; }
+  #ff { position: absolute; top: 470px; left: 1332px; width: 564px; text-align: center; z-index: 30; display: none; }
+  #ff span { display: inline-block; background: rgba(29,29,27,0.88); color: #fff; font-size: 30px; font-weight: 700;
+    padding: 14px 26px; border-radius: 14px; letter-spacing: 0.02em; }
+  #cursor { position: absolute; z-index: 40; width: 26px; height: 26px; left: 900px; top: 500px; pointer-events: none;
+    transition: left 0.45s ease, top 0.45s ease; filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.35)); }
+  #cursor.click::after { content: ""; position: absolute; left: -14px; top: -14px; width: 28px; height: 28px; border-radius: 50%;
+    border: 3px solid #2a78d6; animation: ping 0.5s ease-out; }
+  @keyframes ping { from { transform: scale(0.4); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+</style>
+</head>
+<body>
+  <div class="labels">
+    <div class="label" id="docLabel">Physician <small>dashboard</small></div>
+    <div class="label" id="ptLabel">Patient <small>phone browser</small></div>
+    <div id="note"></div>
+  </div>
+  <iframe id="doc" name="doc" src="about:blank"></iframe>
+  <iframe id="pt" name="pt" src="about:blank"></iframe>
+  <div id="captionBar">
+    <div id="scene"></div>
+    <div id="caption"></div>
+    <div id="rule"></div>
+  </div>
+  <div id="ff"><span>⏩ Fast-forward ×4 · speech muted</span></div>
+  <div id="card"></div>
+  <svg id="cursor" viewBox="0 0 24 24"><path d="M5 3L19 12L12 13L9 20L5 3Z" fill="white" stroke="black" stroke-width="1.5" stroke-linejoin="round"/></svg>
+<script>
+  const esc = (t) => String(t).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  window.stage = {
+    note(text) { document.getElementById("note").textContent = text; },
+    caption(scene, text, rule) {
+      document.getElementById("scene").textContent = scene || "";
+      document.getElementById("caption").textContent = text || "";
+      document.getElementById("rule").textContent = rule ? `Safety rule: ${rule}` : "";
+    },
+    card(title, lines, foot) {
+      const el = document.getElementById("card");
+      if (!title) { el.style.display = "none"; return; }
+      el.innerHTML = `<h1>${esc(title)}</h1><ul>${lines.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>` +
+        (foot ? `<div class="foot">${esc(foot)}</div>` : "");
+      el.style.display = "flex";
+    },
+    ff(on) { document.getElementById("ff").style.display = on ? "block" : "none"; },
+    cursor(x, y, click) {
+      const c = document.getElementById("cursor");
+      c.style.left = `${x}px`; c.style.top = `${y}px`;
+      if (click) { c.classList.remove("click"); void c.offsetWidth; c.classList.add("click"); }
+    },
+  };
+</script>
+</body>
+</html>
