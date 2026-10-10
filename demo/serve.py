@@ -33,21 +33,19 @@ def main() -> None:
     print(f"Demo site reset with {len(seeded)} synthetic appointments.")
     print(f"Front page: {DEMO_URL}/  (demo mode: patient sign-in codes are shown on screen)")
     print(f"Physician dashboard: {DEMO_URL}/dashboard (login: PHYSICIAN_USERNAME / PHYSICIAN_PASSWORD from .env)")
-    # Hosted (a public URL): listen on the host's port on every interface, trusting its proxy's forwarded headers.
-    host = "0.0.0.0" if public_url else "127.0.0.1"
+    # Public behind a local tunnel (cloudflared): it connects from 127.0.0.1 and appends the visitor's address, so only
+    # that hop's forwarding headers are trusted and a visitor can't pick their own address.
     port = int(os.environ.get("PORT", DEMO_PORT))
-    uvicorn.run(create_app(settings=settings), host=host, port=port, log_level="warning",
-                proxy_headers=True, forwarded_allow_ips="*" if public_url else "127.0.0.1")
+    uvicorn.run(create_app(settings=settings), host="127.0.0.1", port=port, log_level="warning",
+                proxy_headers=True, forwarded_allow_ips="127.0.0.1")
 
 
 def _public_url() -> str | None:
     """The open demo for judges (one-click entry, no codes or passwords) runs when the site has a public address:
-    `--public https://…`, DEMO_PUBLIC_URL, or the address the host gives the service (Render, Hugging Face Spaces)."""
+    `--public https://…` or DEMO_PUBLIC_URL. (The hosted version runs on Vercel: api/index.py, demo/hosted.py.)"""
     if "--public" in sys.argv:
         return sys.argv[sys.argv.index("--public") + 1]
-    space_host = os.environ.get("SPACE_HOST")
-    return (os.environ.get("DEMO_PUBLIC_URL") or os.environ.get("RENDER_EXTERNAL_URL")
-            or (f"https://{space_host}" if space_host else None))
+    return os.environ.get("DEMO_PUBLIC_URL")
 
 
 if __name__ == "__main__":

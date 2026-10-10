@@ -53,7 +53,7 @@ Demo mode must only ever be used with synthetic data.
 
 ### Hosted demo for judges
 
-`python -m demo.serve --public <https URL>` (or the Vercel deployment: `api/index.py`, `demo/hosted.py`) runs the **open demo**: the front page offers one-click entry as a fresh fictional patient, the demo doctor, or hospital staff, with no codes or passwords, and a switcher at the bottom of every page. Each visitor gets their own fictional patient booked with Dr. Anika Rao. On Vercel it needs `OPENAI_API_KEY` and a Postgres `DATABASE_URL` (Neon); the database is seeded once and never wiped. New demo patients are capped per visitor and per day to bound AI spend.
+`python -m demo.serve --public <https URL>` (or the Vercel deployment: `api/index.py`, `demo/hosted.py`) runs the **open demo**: the front page offers one-click entry as a fresh fictional patient, the demo doctor, or hospital staff, with no codes or passwords, and a switcher at the bottom of every page. Each visitor gets their own fictional patient booked with Dr. Anika Rao. On Vercel it needs `OPENAI_API_KEY` and a Postgres `DATABASE_URL` (Neon); the database is seeded once and never wiped. New demo patients are capped at 400 a day, counted in the database: that is the real bound on AI spend. There is also a cap of 8 an hour per visitor, keyed on the address the platform reports, but on serverless hosts it is best-effort because each instance keeps its own count.
 
 ## Run for development
 

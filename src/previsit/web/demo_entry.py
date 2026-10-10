@@ -5,6 +5,7 @@ visitor has their own patient and nobody walks into someone else's call. "Be the
 who sees every visitor's patient. No codes, no passwords: everyone here is fictional.
 """
 
+import os
 import secrets
 import time
 from collections import defaultdict, deque
@@ -34,7 +35,9 @@ VISIT_REASON = "Feeling unwell"
 GUEST_DOMAIN = "guest.example.org"  # reserved for examples: nothing is ever delivered there
 NEW_PATIENTS_PER_HOUR_PER_VISITOR = 8
 NEW_PATIENTS_PER_DAY = 400
-_recent: dict[str, deque[float]] = defaultdict(deque)  # per server process; the daily cap is counted in the database
+# Per server process, so best-effort on serverless hosts where instances come and go; the daily cap, counted in the
+# database, is the real bound on spend.
+_recent: dict[str, deque[float]] = defaultdict(deque)
 
 
 def is_guest(contact: str) -> bool:
@@ -42,9 +45,14 @@ def is_guest(contact: str) -> bool:
 
 
 def _visitor(request: Request) -> str:
-    # Behind a proxy or tunnel every request comes from the proxy; the edge passes the visitor's address.
-    forwarded = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
-    return request.headers.get("cf-connecting-ip") or forwarded or (request.client.host if request.client else "")
+    """The visitor's address, only from sources a client can't forge. On Vercel that is the header the platform sets
+    itself; elsewhere it is the connection's peer, which demo.serve resolves through its local tunnel (uvicorn trusts
+    forwarding headers from 127.0.0.1 only). Client-supplied CF-Connecting-IP / X-Forwarded-For are never read here."""
+    if os.environ.get("VERCEL"):
+        platform = request.headers.get("x-vercel-forwarded-for", "").split(",")[0].strip()
+        if platform:
+            return platform
+    return request.client.host if request.client else ""
 
 
 def _allow_new_patient(session: Session, visitor: str, now: float) -> bool:
