@@ -63,7 +63,7 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | PP.4 | Portal home: patient's own appointments; per appointment intake call, advice, approved tests, reading log, report upload, messages | B | done |
 | PP.5 | Text-message link opens portal sign-in with contact pre-filled | B | done |
 | PP.6 | Doctor's read-only "Open patient's view" button | B | done |
-| PP.7 | Tests: patient sees only own records (guessed IDs, old links); code expiry/lockout/rate limit; unapproved recs never shown in portal; preview is read-only; AI replies still checked before play | T | doing |
+| PP.7 | Tests: patient sees only own records (guessed IDs, old links); code expiry/lockout/rate limit; unapproved recs never shown in portal; preview is read-only; AI replies still checked before play | T | done |
 | PP.8 | Real sign-in code delivery by SMS/email | U+B | blocked: needs a messaging provider (same as F.3) |
 
 ## Demo release: working site + captioned video (final step, P-001)
