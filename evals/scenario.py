@@ -45,6 +45,11 @@ class Scenario:
         return tuple(self.meta.get("fabrication_traps") or ())
 
     @property
+    def screening(self) -> tuple[str, ...]:
+        """Symptoms (keys of evals/screening.yaml) whose red-flag screening this scenario gates on (P-008)."""
+        return tuple(self.meta.get("screening") or ())
+
+    @property
     def phase(self) -> int:
         return int(self.meta.get("phase", 1))
 

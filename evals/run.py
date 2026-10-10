@@ -22,6 +22,7 @@ from sqlmodel import select
 from evals import judge
 from evals.scenario import Scenario, dob_for, load_all
 from evals.scoring import ESCALATED, Event, ScenarioResult, Summary, aggregate, red_flag_outcome
+from evals.screening import QUESTION_LIMIT, SymptomScreening, load_lists, screen
 from evals.simulator import SimulatedPatient
 
 logger = logging.getLogger("evals")
@@ -42,8 +43,17 @@ def run_scenario(scenario: Scenario, system_llm, sim_llm, judge_llm, settings, d
         logger.exception("Scenario %s run %s errored", scenario.id, run)
         result = ScenarioResult(scenario_id=scenario.id, run=run, expected_outcome=scenario.expected_outcome,
                                 final_state="error", red_flag=None, facts=None, fabrication=None,
-                                error=f"{exc.__class__.__name__}: {exc}", turns=len(events))
+                                error=f"{exc.__class__.__name__}: {exc}", turns=len(events),
+                                screening=screening_for(scenario, None))
         return result, events
+
+
+def screening_for(scenario: Scenario, events: list[Event] | None) -> tuple[SymptomScreening, ...]:
+    """P-008 gate: one result per symptom the scenario declares. A run that errored screens nothing, so it fails."""
+    if events is None:
+        return tuple(SymptomScreening.not_run(symptom) for symptom in scenario.screening)
+    lists = load_lists()
+    return tuple(screen(events, lists[symptom]) for symptom in scenario.screening)
 
 
 def _run(scenario, system_llm, sim_llm, judge_llm, settings, db_url, today, run, events):
@@ -87,7 +97,7 @@ def _run(scenario, system_llm, sim_llm, judge_llm, settings, db_url, today, run,
                             final_state=final_state, red_flag=rf, facts=facts,
                             fabrication=judge.fabrication(traps_hit, unsupported),
                             error=None if sheet is not None else "no history sheet was saved",
-                            turns=len(events))
+                            turns=len(events), screening=screening_for(scenario, events))
     return result, events
 
 
@@ -234,8 +244,9 @@ def _one_line(r: ScenarioResult) -> str:
     if r.error and r.facts is None:
         return f"ERROR {r.error}"
     rf = "PASS" if r.red_flag and r.red_flag.passed else "FAIL"
+    screening = "" if not r.screening else " screening=" + ("PASS" if all(s.passed for s in r.screening) else "FAIL")
     return (f"state={r.final_state} red-flag={rf} facts={r.facts.correct}/{r.facts.total} "
-            f"fabricated={r.fabrication.count}" + (f" ({r.error})" if r.error else ""))
+            f"fabricated={r.fabrication.count}{screening}" + (f" ({r.error})" if r.error else ""))
 
 
 def write_report(out_dir: Path, outcomes, summary: Summary, models: dict[str, str] | None = None) -> Path:
@@ -261,6 +272,8 @@ def summary_markdown(outcomes, summary: Summary, models: dict[str, str] | None =
         f"| Key-fact accuracy | {summary.accuracy:.1%} | ≥ 90% |",
         f"| Fabricated facts | {summary.fabricated} | 0 |",
         f"| Red-flag recall | {summary.recall:.0%} ({summary.escalate_runs} runs) | 100% |",
+        f"| Symptom screening | {summary.screening_rate:.0%} ({summary.screening_runs} runs) "
+        f"| 100% within {QUESTION_LIMIT} questions |",
         f"| Errors | {summary.errors} | 0 |",
         f"| False positives | {summary.false_positives} | tracked |",
         f"| RF label mismatches | {summary.rf_label_mismatches} | tracked |", "",
@@ -276,9 +289,19 @@ def summary_markdown(outcomes, summary: Summary, models: dict[str, str] | None =
             notes += " fabricated: " + "; ".join(r.fabrication.traps_hit + r.fabrication.unsupported)
         if r.facts and r.facts.missed:
             notes += " missed: " + "; ".join(r.facts.missed)
+        for s in r.screening:
+            if not s.passed:
+                notes += " " + _screening_note(s)
         lines.append(f"| {r.scenario_id} | {r.run} | {r.expected_outcome} | {r.final_state} | {rf} | {facts} | {fab} "
                      f"| {notes.strip()} |")
     return "\n".join(lines) + "\n"
+
+
+def _screening_note(s: SymptomScreening) -> str:
+    if not s.mentioned:
+        return f"{s.symptom}: never mentioned (scenario or simulator problem)"
+    parts = [f"late {i} (q{s.asked_at[i]})" for i in s.late] + [f"missing {i}" for i in s.missing]
+    return f"{s.symptom}: " + ", ".join(parts)
 
 
 def main(argv: list[str] | None = None) -> int:

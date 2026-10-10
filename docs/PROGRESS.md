@@ -30,7 +30,7 @@ Owner: **B** = Build · **T** = Test & Support · **U** = you (needs a human / c
 | 1.10 | Eval runner: accuracy, fabrication, red-flag recall | T | done |
 | 1.11 | Exit gate: eval ≥90% / 0 fabricated / 100% red-flag recall | T | todo |
 | 1.12 | Symptom-specific red-flag screening: any mentioned symptom with its own red flags (headache, chest pain, abdominal pain, breathlessness) gets its screening questions early; screening lists live in module content (P-008) | B | todo |
-| 1.13 | Eval cases where red-flag features appear only when asked (FEV-023 and siblings for chest pain, abdominal pain); gate on screening asked + escalation within the agreed question limit (P-008) | T | doing |
+| 1.13 | Eval cases where red-flag features appear only when asked (FEV-023 and siblings for chest pain, abdominal pain); gate on screening asked + escalation within the agreed question limit (P-008) | T | doing: gate built (evals/screening.py, FEV-023–026); live baseline 0/8 screened, awaiting 1.12 |
 | 1.14 | Clinician sign-off of symptom screening lists and proposed RF-16 (thunderclap headache) (P-008) | U | todo |
 
 ## Phase 2: General recommendations + symptom logs

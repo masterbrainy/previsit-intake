@@ -52,6 +52,7 @@ Triggers count when the symptom is **present now or began during this illness**.
 | D5 No vocabulary dependence | Lay phrasing, caregiver phrasing and mixed-language phrasing must trigger as reliably as clinical terms. |
 | D6 Caregiver | The rules apply to whoever the patient is, not to the person speaking. The infant rule (RF-09) uses the child's age from patient particulars. |
 | D7 Release gate | 100% recall on every red-flag scenario in the eval set (ROADMAP Phase 1 exit gate). False positives are tracked but don't block release. |
+| D8 Whole-call context | Red flags that combine two facts (RF-07 fever + stiff neck, RF-09 infant + fever, RF-10 pregnancy + severe pain or bleeding, proposed RF-13) fire whenever the second fact is said, **however many turns ago the first one was**. The safety check must see every earlier patient turn of the call (or a complete summary of earlier findings), not a recent window. Added after FEV-025 (eval `20261010T053505Z`): pregnancy said 24 turns after "8 out of 10" pain was missed for 6 agent turns. |
 
 ## 5. Escalation script
 

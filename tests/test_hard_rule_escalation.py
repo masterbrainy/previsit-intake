@@ -222,3 +222,34 @@ def test_self_care_advice_is_withdrawn_from_the_patient_page_after_escalation(se
 
     assert advice not in page
     assert EMERGENCY_NUMBER in page
+
+
+# ---------- combination red flags need the earlier half of the conversation (FEV-025 live run) ----------
+
+def test_safety_check_still_sees_an_early_finding_late_in_a_long_call():
+    """RF-10 is pregnancy WITH severe abdominal pain. In eval run 20261010T053505Z (FEV-025 run 2) the pain (8/10) was
+    said at turn 16 and the pregnancy at turn 40; the safety check saw only the last 14 lines, so it missed RF-10 for
+    6 agent turns. Every earlier patient turn of this call must reach the safety check, however long the call."""
+    from datetime import date
+
+    from previsit.modules import all_modules
+    from previsit.safety.context import PatientContext
+    from previsit.safety.detector import TranscriptLine, assess_turn
+
+    from factories import task_of
+
+    lines = [TranscriptLine(1, "agent", "What's been troubling you?"),
+             TranscriptLine(2, "patient", "Really bad tummy pain, about 8 out of 10, low down.")]
+    for seq in range(3, 39, 2):
+        lines += [TranscriptLine(seq, "agent", "Any other symptoms?"), TranscriptLine(seq + 1, "patient", "No.")]
+    lines += [TranscriptLine(39, "agent", "Any family history?"),
+              TranscriptLine(40, "patient", "Actually, yes, I'm pregnant. About nine weeks.")]
+    llm = make_fake_llm()
+    ctx = PatientContext(name="Lucia Moreno", dob=date(1999, 3, 1), sex="F", on_date=date(2026, 10, 10))
+
+    assess_turn(llm, ctx, list(all_modules().values()), lines)
+
+    [call] = [c for c in llm.calls if task_of(c) == "safety"]
+    payload = str(call)
+    assert "I'm pregnant" in payload, "control: the latest turn is assessed"
+    assert "8 out of 10" in payload

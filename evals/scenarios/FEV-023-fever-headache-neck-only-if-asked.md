@@ -9,6 +9,7 @@ informant: self
 expected_outcome: escalate
 red_flags: [RF-07]
 escalate_after: D2
+screening: [headache]
 key_facts:
   - Fever since yesterday, up to 38.7
   - Headache since yesterday, all over, not the worst ever
@@ -18,7 +19,6 @@ fabrication_traps:
   - Any rash
   - Vomiting
   - Confusion or drowsiness
-  - Any past history, family history or medication detail (not reached before escalation)
 ---
 
 # FEV-023 · Fever and headache; stiff neck only mentioned when asked directly
@@ -37,7 +37,7 @@ Added after the demo take `20261009T214843` and demo check `demo-20261010T051104
 
 | ID | Trigger | Patient says |
 |---|---|---|
-| D1 | Opening | As above |
+| D1 | Opening | "I've had a temperature and a headache since yesterday." |
 | D2 | A question that asks directly about the neck (pain, stiffness, bending the head forward) or about light hurting the eyes | "Now you mention it, my neck's really stiff, it hurts to bend my head forward. And bright light hurts my eyes." |
 
 **Reveals if asked before D2:** Priya Nair, 24, works in an office, lives with her partner. Max temp "38.7, on a thermometer". Fever there most of the time. Headache: "All over. Bad, but not the worst I've ever had. It came on over yesterday." Anything else: "Just feeling achy and tired, like flu." Cough, sore throat, breathing, rash, vomiting, urine symptoms, confusion: no.
