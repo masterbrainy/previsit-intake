@@ -4,6 +4,7 @@ Every patient turn, in every state (including after completion), goes through re
 """
 
 import logging
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 
@@ -136,13 +137,14 @@ class IntakeEngine:
         """Second step of the two-step read-back: builds the sheet and reads the main points back."""
         if intake.state is not IntakeState.READBACK or not intake.readback_pending:
             return AgentReply(self._last_agent_text(session, intake), intake.state, intake.state.is_terminal)
+        ctx = self._context(session, intake)
         try:
-            sheet = self._save_sheet(session, intake, self._context(session, intake), modules_for(intake.module_ids))
+            sheet = self._save_sheet(session, intake, ctx, modules_for(intake.module_ids))
         except LLMError:
             return self._fail(session, intake, "Model unavailable during read-back")
         intake.readback_pending = False
         session.add(intake)
-        return self._say(session, intake, f"{readback_text(sheet)} {READBACK_QUESTION}")
+        return self._say(session, intake, f"{readback_text(sheet, not ctx.is_caregiver_call)} {READBACK_QUESTION}")
 
     def run_sheet_job(self, session: Session, job: SheetJob) -> None:
         intake = session.get(Intake, job.intake_id)
@@ -244,7 +246,7 @@ class IntakeEngine:
             reply = self._say(session, intake, READBACK_HOLDING)
             return AgentReply(reply.text, reply.state, follow_up=True)
         sheet = self._save_sheet(session, intake, ctx, modules)
-        return self._say(session, intake, f"Thank you. {readback_text(sheet)} {READBACK_QUESTION}")
+        return self._say(session, intake, f"Thank you. {readback_text(sheet, not ctx.is_caregiver_call)} {READBACK_QUESTION}")
 
     def _on_readback(
         self, session: Session, intake: Intake, ctx: PatientContext, modules: list[ComplaintModule], text: str
@@ -472,10 +474,23 @@ def _complaint_phrase(complaint: str, duration: str) -> str:
     return f"{complaint}{joiner}{duration}"
 
 
-def readback_text(sheet: HistorySheet) -> str:
+# The sheet is written about the patient ("his thermometer"); read back to the patient it should say "your".
+_TO_PATIENT = {"his": "your", "her": "your", "hers": "yours", "him": "you", "himself": "yourself", "herself": "yourself"}
+
+
+def _to_patient(text: str) -> str:
+    def swap(match: re.Match) -> str:
+        word = match.group(0)
+        new = _TO_PATIENT[word.lower()]
+        return new.capitalize() if word[0].isupper() else new
+    return re.sub(r"\b(?:" + "|".join(_TO_PATIENT) + r")\b", swap, text, flags=re.IGNORECASE)
+
+
+def readback_text(sheet: HistorySheet, to_patient: bool = False) -> str:
+    """The main points of the sheet, spoken back to the caller. to_patient: the patient is answering for themself."""
     complaints = ", ".join(_complaint_phrase(c.complaint, c.duration) for c in sheet.chief_complaints)
     complaint_texts = {c.complaint.lower() for c in sheet.chief_complaints}
     extra = [s for s in sheet.hopi if not any(s.text.lower().startswith(t) for t in complaint_texts)]
-    details = " ".join(s.text.rstrip(".") + "." for s in extra[:3])
+    details = " ".join((_to_patient(s.text) if to_patient else s.text).rstrip(".") + "." for s in extra[:3])
     opening = f"Here are the main points: {complaints}." if complaints else "Here are the main points."
     return f"{opening} {details}".strip()

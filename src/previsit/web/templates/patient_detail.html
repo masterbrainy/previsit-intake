@@ -17,7 +17,7 @@
 <section class="card" id="referrals" data-state="{{ v.intake.state.value }}">
   <h2>Care team</h2>
   <p style="margin:0">Booked with {{ v.appointment.physician_name }}.
-    {% for r in referrals %}Referred to {{ names[r.to_doctor_id] }} by {{ names[r.from_doctor_id] }} on {{ r.created_at.strftime('%d %b') }}{% if r.note %} (“{{ r.note }}”){% endif %}. {% endfor %}</p>
+    {% for r in referrals %}Referred to {{ names[r.to_doctor_id] }} by {{ names[r.from_doctor_id] }} on {{ r.created_at|clock('%d %b') }}{% if r.note %} (“{{ r.note }}”){% endif %}. {% endfor %}</p>
   {% if other_appointments %}<p class="muted" style="margin:6px 0 0">Other appointments:
     {% for a in other_appointments %}<a href="/patients/{{ a.id }}">{{ a.scheduled_at.strftime('%d %b') }} with {{ a.physician_name }}</a>{{ ', ' if not loop.last }}{% endfor %}</p>{% endif %}
   {% if refer_to %}
@@ -54,7 +54,7 @@
       {% for rec in v.recs %}
       <div class="rec">
         <div><strong>{{ rec.name }}</strong> <span class="badge {{ 'sent' if rec.patient_notified_at else rec.status.value }}">{{ 'sent to patient' if rec.patient_notified_at else rec.status.value }}</span></div>
-        <div class="why">{{ rec.rationale }}{% if rec.decided_by %} · {{ rec.status.value }} by {{ rec.decided_by }} {{ rec.decided_at.strftime('%d %b %H:%M') }}{% endif %}</div>
+        <div class="why">{{ rec.rationale }}{% if rec.decided_by %} · {{ rec.status.value }} by {{ rec.decided_by }} {{ rec.decided_at|clock('%d %b %H:%M') }}{% endif %}</div>
         {% if rec.patient_instructions %}<div class="why">Patient instructions: {{ rec.patient_instructions }}</div>{% endif %}
         {% if rec.physician_note %}<div class="why">Note: {{ rec.physician_note }}</div>{% endif %}
         {% if not rec.patient_notified_at %}
@@ -93,7 +93,7 @@
       <h2>Lab results</h2>
       <p class="muted" style="margin-top:-6px">Shown exactly as uploaded. Not read or interpreted by AI.</p>
       {% for r in v.results %}
-      <p><a href="/results/{{ r.id }}" target="_blank" rel="noopener">{{ r.filename }}</a> <span class="muted">· {{ (r.size_bytes / 1024)|round(0)|int }} KB · uploaded by {{ r.uploaded_by }} {{ r.created_at.strftime('%d %b %H:%M') }}</span></p>
+      <p><a href="/results/{{ r.id }}" target="_blank" rel="noopener">{{ r.filename }}</a> <span class="muted">· {{ (r.size_bytes / 1024)|round(0)|int }} KB · uploaded by {{ r.uploaded_by }} {{ r.created_at|clock('%d %b %H:%M') }}</span></p>
       {% else %}<p class="empty">No results uploaded yet.</p>{% endfor %}
     </section>
   </div>
@@ -112,7 +112,7 @@
       {% if v.logs %}
       <table><thead><tr><th>Time</th><th>Reading</th><th>Note</th></tr></thead><tbody>
       {% for log in v.logs|reverse %}
-        <tr><td class="mono">{{ log.recorded_at.strftime('%d %b %H:%M') }}</td>
+        <tr><td class="mono">{{ log.recorded_at|clock('%d %b %H:%M') }}</td>
           <td>{{ log.value }} {{ log.unit }} {% if log.flagged %}<span class="badge review">flagged</span>{% endif %}</td><td>{{ log.note }}</td></tr>
       {% endfor %}</tbody></table>
       {% else %}<p class="empty">No readings logged.</p>{% endif %}
@@ -121,7 +121,7 @@
     <section class="card">
       <h2>Sent to patient</h2>
       {% for m in v.messages|reverse %}
-      <details><summary><span class="badge {{ 'emergency' if m.kind.value == 'escalation' else 'info' }}">{{ m.kind.value.replace('_', ' ') }}</span> <span class="muted">{{ m.created_at.strftime('%d %b %H:%M') }}</span></summary>
+      <details><summary><span class="badge {{ 'emergency' if m.kind.value == 'escalation' else 'info' }}">{{ m.kind.value.replace('_', ' ') }}</span> <span class="muted">{{ m.created_at|clock('%d %b %H:%M') }}</span></summary>
         <p class="msg">{{ m.body }}</p></details>
       {% else %}<p class="empty">Nothing yet.</p>{% endfor %}
     </section>
@@ -137,7 +137,7 @@
 
     <section class="card">
       <details><summary>Audit trail ({{ audit|length }})</summary>
-        <table><tbody>{% for e in audit %}<tr><td class="mono">{{ e.at.strftime('%d %b %H:%M:%S') }}</td><td>{{ e.actor }}</td><td class="mono">{{ e.action }}</td></tr>{% endfor %}</tbody></table>
+        <table><tbody>{% for e in audit %}<tr><td class="mono">{{ e.at|clock('%d %b %H:%M:%S') }}</td><td>{{ e.actor }}</td><td class="mono">{{ e.action }}</td></tr>{% endfor %}</tbody></table>
       </details>
     </section>
   </div>

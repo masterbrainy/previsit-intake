@@ -4,7 +4,7 @@ from sqlmodel import Session
 
 from previsit import audit, outbox
 from previsit.config import Settings
-from previsit.models import MessageKind, RedFlagEvent
+from previsit.models import MessageKind, RedFlagEvent, Turn
 from previsit.safety.context import PatientContext
 from previsit.safety.red_flags import SUICIDE_RISK_ID, describe
 
@@ -30,13 +30,14 @@ def record_red_flag(
     session.add(event)
     session.flush()
     informant = "self" if not ctx.is_caregiver_call else ctx.informant
+    turn = session.get(Turn, turn_id) if turn_id else None  # cite the transcript turn number the doctor sees (t20)
     outbox.send_staff_alert(
         session,
         appointment_id,
         "emergency",
         f"RED FLAG: {describe(rf_ids)}",
         f'{ctx.name} (DOB {ctx.dob.isoformat()}), informant: {informant}. Triggering statement: "{evidence}" '
-        f"(source: {source}{f', turn {turn_id}' if turn_id else ''}). Patient told to seek emergency care now.",
+        f"(source: {source}{f', transcript turn t{turn.seq}' if turn else ''}). Patient told to seek emergency care now.",
     )
     outbox.send_patient_message(
         session, appointment_id, MessageKind.ESCALATION, escalation_message(rf_ids, ctx, settings), actor="system",

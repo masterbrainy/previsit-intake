@@ -55,7 +55,7 @@
   {% endfor %}
   {% if v.logs %}
   <h3>Your readings</h3>
-  <ul class="stmts">{% for log in v.logs|reverse %}<li>{{ log.recorded_at.strftime('%a %H:%M') }}: {{ log.value }} {{ log.unit }}</li>{% endfor %}</ul>
+  <ul class="stmts">{% for log in v.logs|reverse %}<li>{{ log.recorded_at|clock('%a %H:%M') }}: {{ log.value }} {{ log.unit }}</li>{% endfor %}</ul>
   {% endif %}
 </div>
 {% endif %}

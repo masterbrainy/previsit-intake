@@ -5,7 +5,7 @@
 {% block main_class %}narrow{% endblock %}
 {% block content %}
 <h1>Book an appointment</h1>
-<p class="sub">Tell us briefly what the visit is about and we'll suggest the right doctor.</p>
+<p class="sub">Tell us briefly what the visit is about and we'll suggest doctors who see it.</p>
 {% if error %}<div class="banner danger" role="alert"><strong>{{ error }}</strong></div>{% endif %}
 <form class="card" method="post" action="/portal/book/doctors">
   <label for="patient_id">Who is it for?</label>

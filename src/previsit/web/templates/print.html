@@ -10,7 +10,7 @@
   {% include "_sheet.html" %}
   {% if v.logs %}
   <h3>Symptom log</h3>
-  <ul class="stmts">{% for log in v.logs %}<li>{{ log.recorded_at.strftime('%d %b %H:%M') }}: {{ log.value }} {{ log.unit }}{% if log.note %} ({{ log.note }}){% endif %}</li>{% endfor %}</ul>
+  <ul class="stmts">{% for log in v.logs %}<li>{{ log.recorded_at|clock('%d %b %H:%M') }}: {{ log.value }} {{ log.unit }}{% if log.note %} ({{ log.note }}){% endif %}</li>{% endfor %}</ul>
   {% endif %}
   <h3>Investigations</h3>
   {% set decided = v.recs|selectattr('decided_by')|list %}

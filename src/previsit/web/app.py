@@ -4,6 +4,7 @@ import base64
 import logging
 import secrets
 from collections.abc import Iterator
+from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -23,6 +24,16 @@ from previsit.llm import LLMClient, OpenAILLM
 logger = logging.getLogger(__name__)
 WEB_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=WEB_DIR / "templates")
+
+
+def clock(value: datetime | None, fmt: str) -> str:
+    """Formats a stored UTC time (models.utcnow) in the clinic's local time. Appointment times are already local."""
+    if value is None:
+        return ""
+    return value.replace(tzinfo=UTC).astimezone().strftime(fmt)
+
+
+templates.env.filters["clock"] = clock
 basic = HTTPBasic(realm="PATH: staff")
 # Pages with patient data are never stored by the browser or a shared cache.
 PRIVATE_PATHS = ("/portal", "/p/", "/patients", "/dashboard", "/results", "/doctor")
